@@ -1,0 +1,9 @@
+http://scalaplace.blogspot.com/2012/06/how-to-add-menubar-menu-menuitem.html
+
+https://docs.oracle.com/javase/tutorial/uiswing/components/menu.html
+
+https://www.cis.upenn.edu/~matuszek/Concise%20Guides/Concise%20Scala%20GUI.html
+
+https://www.chessprogramming.org
+
+https://kubuszok.com/compiled/implicits-type-classes-and-extension-methods/

@@ -1,0 +1,4 @@
+<imgLocations>
+    <BlackPieces dir = "Pieces/BlackPieces.png"/>
+    <WhitePieces dir = "Pieces/WhitePieces.png"/>
+</imgLocations>
