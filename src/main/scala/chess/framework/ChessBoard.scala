@@ -50,7 +50,7 @@ class ChessBoard(
     *
     * @param sqr the square to be emptied
     */
-  def emptySquare(sqr: SquareCoordinate): ChessBoard =
+  private def emptySquare(sqr: SquareCoordinate): ChessBoard =
     if (sqr.isValid) updated(sqr, NoPiece)
     else this
 
@@ -161,7 +161,7 @@ class ChessBoard(
     * @param color kings of this color are tested
     * @return `true` if the player is checked, otherwise `false`
     */
-  def isCheck(color: Color = turn): Boolean =
+  private def isCheck(color: Color = turn): Boolean =
     (for (c <- 1 to 8; row <- 1 to 8;
           sqr = SquareCoordinate(columnLetter(c), row)) yield {
       val piece = apply(sqr)
@@ -178,7 +178,7 @@ class ChessBoard(
     * @param startPiece the moved piece
     * @param endPiece   the captured piece or [[NoPiece]] for an empty square
     */
-  def isLegalMove(start: SquareCoordinate, end: SquareCoordinate, startPiece: Piece, endPiece: Piece): Boolean = {
+  private def isLegalMove(start: SquareCoordinate, end: SquareCoordinate, startPiece: Piece, endPiece: Piece): Boolean = {
     val startCIndex = start.colIndx
     val endCIndex = end.colIndx
     val columnDif = endCIndex - startCIndex
@@ -221,9 +221,9 @@ class ChessBoard(
   }
 
 
-  def isAttacked(sqr: SquareCoordinate): Boolean = isAttacked(sqr, apply(sqr).color)
+  private def isAttacked(sqr: SquareCoordinate): Boolean = isAttacked(sqr, apply(sqr).color)
 
-  def isAttacked(sqr: SquareCoordinate, attacked: Color): Boolean = {
+  private def isAttacked(sqr: SquareCoordinate, attacked: Color): Boolean = {
     implicit class Intersectable[P <: Piece](val content: Array[P]) {
       def ^[OtherP <: Piece](other: Array[OtherP]): Boolean = (for (i <- content; j <- other) yield j == i) contains true
     }
@@ -257,7 +257,7 @@ class ChessBoard(
     def attackedOrthogonally: Boolean =
       queen ++ rook ^ Array(partNxtPiece(1, 0), partNxtPiece(-1, 0), partNxtPiece(0, -1), partNxtPiece(1, 0))
 
-    //    FIXME pawn check not correct evaluated
+    //FIXME pawn check not correct evaluated
     def attackedByPawn: Boolean =
       if (opponent == Black) apply(NumericSquareCoordinate(colI, row) + (1, 1)) == Pawn(opponent) || apply(NumericSquareCoordinate(colI, row) + (-1, 1)) == Pawn(opponent)
       else apply(NumericSquareCoordinate(colI, row) + (1, -1)) == Pawn(opponent) || apply(NumericSquareCoordinate(colI, row) + (-1, -1)) == Pawn(opponent)
@@ -308,14 +308,15 @@ class ChessBoard(
       }) && (startColIndex - endColIndex == from._2 - to._2 || startColIndex - to._2 == endColIndex - from._2))
   }
 
-  def resign(): ChessBoard = new ChessBoard(squares, history, turn, io, Ended(Win(turn.opposite)(GameStatus.Resign)))
+  private def resign(): ChessBoard = new ChessBoard(squares, history, turn, io, Ended(Win(turn.opposite)(GameStatus.Resign)))
 
   /**
     * Sets a piece at a specific position.
     */
-  def updated(square: SquareCoordinate, piece: Char, color: Color, moved: Boolean): ChessBoard = updated(square, Piece(piece)(color, moved))
+  @deprecated
+  private def updated(square: SquareCoordinate, piece: Char, color: Color, moved: Boolean): ChessBoard = updated(square, Piece(piece)(color, moved))
 
-  def updated(square: SquareCoordinate, piece: Piece): ChessBoard = {
+  private def updated(square: SquareCoordinate, piece: Piece): ChessBoard = {
     val updated = squares(square._1).updated(square._2, piece)
     new ChessBoard(squares.updated(square._1, updated), history, turn, io, gameStatus)
   }

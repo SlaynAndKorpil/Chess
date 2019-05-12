@@ -1,6 +1,7 @@
 package chess.graphics
 
 import java.awt.event.KeyEvent
+import chess.framework._
 import scala.swing._
 
 trait CMenuBar {
@@ -41,7 +42,7 @@ trait CMenuBar {
 
     object colorMode extends CMenuItem ("Color mode", KeyEvent.VK_C, _ => ())
 
-    object resign extends CMenuItem ("Resign", KeyEvent.VK_R, _ => gameFrame.board.resign())
+    object resign extends CMenuItem ("Resign", KeyEvent.VK_R, _ => gameFrame.board.receive(Resignation))
 
     object restart extends CMenuItem ("Restart", KeyEvent.VK_S, _ => gameFrame.board = chess.framework.ChessBoard.classicalBoard(gameFrame))
 
