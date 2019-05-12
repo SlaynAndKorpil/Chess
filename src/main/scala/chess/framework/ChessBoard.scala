@@ -209,7 +209,7 @@ class ChessBoard(
         isEmptyOrthogonal(start, end) || isEmptyDiagonal(start, end)
       case King(color, _) =>
         (columnDif <= 1 && columnDif >= -1 && lineDif <= 1 && lineDif >= -1) ||
-          //        castle
+          //castle
           (!startPiece.moved && (end._1 == 'c' || end._1 == 'g') && {
             val rookSquare = if (startCIndex < endCIndex) AbstractSqrCoordinate.sqr2indxSqr(end) + (1, 0) else AbstractSqrCoordinate.sqr2indxSqr(end) - (2, 0)
             val rook = apply(rookSquare)
@@ -227,7 +227,7 @@ class ChessBoard(
       def ^[OtherP <: Piece](other: Array[OtherP]): Boolean = (for (i <- content; j <- other) yield j == i) contains true
     }
 
-    //    FIXME still false positive results with queen directly orthogonal to king
+    //FIXME still false positive results with queen directly orthogonal to king
 
     val opponent = attacked.opposite
     val colI = sqr.colIndx
@@ -274,6 +274,7 @@ class ChessBoard(
     */
   @tailrec
   private def nextPiece(start: NumericSquareCoordinate, increment: NumericSquareCoordinate): Piece = {
+    //    FIXME
     val incremented = start + increment
     if (incremented.isValid) apply(incremented) match {
       case NoPiece => nextPiece(incremented, increment)
