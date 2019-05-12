@@ -1,6 +1,7 @@
 package chess.framework
 
 import chess.framework.GameStatus._
+
 import scala.annotation.tailrec
 import scala.language.{implicitConversions, postfixOps}
 import scala.xml.Elem
@@ -12,7 +13,7 @@ import scala.xml.Elem
 class ChessBoard(
                   val squares: Map[Char, Column],
                   override val history: List[MoveData],
-                  val turn: Color = White,
+                  val turn: AnyColor = White,
                   val io: ChessIO,
                   override val gameStatus: GameStatus
                 ) extends BoardMeta {
@@ -452,7 +453,7 @@ object ChessBoard {
     */
   def fill(piece: Piece, io: ChessIO): ChessBoard = this (Array.fill(8)(Column(piece)), Nil, White, io).get
 
-  def apply(columns: Array[Column], history: List[MoveData] = Nil, turn: Color = White, io: ChessIO): Option[ChessBoard] =
+  def apply(columns: Array[Column], history: List[MoveData] = Nil, turn: AnyColor = White, io: ChessIO): Option[ChessBoard] =
     if (columns.length >= 8)
       Some(new ChessBoard(
         Map(

@@ -27,16 +27,18 @@ object Color {
   }
 }
 
-sealed trait AnyColor extends Color
+sealed trait AnyColor extends Color {
+  override def opposite: AnyColor
+}
 
 object White extends AnyColor {
   override def toString: String = Color.WHITE
-  override def opposite: Color = Black
+  override def opposite: AnyColor = Black
 }
 
 object Black extends AnyColor {
   override def toString: String = Color.BLACK
-  override def opposite: Color = White
+  override def opposite: AnyColor = White
 }
 
 object NoColor extends Color {

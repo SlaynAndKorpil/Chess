@@ -11,10 +11,9 @@ sealed trait Win extends GameResult {
 }
 
 object Win {
-  def apply(winner: Color): WinResultReason => Win = winner match {
+  def apply(winner: AnyColor): WinResultReason => Win = winner match {
     case White => WhiteWins
     case Black => BlackWins
-    case NoColor => WhiteWins//TODO not very fancy
   }
 }
 
