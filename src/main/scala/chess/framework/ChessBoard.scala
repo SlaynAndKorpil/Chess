@@ -320,7 +320,7 @@ class ChessBoard(
 
 
   def save: Elem =
-  //  TODO save gameStatus
+  //TODO save gameStatus
     <chessboard version={Version.toString}>
       <board>
         {for (x <- 1 to 8; col = columnLetter(x)) yield
