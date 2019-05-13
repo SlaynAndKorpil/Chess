@@ -23,6 +23,7 @@ class SaveLoader {
     val version = (xml \@ "version").toLong
     val loader = version match {
       case 0 =>
+        Debugger debug s"Loading file with loader for version 0"
         Loader1
       case _ =>
         Error error s"unknown save version: $version"
@@ -50,7 +51,7 @@ class SaveLoader {
           moves map (move =>
             MoveData(
               SquareCoordinate(extractWithFilter(move, "start").head, extractWithFilter(move, "start").last.toInt),
-              Piece(extractWithFilter(move, "movedPiece").head)(Color(extractWithFilter(move, "movedPiece").last), true),
+              Piece(extractWithFilter(move, "movedPiece").head, Color(extractWithFilter(move, "movedPiece").last), moved = true),
               SquareCoordinate(extractWithFilter(move, "end").head, extractWithFilter(move, "end").last.toInt),
               extractWithFilter(move, "capture").toBoolean
             )) toList,

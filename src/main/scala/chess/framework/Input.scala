@@ -6,7 +6,7 @@ package chess.framework
 sealed abstract class Input[InputType] (val value: InputType)
 
 case class MoveParams(from: SquareCoordinate, to: SquareCoordinate) extends Input(from -> to)
-case class Promotion (piece: AnyPiece) extends Input(piece)
+case class Promotion(piece: (AnyColor, Boolean) => AnyPiece) extends Input(piece)
 
 trait Command extends Input[Unit]
 

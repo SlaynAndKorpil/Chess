@@ -20,6 +20,9 @@ class ChessBoard(
 
   import ChessBoard._
 
+  //TODO find better identifier
+  val turnCounter: Int = history.length / 2
+
   /**
     * @note When the coordinate is outside the board, [[NoPiece]] is returned.
     * @param sqr coordinates on the board
@@ -64,8 +67,7 @@ class ChessBoard(
     case MoveParams(from, to) if gameStatus == StandardReq =>
       move(from, to)
     case Promotion(piece) if gameStatus.isInstanceOf[PromoReq] =>
-      io.removePromotion()
-      Some(updated(/*FIXME read coordinate from gameStatus*/ SquareCoordinate('a', 1), piece))
+      promote(/*FIXME load coordinate from status*/SquareCoordinate('a', 1), piece)
     case DrawOffer if gameStatus == StandardReq =>
       io.showDrawOffer()
       Some(new ChessBoard(squares, history, turn, io, DrawAcceptanceReq))
@@ -81,6 +83,20 @@ class ChessBoard(
       io.showResign()
       Some(resign())
     case _ => None
+  }
+
+  private def promote(sqr: SquareCoordinate, piece: (AnyColor, Boolean) => AnyPiece): Option[ChessBoard] = {
+    val promCol = turn.opposite
+    piece match {
+      case Queen =>
+        Debugger debug s"test promotion"
+        io.removePromotion()
+        Some(updated(/*FIXME read coordinate from gameStatus*/ SquareCoordinate('a', 1), piece(promCol, false)))
+//      case Bishop => TODO implement other cases
+//      case Knight =>
+//      case Rook =>
+      case _ => None
+    }
   }
 
 
@@ -161,13 +177,15 @@ class ChessBoard(
     * @param color kings of this color are tested
     * @return `true` if the player is checked, otherwise `false`
     */
-  private def isCheck(color: Color = turn): Boolean =
-    (for (c <- 1 to 8; row <- 1 to 8;
-          sqr = SquareCoordinate(columnLetter(c), row)) yield {
+  private def isCheck(color: AnyColor = turn): Boolean = {
+    val attackedKings = for (c <- 1 to 8; row <- 1 to 8;
+                             sqr = SquareCoordinate(columnLetter(c), row)) yield {
       val piece = apply(sqr)
       if (piece == King(color) || piece == King(color, moved = true)) isAttacked(sqr)
       else false
-    }) contains true
+    }
+    attackedKings contains true
+  }
 
   /**
     * Tests if this is a correct move under consideration of the moved piece's type.
@@ -221,9 +239,15 @@ class ChessBoard(
   }
 
 
-  private def isAttacked(sqr: SquareCoordinate): Boolean = isAttacked(sqr, apply(sqr).color)
+  private def isAttacked(sqr: SquareCoordinate): Boolean = {
+    val attackedCol = apply(sqr).color
+    attackedCol match {
+      case col: AnyColor => isAttacked(sqr, col)
+      case NoColor => false
+    }
+  }
 
-  private def isAttacked(sqr: SquareCoordinate, attacked: Color): Boolean = {
+  private def isAttacked(sqr: SquareCoordinate, attacked: AnyColor): Boolean = {
     implicit class Intersectable[P <: Piece](val content: Array[P]) {
       def ^[OtherP <: Piece](other: Array[OtherP]): Boolean = (for (i <- content; j <- other) yield j == i) contains true
     }
@@ -314,7 +338,7 @@ class ChessBoard(
     * Sets a piece at a specific position.
     */
   @deprecated
-  private def updated(square: SquareCoordinate, piece: Char, color: Color, moved: Boolean): ChessBoard = updated(square, Piece(piece)(color, moved))
+  private def updated(square: SquareCoordinate, piece: Char, color: Color, moved: Boolean): ChessBoard = updated(square, Piece(piece, color, moved))
 
   private def updated(square: SquareCoordinate, piece: Piece): ChessBoard = {
     val updated = squares(square._1).updated(square._2, piece)

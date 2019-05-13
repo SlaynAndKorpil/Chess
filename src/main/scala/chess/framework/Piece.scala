@@ -10,9 +10,15 @@ sealed trait Piece {
 
   def xml: Elem =
     <piece>
-      <id>{identifier}</id>
-      <color>{color}</color>
-      <moved>{moved}</moved>
+      <id>
+        {identifier}
+      </id>
+      <color>
+        {color}
+      </color>
+      <moved>
+        {moved}
+      </moved>
     </piece>
 
   def isEmpty: Boolean
@@ -27,7 +33,7 @@ sealed trait Piece {
 }
 
 object NoPiece extends Piece {
-  /**@note only for internal use; simply returns this object*/
+  /** @note only for internal use; simply returns this object */
   private[chess] def apply(c: Color, b: Boolean): NoPiece.type = this
 
   val color: Color = NoColor
@@ -38,36 +44,39 @@ object NoPiece extends Piece {
 
   val moved: Boolean = false
 
-  def moved_= (b: Boolean): Unit = ()
+  def moved_=(b: Boolean): Unit = ()
 }
 
-sealed abstract class AnyPiece (override val identifier: Char) extends Piece {
+sealed abstract class AnyPiece(override val identifier: Char) extends Piece {
   override def isEmpty = false
-  val color: Color
+
+  val color: AnyColor
 }
 
-final case class Pawn (color: Color, var moved: Boolean = false) extends AnyPiece('P')
+final case class Pawn(color: AnyColor, var moved: Boolean = false) extends AnyPiece('P')
 
-final case class Bishop (color: Color, var moved: Boolean = false) extends AnyPiece('B')
+final case class Bishop(color: AnyColor, var moved: Boolean = false) extends AnyPiece('B')
 
-final case class Knight (color: Color, var moved: Boolean = false) extends AnyPiece('N')
+final case class Knight(color: AnyColor, var moved: Boolean = false) extends AnyPiece('N')
 
-final case class Rook (color: Color, var moved: Boolean = false) extends AnyPiece('R')
+final case class Rook(color: AnyColor, var moved: Boolean = false) extends AnyPiece('R')
 
-final case class Queen (color: Color, var moved: Boolean = false) extends AnyPiece('Q')
+final case class Queen(color: AnyColor, var moved: Boolean = false) extends AnyPiece('Q')
 
-final case class King (color: Color, var moved: Boolean = false) extends AnyPiece('K')
-
+final case class King(color: AnyColor, var moved: Boolean = false) extends AnyPiece('K')
 
 
 object Piece {
-  def apply (id: Char): (Color, Boolean) => Piece = id match {
-    case 'P' => Pawn
-    case 'B' => Bishop
-    case 'N' => Knight
-    case 'R' => Rook
-    case 'Q' => Queen
-    case 'K' => King
-    case _ => NoPiece.apply
+  def apply(id: Char, col: Color, moved: Boolean): Piece = col match {
+    case any: AnyColor => id match {
+      case 'P' => Pawn(any, moved)
+      case 'B' => Bishop(any, moved)
+      case 'N' => Knight(any, moved)
+      case 'R' => Rook(any, moved)
+      case 'Q' => Queen(any, moved)
+      case 'K' => King(any, moved)
+      case _ => NoPiece
+    }
+    case NoColor => NoPiece
   }
 }

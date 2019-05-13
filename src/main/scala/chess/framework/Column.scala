@@ -31,7 +31,7 @@ final class Column extends IndexedSeq[Piece] with IndexedSeqLike[Piece, Column] 
 
   def updated(line: Int, piece: Piece): Column = new Column(pieces.updated(line-1, piece))
 
-  def updated(line: Int, piece: Char, color: Color): Column = updated(line, piece match {
+  def updated(line: Int, piece: Char, color: AnyColor): Column = updated(line, piece match {
     case 'P' => Pawn(color)
     case 'R' => Rook(color)
     case 'N' => Knight(color)
@@ -69,7 +69,7 @@ object Column {
   def loadFromXML (xml: NodeSeq): Column = {
     var result = new Column(NoPiece)
     for (i <- 1 to 8; label = "l"+i; if (xml \ label) != NodeSeq.Empty; data = xml \ label)
-      result = result.updated(i, Piece((data \ "id").text.head) (Color((data \ "color").text), (data \ "moved").text.toBoolean))
+      result = result.updated(i, Piece((data \ "id").text.head, Color((data \ "color").text), (data \ "moved").text.toBoolean))
     result
   }
 }
