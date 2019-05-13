@@ -1,7 +1,9 @@
 package chess.graphics
 
 import java.awt.event.KeyEvent
+
 import chess.framework._
+
 import scala.swing._
 
 trait CMenuBar {
@@ -9,7 +11,6 @@ trait CMenuBar {
 
   menuBar = Menu
 
-  //TODO add functionality; add more MenuItems, Menus and submenus
   /*
   TODO menus:
   TODO - propose takeback
@@ -60,5 +61,4 @@ trait CMenuBar {
     object Test extends CMenuItem("test promotion", 0, _ =>
       gameFrame.update(gameFrame.board.receive(Promotion(chess.framework.Queen))))
   }
-
 }

@@ -81,7 +81,7 @@ class ChessBoard(
       Some(new ChessBoard(squares, history, turn, io, Ended(Draw(DrawAgreement))))
     case Resignation if gameStatus == StandardReq =>
       io.showResign()
-      Some(resign())
+      Some(resign)
     case _ => None
   }
 
@@ -332,7 +332,8 @@ class ChessBoard(
       }) && (startColIndex - endColIndex == from._2 - to._2 || startColIndex - to._2 == endColIndex - from._2))
   }
 
-  private def resign(): ChessBoard = new ChessBoard(squares, history, turn, io, Ended(Win(turn.opposite)(GameStatus.Resign)))
+  private def resign: ChessBoard =
+    new ChessBoard(squares, history, turn, io, Ended(Win(turn.opposite)(Resign)))
 
   /**
     * Sets a piece at a specific position.
