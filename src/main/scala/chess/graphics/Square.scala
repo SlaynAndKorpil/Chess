@@ -6,7 +6,7 @@ import chess.graphics.BoardColors.BoardColor
 import scala.swing.{Graphics2D, Insets, ToggleButton, Image}
 import scala.swing.event.{ButtonClicked, Event}
 
-class Square (color: BoardColor, val pos: SquareCoordinate, var piece: chess.framework.Piece) extends ToggleButton {
+class Square (var color: BoardColor, val pos: SquareCoordinate, var piece: chess.framework.Piece) extends ToggleButton {
 //a small hack that changes every ButtonClicked in a SquarePressed event before publishing
   override def publish(e: Event): Unit = super.publish(e match {
     case ButtonClicked(sq: Square) =>

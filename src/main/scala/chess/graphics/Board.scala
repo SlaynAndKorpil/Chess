@@ -3,6 +3,7 @@ package chess.graphics
 import chess.framework.{ChessBoard, ChessIO, SquareCoordinate}
 import chess.graphics.BoardColors.BoardColor
 import chess.graphics.BoardColors.Brown._
+
 import scala.swing._
 
 class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
@@ -31,13 +32,14 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
     contents foreach (comp => listenTo(comp))
   }
 
-  def reload(): Unit = {
+  override def repaint(): Unit = {
     contents foreach {
       case sq: Square =>
+        Debugger debug s"${sq.pos}: ${board(sq.pos)}"
         sq.piece = board(sq.pos)
-        sq.unselect()
       case _ =>
     }
+    super.repaint()
   }
 
   def unselect(square: SquareCoordinate): Unit = {
@@ -64,6 +66,7 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
 
   override def removePromotion(): Unit = {
     Debugger debug s"promoted!"
+    repaint()
   }
 
   override def showResign(): Unit = {

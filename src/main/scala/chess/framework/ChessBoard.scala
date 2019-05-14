@@ -67,7 +67,7 @@ class ChessBoard(
     case MoveParams(from, to) if gameStatus == StandardReq =>
       move(from, to)
     case Promotion(piece) if gameStatus.isInstanceOf[PromoReq] =>
-      promote(/*FIXME load coordinate from status*/SquareCoordinate('a', 1), piece)
+      promote(/*FIXME load coordinate from status*/ SquareCoordinate('a', 1), piece)
     case DrawOffer if gameStatus == StandardReq =>
       io.showDrawOffer()
       Some(new ChessBoard(squares, history, turn, io, DrawAcceptanceReq))
@@ -86,17 +86,25 @@ class ChessBoard(
   }
 
   private def promote(sqr: SquareCoordinate, piece: (AnyColor, Boolean) => AnyPiece): Option[ChessBoard] = {
-    val promCol = turn.opposite
-    piece match {
+    val promoCol = turn.opposite
+    val promoPiece = piece match {
       case Queen =>
-        Debugger debug s"test promotion"
-        io.removePromotion()
-        Some(updated(/*FIXME read coordinate from gameStatus*/ SquareCoordinate('a', 1), piece(promCol, false)))
-//      case Bishop => TODO implement other cases
-//      case Knight =>
-//      case Rook =>
-      case _ => None
+        Queen(promoCol)
+      case Bishop =>
+        Bishop(promoCol)
+      case Knight =>
+        Knight(promoCol)
+      case Rook =>
+        Rook(promoCol)
+      case _ => NoPiece
     }
+
+    io.removePromotion()
+    if (promoPiece != NoPiece) {
+      io.removePromotion()
+      Some(updated(/*FIXME read coordinate from gameStatus*/ SquareCoordinate('a', 1), promoPiece))
+    }
+    else None
   }
 
 

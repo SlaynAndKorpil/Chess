@@ -36,7 +36,7 @@ trait BoardEventHandler {
     board.receive(MoveParams(from, to)) match {
       case Some(b) =>
         board = b
-        reload()
+        repaint()
       case None =>
     }
   }
