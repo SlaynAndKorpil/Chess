@@ -1,7 +1,7 @@
 package chess.framework
 
 import chess.framework.ChessBoard.columnLetter
-import chess.framework.GameStatus.StandardReq
+import chess.framework.GameStatus._
 
 import scala.language.postfixOps
 import scala.xml._
@@ -33,7 +33,7 @@ class SaveLoader {
   }
 
   private trait Loader {
-    def load (xml: Elem): Option[ChessIO => ChessBoard]
+    def load(xml: Elem): Option[ChessIO => ChessBoard]
   }
 
   private object NoLoaderDefined extends Loader {
@@ -56,10 +56,17 @@ class SaveLoader {
               extractWithFilter(move, "capture").toBoolean
             )) toList,
           col,
-          io, StandardReq /*TODO load status from file*/
+          io,
+          GameStatus.GameStatus(extractWithFilter(xml, "boardStatus")) match {
+            case Left(status) => status
+            case Right(message) =>
+              Error error s"$message"
+              StandardReq
+          }
         ))
         case _ => None
       }
     }
   }
+
 }

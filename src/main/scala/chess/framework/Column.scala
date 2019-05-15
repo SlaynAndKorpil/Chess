@@ -67,9 +67,10 @@ object Column {
   }
 
   def loadFromXML (xml: NodeSeq): Column = {
+    //TODO rewrite in functional style
     var result = new Column(NoPiece)
     for (i <- 1 to 8; label = "l"+i; if (xml \ label) != NodeSeq.Empty; data = xml \ label)
-      result = result.updated(i, Piece((data \ "id").text.head, Color((data \ "color").text), (data \ "moved").text.toBoolean))
+      result = result.updated(i, Piece((data \ "id").text.filter(c => c != ' ' && c != '\n').head, Color((data \ "color").text.filter(c => c != ' ' && c != '\n')), (data \ "moved").text.filter(c => c != ' ' && c != '\n').toBoolean))
     result
   }
 }

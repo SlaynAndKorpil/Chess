@@ -67,7 +67,7 @@ class ChessBoard(
     case MoveParams(from, to) if gameStatus == StandardReq =>
       move(from, to)
     case Promotion(piece) if gameStatus.isInstanceOf[PromoReq] =>
-      promote(/*FIXME load coordinate from status*/ SquareCoordinate('a', 1), piece)
+      promote(piece)
     case DrawOffer if gameStatus == StandardReq =>
       io.showDrawOffer()
       Some(new ChessBoard(squares, history, turn, io, DrawAcceptanceReq))
@@ -79,13 +79,13 @@ class ChessBoard(
       //TODO test for repetition
       io.removeDrawOffer()
       Some(new ChessBoard(squares, history, turn, io, Ended(Draw(DrawAgreement))))
-    case Resignation if gameStatus == StandardReq =>
+    case Resign if gameStatus == StandardReq =>
       io.showResign()
       Some(resign)
     case _ => None
   }
 
-  private def promote(sqr: SquareCoordinate, piece: (AnyColor, Boolean) => AnyPiece): Option[ChessBoard] = {
+  private def promote(piece: (AnyColor, Boolean) => AnyPiece): Option[ChessBoard] = {
     val promoColor = turn.opposite
     val promoPiece = piece match {
       case Queen =>
@@ -103,7 +103,6 @@ class ChessBoard(
       gameStatus match {
         case PromoReq(sqr: SquareCoordinate) =>
           val result = updated(sqr, promoPiece, StandardReq)
-//          Debugger debug s"res: $result, resStatus: ${result.gameStatus}"
           io.removePromotion()
           Some(result)
         case _ => None
@@ -155,10 +154,9 @@ class ChessBoard(
 
       var result: ChessBoard = new ChessBoard(squares, MoveData(from, movingPiece, to, startColor.opposite == endColor) :: history, turn.opposite, io, nxtStatus)
 
+      //testing for en passant and castling
       movingPiece match {
-        case Pawn(_, _) if {
-          apply(to).isEmpty && from.column != to.column
-        } =>
+        case Pawn(_, _) if apply(to).isEmpty && from.column != to.column =>
           result = result.emptySquare(SquareCoordinate(to.column, from.row))
         case King(color, _) =>
           if (to._1 == 'c' && color == White) result = result.updated(SquareCoordinate('d', 1), Rook(White)).emptySquare(SquareCoordinate('a', 1))
@@ -174,14 +172,6 @@ class ChessBoard(
 
     if (isValid) Some(doMove)
     else None
-    /*
-    TODO tests for...
-    TODO - mate
-    TODO - stalemate
-    TODO - draw by insufficient material; see: http://www.e4ec.org/immr.html
-    TODO - draw by repetition; see: https://www.chessprogramming.org/Repetitions
-    => I/O interaction
-     */
   }
 
   /**
@@ -343,7 +333,7 @@ class ChessBoard(
   }
 
   private def resign: ChessBoard =
-    new ChessBoard(squares, history, turn, io, Ended(Win(turn.opposite)(Resign)))
+    new ChessBoard(squares, history, turn, io, Ended(Win(turn.opposite)(Resignation)))
 
   /**
     * Sets a piece at a specific position.
@@ -388,6 +378,9 @@ class ChessBoard(
       <turn>
         {turn}
       </turn>
+      <boardStatus>
+        {gameStatus.toString}
+      </boardStatus>
     </chessboard>
 
   /**

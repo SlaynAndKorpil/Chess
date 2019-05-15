@@ -10,7 +10,7 @@ case class Promotion(piece: (AnyColor, Boolean) => AnyPiece) extends Input(piece
 
 trait Command extends Input[Unit]
 
-object Resignation extends Command
+object Resign extends Command
 object DrawOffer extends Command
 object DrawReject extends Command
 object DrawAcceptance extends Command

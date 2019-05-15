@@ -34,7 +34,7 @@ class InputInterpreter (plainBoard: ChessIO => ChessBoard) extends ChessIO {
           val in2 = inputs._2.tail
           in1 match {
             case "resign" =>
-              board.receive(Resignation)
+              board.receive(Resign)
             case "stop" =>
               println("stopping process...")
               System.exit(0)

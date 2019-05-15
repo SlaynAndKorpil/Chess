@@ -6,6 +6,35 @@ sealed trait GameStatus {
   def isActive: Boolean
 }
 
+object GameStatus {
+  def apply(state: String): Either[GameStatus, String] = {
+    import GameResult.contains
+
+    val last = state.length - 1
+    val failMessage = Right("Failed to load gameStatus.")
+
+    if (contains(state, "Ended(", ")")) {
+      val result = state.substring(6, last)
+      val res: Option[GameResult] = GameResult(result)
+      res match {
+        case Some(x) => Left(Ended(x))
+        case _ => failMessage
+      }
+    }
+    else if (state == StandardReq.toString) Left(StandardReq)
+    else if (contains(state, "PromoReq(", ")")) {
+      val sqr = state.substring(9, last)
+      val result = SquareCoordinate(sqr)
+      result match {
+        case Some(square) => Left(PromoReq(square))
+        case _ => failMessage
+      }
+    }
+    else if (state == DrawAcceptanceReq.toString) Left(DrawAcceptanceReq)
+    else failMessage
+  }
+}
+
 case class Ended(result: GameResult) extends GameStatus {
   def isActive: Boolean = false
 }
@@ -14,8 +43,12 @@ trait Active extends GameStatus {
   def isActive: Boolean = true
 }
 
-object StandardReq extends Active
+object StandardReq extends Active {
+  override def toString: String = "Waiting"
+}
 
 case class PromoReq(square: SquareCoordinate) extends Active
 
-object DrawAcceptanceReq extends Active
+object DrawAcceptanceReq extends Active {
+  override def toString: String = "Draw reaction"
+}

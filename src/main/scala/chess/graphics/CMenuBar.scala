@@ -45,7 +45,7 @@ trait CMenuBar {
     object colorMode extends CMenuItem("Color mode", KeyEvent.VK_C, _ => ())
 
     object resign extends CMenuItem("Resign", KeyEvent.VK_R, _ =>
-      gameFrame.update(gameFrame.board.receive(Resignation)))
+      gameFrame.update(gameFrame.board.receive(Resign)))
 
     object restart extends CMenuItem("Restart", KeyEvent.VK_S, _ =>
       gameFrame.board = chess.framework.ChessBoard.classicalBoard(gameFrame))
@@ -58,10 +58,9 @@ trait CMenuBar {
     object load extends CMenuItem("Load", KeyEvent.VK_L, Shortcut.load, _ => println("load!"))
 
     @deprecated
-    object Test extends CMenuItem("test promotion", 0, _ => {
+    object Test extends CMenuItem("test promotion", 0, _ =>
       gameFrame.update(gameFrame.board.receive(Promotion(chess.framework.Queen)))
-      Debugger debug s"a1: ${gameFrame.board(SquareCoordinate('a', 1))}"
-    })
+    )
 
   }
 

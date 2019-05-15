@@ -38,7 +38,6 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
   def reload(): Unit =
     contents foreach {
       case sq: Square =>
-        Debugger debug s"${sq.pos}: ${board(sq.pos)}"
         sq.piece = board(sq.pos)
       case _ =>
     }
