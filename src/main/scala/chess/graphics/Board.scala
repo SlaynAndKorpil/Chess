@@ -11,9 +11,12 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
 
   setup()
 
-  def update(boardOpt: Option[ChessBoard]): Unit = boardOpt match {
-    case Some(b) => board = b
-    case None =>
+  def update(boardOpt: Option[ChessBoard]): Unit = {
+    boardOpt match {
+      case Some(b) => board = b
+      case None =>
+    }
+    repaint()
   }
 
   def setup(): Unit = {
@@ -32,13 +35,16 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
     contents foreach (comp => listenTo(comp))
   }
 
-  override def repaint(): Unit = {
+  def reload(): Unit =
     contents foreach {
       case sq: Square =>
         Debugger debug s"${sq.pos}: ${board(sq.pos)}"
         sq.piece = board(sq.pos)
       case _ =>
     }
+
+  override def repaint(): Unit = {
+    reload()
     super.repaint()
   }
 
@@ -66,7 +72,6 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
 
   override def removePromotion(): Unit = {
     Debugger debug s"promoted!"
-    repaint()
   }
 
   override def showResign(): Unit = {

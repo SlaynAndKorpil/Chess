@@ -86,23 +86,28 @@ class ChessBoard(
   }
 
   private def promote(sqr: SquareCoordinate, piece: (AnyColor, Boolean) => AnyPiece): Option[ChessBoard] = {
-    val promoCol = turn.opposite
+    val promoColor = turn.opposite
     val promoPiece = piece match {
       case Queen =>
-        Queen(promoCol)
+        Queen(promoColor)
       case Bishop =>
-        Bishop(promoCol)
+        Bishop(promoColor)
       case Knight =>
-        Knight(promoCol)
+        Knight(promoColor)
       case Rook =>
-        Rook(promoCol)
+        Rook(promoColor)
       case _ => NoPiece
     }
 
-    io.removePromotion()
     if (promoPiece != NoPiece) {
-      io.removePromotion()
-      Some(updated(/*FIXME read coordinate from gameStatus*/ SquareCoordinate('a', 1), promoPiece))
+      gameStatus match {
+        case PromoReq(sqr: SquareCoordinate) =>
+          val result = updated(sqr, promoPiece, StandardReq)
+//          Debugger debug s"res: $result, resStatus: ${result.gameStatus}"
+          io.removePromotion()
+          Some(result)
+        case _ => None
+      }
     }
     else None
   }
@@ -237,6 +242,7 @@ class ChessBoard(
       case King(color, _) =>
         (columnDif <= 1 && columnDif >= -1 && lineDif <= 1 && lineDif >= -1) ||
           //castle
+          //FIXME somehow does not work anymore after king was checked
           (!startPiece.moved && (end._1 == 'c' || end._1 == 'g') && {
             val rookSquare = if (startCIndex < endCIndex) AbstractSqrCoordinate.sqr2indxSqr(end) + (1, 0) else AbstractSqrCoordinate.sqr2indxSqr(end) - (2, 0)
             val rook = apply(rookSquare)
@@ -259,8 +265,6 @@ class ChessBoard(
     implicit class Intersectable[P <: Piece](val content: Array[P]) {
       def ^[OtherP <: Piece](other: Array[OtherP]): Boolean = (for (i <- content; j <- other) yield j == i) contains true
     }
-
-    //FIXME still false positive results with queen directly orthogonal to king
 
     val opponent = attacked.opposite
     val colI = sqr.colIndx
@@ -287,9 +291,8 @@ class ChessBoard(
       queen ++ bishop ^ Array(partNxtPiece(1, 1), partNxtPiece(-1, -1), partNxtPiece(1, -1), partNxtPiece(-1, 1))
 
     def attackedOrthogonally: Boolean =
-      queen ++ rook ^ Array(partNxtPiece(1, 0), partNxtPiece(-1, 0), partNxtPiece(0, -1), partNxtPiece(1, 0))
+      queen ++ rook ^ Array(partNxtPiece(1, 0), partNxtPiece(-1, 0), partNxtPiece(0, -1), partNxtPiece(0, 1))
 
-    //FIXME pawn check not correct evaluated
     def attackedByPawn: Boolean =
       if (opponent == Black) apply(NumericSquareCoordinate(colI, row) + (1, 1)) == Pawn(opponent) || apply(NumericSquareCoordinate(colI, row) + (-1, 1)) == Pawn(opponent)
       else apply(NumericSquareCoordinate(colI, row) + (1, -1)) == Pawn(opponent) || apply(NumericSquareCoordinate(colI, row) + (-1, -1)) == Pawn(opponent)
@@ -307,7 +310,6 @@ class ChessBoard(
     */
   @tailrec
   private def nextPiece(start: NumericSquareCoordinate, increment: NumericSquareCoordinate): Piece = {
-    //    FIXME
     val incremented = start + increment
     if (incremented.isValid) apply(incremented) match {
       case NoPiece => nextPiece(incremented, increment)
@@ -349,9 +351,11 @@ class ChessBoard(
   @deprecated
   private def updated(square: SquareCoordinate, piece: Char, color: Color, moved: Boolean): ChessBoard = updated(square, Piece(piece, color, moved))
 
-  private def updated(square: SquareCoordinate, piece: Piece): ChessBoard = {
+  private def updated(square: SquareCoordinate, piece: Piece): ChessBoard = updated(square, piece, this.gameStatus)
+
+  private def updated(square: SquareCoordinate, piece: Piece, status: GameStatus): ChessBoard = {
     val updated = squares(square._1).updated(square._2, piece)
-    new ChessBoard(squares.updated(square._1, updated), history, turn, io, gameStatus)
+    new ChessBoard(squares.updated(square._1, updated), history, turn, io, status)
   }
 
 
