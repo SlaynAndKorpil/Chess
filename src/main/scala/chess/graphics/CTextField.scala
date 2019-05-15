@@ -8,7 +8,7 @@ class CTextField(text: String) extends TextArea(text) {
   background = new java.awt.Color(0x515355)
   foreground = new java.awt.Color(0xCCCCCC)
 
-  xLayoutAlignment = peer.getSize().width*100
+  xLayoutAlignment = peer.getWidth*100
 
   editable = false
 }

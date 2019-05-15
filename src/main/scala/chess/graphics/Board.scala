@@ -9,6 +9,8 @@ import scala.swing._
 class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
   var board: ChessBoard = ChessBoard.classicalBoard(this)
 
+  val promoMenu = new PromotionChooser()
+
   setup()
 
   def update(boardOpt: Option[ChessBoard]): Unit = {
@@ -66,6 +68,7 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
   }
 
   override def showPromotion(): Unit = {
+    promoMenu.open
     Debugger debug s"promote!"
   }
 

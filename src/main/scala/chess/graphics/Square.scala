@@ -1,48 +1,50 @@
 package chess.graphics
 
 import java.awt.image.{BufferedImage, ImageObserver}
+
 import chess.framework.SquareCoordinate
 import chess.graphics.BoardColors.BoardColor
-import scala.swing.{Graphics2D, Insets, ToggleButton, Image}
-import scala.swing.event.{ButtonClicked, Event}
 
-class Square (var color: BoardColor, val pos: SquareCoordinate, var piece: chess.framework.Piece) extends ToggleButton {
-//a small hack that changes every ButtonClicked in a SquarePressed event before publishing
+import scala.swing.event.{ButtonClicked, Event}
+import scala.swing.{Graphics2D, Image, Insets, ToggleButton}
+
+class Square(var color: BoardColor, val pos: SquareCoordinate, var piece: chess.framework.Piece) extends ToggleButton {
+  //a small hack that changes every ButtonClicked in a SquarePressed event before publishing
   override def publish(e: Event): Unit = super.publish(e match {
     case ButtonClicked(sq: Square) =>
       SquarePressed(sq)
     case _ => e
   })
 
-//  color for text
+  //color for text
   foreground = BoardColors.LightGray.Black
 
-//  color of background
+  //color of background
   background = color
 
-//  space between the borders and the content/text
+  //space between the borders and the content/text
   margin = new Insets(100, 100, 100, 100)
 
-//  contentAreaFilled = true; rendering the background(images, color)
+  //contentAreaFilled = true; rendering the background(images, color)
 
-//  selection/ being clicked; doClick() takes 60 ms to perform
-//  selectedIcon = icon
+  //selection/ being clicked; doClick() takes 60 ms to perform
+  //selectedIcon = icon
   def isSelected: Boolean = peer.isSelected
+
   def unselect(): Unit = if (isSelected) setUnselected()
+
   def setUnselected(): Unit = {
     val model = peer.getModel
     model.setSelected(false)
     peer.setModel(model)
   }
 
-//  width and height of ?
+  //width and height of actual square
   def width: Int = peer.getWidth
   def height: Int = peer.getHeight
 
-//  ?
-  requestFocusInWindow()
 
-  private def resizeImage (image: BufferedImage, observer: ImageObserver): Image = {
+  private def resizeImage(image: BufferedImage, observer: ImageObserver): Image = {
     val img: BufferedImage = image
     val result: BufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
     val xScale: Double = img.getWidth.toDouble / result.getWidth.toDouble
@@ -54,7 +56,7 @@ class Square (var color: BoardColor, val pos: SquareCoordinate, var piece: chess
     result
   }
 
-  override def paintComponent (g: Graphics2D): Unit = {
+  override def paintComponent(g: Graphics2D): Unit = {
     super.paintComponent(g)
     val image: Image = Icons.icon(piece) match {
       case Some(img) => resizeImage(img, peer)

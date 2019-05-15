@@ -23,13 +23,9 @@ trait BoardEventHandler {
       else {
         unselect(clickedPos)
         unselect(selectedSquare)
-//        TODO fix deadlock when moving (callback to io by framework.ChessBoard)!!
         move(from = selectedSquare, to = clickedPos)
         selectedSquare = null
       }
-
-//    case scala.swing.event.
-//    case MouseClicked(_, _, _, _, _) =>
   }
 
   def move(from: SquareCoordinate, to: SquareCoordinate): Unit = {
