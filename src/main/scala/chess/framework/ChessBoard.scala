@@ -379,7 +379,7 @@ class ChessBoard(
         {turn}
       </turn>
       <boardStatus>
-        {gameStatus.toString}
+        {gameStatus}
       </boardStatus>
     </chessboard>
 

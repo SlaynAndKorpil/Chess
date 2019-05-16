@@ -26,6 +26,9 @@ trait BoardEventHandler {
         move(from = selectedSquare, to = clickedPos)
         selectedSquare = null
       }
+    case PromotionEvent(piece) =>
+      promoMenu.close()
+      update(board.receive(Promotion(piece.pieceType)))
   }
 
   def move(from: SquareCoordinate, to: SquareCoordinate): Unit = {
