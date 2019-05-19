@@ -23,9 +23,12 @@ class PromotionChooser(val width: Int, val height: Int) extends Frame with Publi
       publish(promo)
   }
 
+  //TODO somehow it listens to itself
+  deafTo(this)
+
   val backgroundCol: BoardColors.BoardColor = BoardColors.Brown.White
 
-  val content: Seq[Component] = Seq(
+  private val content: Seq[Component] = Seq(
     new PromoOptionButton(White, Queen, backgroundCol),
     new PromoOptionButton(White, Rook, backgroundCol),
     new PromoOptionButton(White, Knight, backgroundCol),

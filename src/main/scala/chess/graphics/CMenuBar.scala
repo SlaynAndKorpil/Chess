@@ -11,6 +11,9 @@ trait CMenuBar {
 
   menuBar = Menu
 
+  //TODO find better solution for self-reference when opening a FileChooser
+  private val reference: CWindow = this
+
   /*
   TODO menus:
   TODO - propose takeback
@@ -31,7 +34,6 @@ trait CMenuBar {
       mnemonic = event.Key.G
       contents += resign
       contents += restart
-      contents += Test
     }
 
     contents += new Menu("Graphics") {
@@ -47,21 +49,40 @@ trait CMenuBar {
     object resign extends CMenuItem("Resign", KeyEvent.VK_R, _ =>
       gameFrame.update(gameFrame.board.receive(Resign)))
 
-    object restart extends CMenuItem("Restart", KeyEvent.VK_S, _ =>
-      {gameFrame.board = chess.framework.ChessBoard.classicalBoard(gameFrame); gameFrame.repaint()})
-
-    object save extends CMenuItem("Save", KeyEvent.VK_S, Shortcut.save, _ => {
-      saveBoard("testSave")
-      println("save!")
+    object restart extends CMenuItem("Restart", KeyEvent.VK_S, _ => {
+      gameFrame.board = chess.framework.ChessBoard.classicalBoard(gameFrame)
+      gameFrame.repaint()
     })
 
-    object load extends CMenuItem("Load", KeyEvent.VK_L, Shortcut.load, _ => println("load!"))
+    object save extends CMenuItem("Save", KeyEvent.VK_S, Shortcut.save, _ => {
+      val fileChooser = new SaveFileChooser()
+      val result = fileChooser.show(reference)
+      result match {
+        case f: FileChooser.Result.Value if f == FileChooser.Result.Approve =>
+          import gameFrame._
+          val path = fileChooser.filePath
+          ChessBoard.save(board, path)
+        case _ =>
+      }
+    })
 
-    @deprecated
-    object Test extends CMenuItem("test promotion", 0, _ =>
-      gameFrame.update(gameFrame.board.receive(Promotion(chess.framework.Queen)))
-    )
+    object load extends CMenuItem("Load", KeyEvent.VK_L, Shortcut.load, _ => {
+      val fileChooser = new LoadFileChooser()
+      val result = fileChooser.show(reference)
+      result match {
+        case f: FileChooser.Result.Value if f == FileChooser.Result.Approve =>
+          import gameFrame._
+          val path = fileChooser.filePath
+          val loaded = ChessBoard.load(path)
+          loaded match {
+            case Some(x) =>
+              board = x(gameFrame)
+              gameFrame.repaint()
+            case None =>
+          }
+        case _ =>
+      }
+    })
 
   }
-
 }

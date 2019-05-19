@@ -27,11 +27,10 @@ trait BoardEventHandler {
         selectedSquare = null
       }
     case PromotionEvent(piece) =>
-      promoMenu.close()
-      update(board.receive(Promotion(piece.pieceType)))
+      promote(piece.pieceType)
   }
 
-  def move(from: SquareCoordinate, to: SquareCoordinate): Unit = {
+  private def move(from: SquareCoordinate, to: SquareCoordinate): Unit = {
     board.receive(MoveParams(from, to)) match {
       case Some(b) =>
         board = b
@@ -40,7 +39,12 @@ trait BoardEventHandler {
     }
   }
 
+  private def promote(piece: (AnyColor, Boolean) => AnyPiece): Unit = {
+    promoMenu.close()
+    update(board.receive(Promotion(piece)))
+  }
+
   def saveBoard(file: String): Unit = ChessBoard.save(board, file)
 
-  var selectedSquare: SquareCoordinate = _
+  private var selectedSquare: SquareCoordinate = _
 }
