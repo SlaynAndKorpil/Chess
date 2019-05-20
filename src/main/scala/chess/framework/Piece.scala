@@ -4,7 +4,7 @@ import scala.xml.Elem
 
 sealed trait Piece {
   val color: Color
-  var moved: Boolean
+  val moved: Boolean
 
   val identifier: Char
 
@@ -43,8 +43,6 @@ object NoPiece extends Piece {
   override val isEmpty: Boolean = true
 
   val moved: Boolean = false
-
-  def moved_=(b: Boolean): Unit = ()
 }
 
 sealed abstract class AnyPiece(override val identifier: Char) extends Piece {
@@ -53,17 +51,17 @@ sealed abstract class AnyPiece(override val identifier: Char) extends Piece {
   val color: AnyColor
 }
 
-final case class Pawn(color: AnyColor, var moved: Boolean = false) extends AnyPiece('P')
+final case class Pawn(color: AnyColor, moved: Boolean = false) extends AnyPiece('P')
 
-final case class Bishop(color: AnyColor, var moved: Boolean = false) extends AnyPiece('B')
+final case class Bishop(color: AnyColor, moved: Boolean = false) extends AnyPiece('B')
 
-final case class Knight(color: AnyColor, var moved: Boolean = false) extends AnyPiece('N')
+final case class Knight(color: AnyColor, moved: Boolean = false) extends AnyPiece('N')
 
-final case class Rook(color: AnyColor, var moved: Boolean = false) extends AnyPiece('R')
+final case class Rook(color: AnyColor, moved: Boolean = false) extends AnyPiece('R')
 
-final case class Queen(color: AnyColor, var moved: Boolean = false) extends AnyPiece('Q')
+final case class Queen(color: AnyColor, moved: Boolean = false) extends AnyPiece('Q')
 
-final case class King(color: AnyColor, var moved: Boolean = false) extends AnyPiece('K')
+final case class King(color: AnyColor, moved: Boolean = false) extends AnyPiece('K')
 
 
 object Piece {

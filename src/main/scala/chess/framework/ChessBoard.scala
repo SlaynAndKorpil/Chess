@@ -12,10 +12,10 @@ import scala.xml.Elem
   */
 class ChessBoard(
                   val squares: Map[Char, Column],
-                  override val history: List[MoveData],
+                  val history: List[MoveData],
                   val turn: AnyColor = White,
                   val io: ChessIO,
-                  override val gameStatus: GameStatus
+                  val gameStatus: GameStatus
                 ) extends BoardMeta {
 
   import ChessBoard._
@@ -29,7 +29,7 @@ class ChessBoard(
     * @return the piece at some specified position
     */
   def apply(sqr: SquareCoordinate): Piece = getSquare(sqr) match {
-    case Some(x) => x
+    case Some(piece) => piece
     case None => NoPiece
   }
 
@@ -135,42 +135,52 @@ class ChessBoard(
         startColor == turn &&
         startColor != endColor &&
         isLegalMove(from, to, movingPiece, endPiece) &&
-        !doMove.isCheck(turn)
+        !doMove._1.isCheck(turn)
 
-    def doMove: ChessBoard = {
+    def doMove: (ChessBoard, () => Unit) = {
+      //TODO rework code
+      var action: () => Unit = () => ()
       val nxtStatus: GameStatus = movingPiece match {
         case Pawn(color, _) =>
           color match {
             case White if to.row == 8 =>
-              io.showPromotion()
+              action = () => io.showPromotion()
               PromoReq(to)
             case Black if to.row == 1 =>
-              io.showPromotion()
+              action = () => io.showPromotion()
               PromoReq(to)
             case _ => gameStatus
           }
         case _ => gameStatus
       }
 
-      var result: ChessBoard = new ChessBoard(squares, MoveData(from, movingPiece, to, startColor.opposite == endColor) :: history, turn.opposite, io, nxtStatus)
+      val updatedHistory = MoveData(from, movingPiece, to, startColor.opposite == endColor) :: history
+
+      var result: ChessBoard = new ChessBoard(squares, updatedHistory, turn.opposite, io, nxtStatus)
 
       //testing for en passant and castling
       movingPiece match {
         case Pawn(_, _) if apply(to).isEmpty && from.column != to.column =>
           result = result.emptySquare(SquareCoordinate(to.column, from.row))
-        case King(color, _) =>
-          if (to._1 == 'c' && color == White) result = result.updated(SquareCoordinate('d', 1), Rook(White)).emptySquare(SquareCoordinate('a', 1))
-          else if (to._1 == 'g' && color == White) result = result.updated(SquareCoordinate('f', 1), Rook(White)).emptySquare(SquareCoordinate('h', 1))
-          else if (to._1 == 'c' && color == Black) result = result.updated(SquareCoordinate('d', 8), Rook(Black)).emptySquare(SquareCoordinate('a', 8))
-          else if (to._1 == 'g' && color == Black) result = result.updated(SquareCoordinate('f', 8), Rook(Black)).emptySquare(SquareCoordinate('h', 8))
+        case King(color, moved) if !moved && from == ChessBoard.ClassicalValues.kingStartSquare(turn) =>
+          val row = if (color == White) 1 else 8
+          val col = if (to.column == 'c') 'd' else 'f'
+          val emptyCol = if (to.column == 'c') 'a' else 'h'
+          val res = result.updated(SquareCoordinate(col, row), Rook(color)).emptySquare(SquareCoordinate(emptyCol, row))
+          Debugger debug s"row: $row, col: $col, emptyCol: $emptyCol, res: $res"
+          result = res
         case _ =>
       }
 
-      if (!movingPiece.moved) movingPiece.moved = true
-      result.updated(to, movingPiece).emptySquare(from)
+      if (!movingPiece.moved) Piece(movingPiece.identifier, movingPiece.color, moved = true)
+      (result.updated(to, movingPiece).emptySquare(from), action)
     }
 
-    if (isValid) Some(doMove)
+    val movedBoard = doMove
+
+    movedBoard._2()
+
+    if (isValid) Some(doMove._1)
     else None
   }
 
@@ -207,10 +217,9 @@ class ChessBoard(
 
     startPiece match {
       case Pawn(color, moved) =>
-        val direction = if (color == White) 1 else -1
+        val direction = ClassicalValues.pawnDir(color)
         if (!endPiece.isEmpty) (columnDif == 1 || columnDif == -1) && lineDif == direction
-        else (columnDif == 0 && lineDif == direction) ||
-          !moved && columnDif == 0 && (lineDif == direction || (lineDif == 2 * direction && apply(start + (0, direction)).isEmpty)) ||
+        else (columnDif == 0 && (lineDif == direction || (!moved && lineDif == 2 * direction && apply(start + (0, direction)).isEmpty))) ||
           //en passant
           history.nonEmpty && (history.head match {
             case MoveData(sPos, piece, ePos, _) =>
@@ -232,11 +241,14 @@ class ChessBoard(
       case King(color, _) =>
         (columnDif <= 1 && columnDif >= -1 && lineDif <= 1 && lineDif >= -1) ||
           //castle
-          //FIXME somehow does not work anymore after king was checked
           (!startPiece.moved && (end._1 == 'c' || end._1 == 'g') && {
-            val rookSquare = if (startCIndex < endCIndex) AbstractSqrCoordinate.sqr2indxSqr(end) + (1, 0) else AbstractSqrCoordinate.sqr2indxSqr(end) - (2, 0)
+            val rookSquare =
+              if (startCIndex < endCIndex) AbstractSqrCoordinate.sqr2indxSqr(end) + (1, 0)
+              else AbstractSqrCoordinate.sqr2indxSqr(end) - (2, 0)
             val rook = apply(rookSquare)
-            rook == Rook(color) && !(start to SquareCoordinate(if (startCIndex < endCIndex) 'g' else 'c', start.row)).forall(isAttacked) && isEmptyOrthogonal(start, end)
+            rook == Rook(color) &&
+              !(start to SquareCoordinate(if (startCIndex < endCIndex) 'g' else 'c', start.row)).forall(sqr => isAttacked(sqr, turn)) &&
+              /*long castle needs one additional square tested, also the king's square is not tested*/ isEmptyOrthogonal(start, end)
           })
       case NoPiece => false
     }
@@ -283,9 +295,12 @@ class ChessBoard(
     def attackedOrthogonally: Boolean =
       queen ++ rook ^ Array(partNxtPiece(1, 0), partNxtPiece(-1, 0), partNxtPiece(0, -1), partNxtPiece(0, 1))
 
-    def attackedByPawn: Boolean =
-      if (opponent == Black) apply(NumericSquareCoordinate(colI, row) + (1, 1)) == Pawn(opponent) || apply(NumericSquareCoordinate(colI, row) + (-1, 1)) == Pawn(opponent)
-      else apply(NumericSquareCoordinate(colI, row) + (1, -1)) == Pawn(opponent) || apply(NumericSquareCoordinate(colI, row) + (-1, -1)) == Pawn(opponent)
+    def attackedByPawn: Boolean = {
+      val dir = ClassicalValues.pawnDir(opponent.opposite)
+      def pieceAtOffset(colD: Int, rowD: Int): Piece = apply(NumericSquareCoordinate(colI, row) + (colD, rowD))
+      Debugger debug s"dir: $dir, pieces: ${}"
+      pieceAtOffset(1, dir) == Pawn(opponent, moved = true) || pieceAtOffset(-1, dir)== Pawn(opponent, moved = true)
+    }
 
     attackedByKnight || attackedByPawn || attackedByKing || attackedDiagonally || attackedOrthogonally
   }
@@ -350,7 +365,6 @@ class ChessBoard(
 
 
   def save: Elem =
-  //TODO save gameStatus
     <chessboard version={Version.toString}>
       <board>
         {for (x <- 1 to 8; col = columnLetter(x)) yield
@@ -411,6 +425,14 @@ object ChessBoard {
       case Black => 7
       case NoColor => -1
     }
+
+    def kingStartSquare(color: AnyColor): SquareCoordinate = {
+      val row = if (color == White) 1 else 8
+      SquareCoordinate('e', row)
+    }
+
+    def pawnDir(color: AnyColor): Int =
+      if (color == White) 1 else -1
   }
 
 

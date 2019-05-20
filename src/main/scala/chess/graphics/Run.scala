@@ -1,8 +1,6 @@
 package chess.graphics
 
-import scala.swing._
-
 object Run extends App {
-  val window = new CWindow()
+  val window = new CWindow(600, 600)
   window.display()
 }
