@@ -76,7 +76,6 @@ class ChessBoard(
       io.removeDrawOffer()
       Some(new ChessBoard(squares, history, turn, io, StandardReq))
     case DrawAcceptance if gameStatus == DrawAcceptanceReq =>
-      //TODO test for repetition
       io.removeDrawOffer()
       Some(new ChessBoard(squares, history, turn, io, Ended(Draw(DrawAgreement))))
     case Resign if gameStatus == StandardReq =>
@@ -162,22 +161,22 @@ class ChessBoard(
       movingPiece match {
         case Pawn(_, _) if apply(to).isEmpty && from.column != to.column =>
           result = result.emptySquare(SquareCoordinate(to.column, from.row))
-        case King(color, moved) if !moved && from == ChessBoard.ClassicalValues.kingStartSquare(turn) =>
+        case King(color, moved) if !moved && from == ChessBoard.ClassicalValues.kingStartSquare(turn) && (to.column == 'c' || to.column == 'g') =>
           val row = if (color == White) 1 else 8
           val col = if (to.column == 'c') 'd' else 'f'
           val emptyCol = if (to.column == 'c') 'a' else 'h'
           val res = result.updated(SquareCoordinate(col, row), Rook(color)).emptySquare(SquareCoordinate(emptyCol, row))
-          Debugger debug s"row: $row, col: $col, emptyCol: $emptyCol, res: $res"
           result = res
         case _ =>
       }
 
-      if (!movingPiece.moved) Piece(movingPiece.identifier, movingPiece.color, moved = true)
-      (result.updated(to, movingPiece).emptySquare(from), action)
+      val resPiece = Piece(movingPiece.identifier, movingPiece.color, moved = true)
+      result.updated(to, resPiece).emptySquare(from) -> action
     }
 
     val movedBoard = doMove
 
+    //TODO maybe pass action via class-system back to receive?
     movedBoard._2()
 
     if (isValid) Some(doMove._1)
@@ -246,9 +245,14 @@ class ChessBoard(
               if (startCIndex < endCIndex) AbstractSqrCoordinate.sqr2indxSqr(end) + (1, 0)
               else AbstractSqrCoordinate.sqr2indxSqr(end) - (2, 0)
             val rook = apply(rookSquare)
-            rook == Rook(color) &&
-              !(start to SquareCoordinate(if (startCIndex < endCIndex) 'g' else 'c', start.row)).forall(sqr => isAttacked(sqr, turn)) &&
-              /*long castle needs one additional square tested, also the king's square is not tested*/ isEmptyOrthogonal(start, end)
+            val squaresToTest = start to SquareCoordinate(if (startCIndex < endCIndex) 'g' else 'c', start.row)
+
+            def isSqrAttacked(sqr: AbstractSqrCoordinate[_]): Boolean = sqr match {
+              case square: SquareCoordinate => isAttacked(square, turn)
+              case square: NumericSquareCoordinate => isAttacked(square, turn)
+            }
+
+            rook == Rook(color) && squaresToTest.forall(sqr => !isSqrAttacked(sqr)) && isEmptyOrthogonal(start, end)
           })
       case NoPiece => false
     }
@@ -297,9 +301,10 @@ class ChessBoard(
 
     def attackedByPawn: Boolean = {
       val dir = ClassicalValues.pawnDir(opponent.opposite)
+
       def pieceAtOffset(colD: Int, rowD: Int): Piece = apply(NumericSquareCoordinate(colI, row) + (colD, rowD))
-      Debugger debug s"dir: $dir, pieces: ${}"
-      pieceAtOffset(1, dir) == Pawn(opponent, moved = true) || pieceAtOffset(-1, dir)== Pawn(opponent, moved = true)
+
+      pieceAtOffset(1, dir) == Pawn(opponent, moved = true) || pieceAtOffset(-1, dir) == Pawn(opponent, moved = true)
     }
 
     attackedByKnight || attackedByPawn || attackedByKing || attackedDiagonally || attackedOrthogonally
@@ -420,16 +425,14 @@ object ChessBoard {
     * Standard values for a classical chess game.
     */
   object ClassicalValues {
-    def pawnStartLine(color: Color): Int = color match {
-      case White => 2
-      case Black => 7
-      case NoColor => -1
-    }
+    def pawnStartLine(color: AnyColor): Int =
+      if (color == White) 2 else 7
 
-    def kingStartSquare(color: AnyColor): SquareCoordinate = {
-      val row = if (color == White) 1 else 8
-      SquareCoordinate('e', row)
-    }
+    def piecesStartLine(color: AnyColor): Int =
+      if (color == White) 1 else 8
+
+    def kingStartSquare(color: AnyColor): SquareCoordinate =
+      SquareCoordinate('e', piecesStartLine(color))
 
     def pawnDir(color: AnyColor): Int =
       if (color == White) 1 else -1
@@ -552,10 +555,11 @@ object ChessBoard {
     }
   }
 
-  def isValidColumn(column: Char): Boolean = columnIndex(column) <= 8 && columnIndex(column) >= 1
+  def isValidColumn(column: Char): Boolean =
+    columnIndex(column) <= 8 && columnIndex(column) >= 1
 
   /**
-    * Matches a one-letter identifier of a column of the board to its corresponding index.
+    * Matches a one-letter identifier of a column to its corresponding index.
     */
   def columnIndex(column: Char): Int = 1 + (column match {
     case 'a' => 0

@@ -1,8 +1,10 @@
 package chess.framework
 
+import chess.framework.ChessBoard.{columnIndex, columnLetter}
+
 import scala.language.implicitConversions
 
-abstract class AbstractSqrCoordinate[ColumnType] {
+sealed abstract class AbstractSqrCoordinate[ColumnType] {
   val column: ColumnType
   val row: Int
 
@@ -12,29 +14,30 @@ abstract class AbstractSqrCoordinate[ColumnType] {
 
   def colIndx: Int
 
-  def to(square: SquareCoordinate): List[SquareCoordinate] = {
-    val inc = ((square.colIndx - colIndx).signum, (square.row - row).signum)
+  def to(square: AbstractSqrCoordinate[_]): List[AbstractSqrCoordinate[_]] = {
+    val inc = (square.colIndx - colIndx).signum -> (square.row - row).signum
     val incremented = this + inc
-    if (inc._1 == 0 && inc._2 == 0) Nil
-    else incremented :: incremented.to(square)
+    if (inc == (0, 0)) this :: Nil
+    else this :: incremented.to(square)
   }
 
-  def until(square: SquareCoordinate): List[SquareCoordinate] = {
+  def until[T](square: AbstractSqrCoordinate[_]): List[AbstractSqrCoordinate[_]] = {
+    //FIXME probably malfunctioning
     if (square.colIndx - colIndx > 1 || square.row - row > 1 || square.colIndx - colIndx < -1 || square.row - row < -1) {
       val inc = ((square.colIndx - colIndx).signum, (square.row - row).signum)
       if (inc._1 == 0 && inc._2 == 0) Nil
-      else NumericSquareCoordinate(colIndx, row) :: (this + inc).to(square)
+      else this :: (this + inc).to(square)
     }
     else Nil
   }
 
-  def +(sq: AbstractSqrCoordinate[_]): SquareCoordinate = this + (sq.colIndx, sq.row)
+  def +(sq: AbstractSqrCoordinate[_]): AbstractSqrCoordinate[_]
 
-  def -(sq: AbstractSqrCoordinate[_]): SquareCoordinate = this - (sq.colIndx, sq.row)
+  def -(sq: AbstractSqrCoordinate[_]): AbstractSqrCoordinate[_]
 
-  def +(sq: (Int, Int)): SquareCoordinate = SquareCoordinate(ChessBoard.columnLetter(colIndx + sq._1), row + sq._2)
+  def +(sq: (Int, Int)): AbstractSqrCoordinate[_]
 
-  def -(sq: (Int, Int)): SquareCoordinate = this + (-sq._1, -sq._2)
+  def -(sq: (Int, Int)): AbstractSqrCoordinate[_]
 
   def unary_+ : SquareCoordinate = NumericSquareCoordinate(colIndx, row)
 
@@ -49,12 +52,24 @@ abstract class AbstractSqrCoordinate[ColumnType] {
 
 
 final case class SquareCoordinate(column: Char, row: Int) extends AbstractSqrCoordinate[Char] {
-  def colIndx: Int = ChessBoard.columnIndex(column)
+  val colIndx: Int = columnIndex(column)
 
   /**
     * Checks if this square is inside the board.
     */
   override def isValid: Boolean = ChessBoard.isValidColumn(column) && row >= 1 && row <= 8
+
+  override def +(sq: AbstractSqrCoordinate[_]): SquareCoordinate = sq match {
+    case SquareCoordinate(col, line) =>
+      SquareCoordinate(columnLetter(columnIndex(column)+columnIndex(col)), row + line)
+    case NumericSquareCoordinate(col, line) => SquareCoordinate(columnLetter(columnIndex(column) + col), row + line)
+  }
+
+  override def -(sq: AbstractSqrCoordinate[_]): SquareCoordinate = this.+(-sq)
+
+  override def +(sq: (Int, Int)): SquareCoordinate = SquareCoordinate(columnLetter(columnIndex(column) + sq._1), row + sq._2)
+
+  override def -(sq: (Int, Int)): SquareCoordinate = this.+(-sq._1, -sq._2)
 }
 
 object SquareCoordinate {
@@ -75,6 +90,17 @@ final case class NumericSquareCoordinate(column: Int, row: Int) extends Abstract
     * Checks if this square is inside the board.
     */
   override def isValid: Boolean = column >= 1 && column <= 8 && row >= 1 && row <= 8
+
+  override def +(sq: AbstractSqrCoordinate[_]): NumericSquareCoordinate = sq match {
+    case SquareCoordinate(col, line) => NumericSquareCoordinate(column + columnIndex(col), row + line)
+    case NumericSquareCoordinate(col, line) => NumericSquareCoordinate(column + col, row + line)
+  }
+
+  override def -(sq: AbstractSqrCoordinate[_]): NumericSquareCoordinate = this.+(-sq)
+
+  override def +(sq: (Int, Int)): NumericSquareCoordinate = NumericSquareCoordinate(column + sq._1, row + sq._2)
+
+  override def -(sq: (Int, Int)): NumericSquareCoordinate = this.+(-sq._1, -sq._2)
 }
 
 object NumericSquareCoordinate {
@@ -86,10 +112,10 @@ object AbstractSqrCoordinate {
   /**
     * implicit conversion from [[SquareCoordinate]] to [[NumericSquareCoordinate]]
     */
-  implicit def sqr2indxSqr(sqr: SquareCoordinate): NumericSquareCoordinate = NumericSquareCoordinate(ChessBoard.columnIndex(sqr.column), sqr.row)
+  implicit def sqr2indxSqr(sqr: SquareCoordinate): NumericSquareCoordinate = NumericSquareCoordinate(sqr.colIndx, sqr.row)
 
   /**
     * implicit conversion from [[NumericSquareCoordinate]] to [[SquareCoordinate]]
     */
-  implicit def indxSqr2sqr(iSqr: NumericSquareCoordinate): SquareCoordinate = SquareCoordinate(ChessBoard.columnLetter(iSqr.column), iSqr.row)
+  implicit def indxSqr2sqr(iSqr: NumericSquareCoordinate): SquareCoordinate = SquareCoordinate(columnLetter(iSqr.column), iSqr.row)
 }
