@@ -7,5 +7,7 @@ trait BoardMeta {
 
   val history: List[MoveData]
 
+  val positions: Positions
+
   val gameStatus: GameStatus
 }

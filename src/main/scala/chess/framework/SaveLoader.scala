@@ -33,10 +33,15 @@ class SaveLoader {
   }
 
   private trait Loader {
+    /** Loads a board from xml */
     def load(xml: Elem): Option[ChessIO => ChessBoard]
   }
 
+  /**
+    * Chosen when no other loader is defined for this version
+    */
   private object NoLoaderDefined extends Loader {
+    /** @return always returns [[scala.None]] because there is no loading operation known for this version */
     override def load(xml: Elem): Option[ChessIO => ChessBoard] = None
   }
 
@@ -46,24 +51,30 @@ class SaveLoader {
       val moves = xml \ "moves" \ "move"
       val color = Color(extractWithFilter(xml, "turn"))
       color match {
-        case col: AnyColor => Some(io => new ChessBoard(
-          (for (x <- 1 to 8; col = columnLetter(x).toString.toUpperCase) yield columnLetter(x) -> Column.loadFromXML(boardData \ col)).toMap,
-          moves map (move =>
+        case col: AnyColor =>
+          val squares = for (x <- 1 to 8; col = columnLetter(x).toString.toUpperCase)
+            yield columnLetter(x) -> Column.loadFromXML(boardData \ col)
+
+          val history = moves map (move =>
             MoveData(
               SquareCoordinate(extractWithFilter(move, "start").head, extractWithFilter(move, "start").last.toInt),
               Piece(extractWithFilter(move, "movedPiece").head, Color(extractWithFilter(move, "movedPiece").last), moved = true),
               SquareCoordinate(extractWithFilter(move, "end").head, extractWithFilter(move, "end").last.toInt),
               extractWithFilter(move, "capture").toBoolean
-            )) toList,
-          col,
-          io,
-          GameStatus.GameStatus(extractWithFilter(xml, "boardStatus")) match {
+            )) toList
+
+          val positions = Positions() //TODO load from save
+
+          val color = col
+
+          val gameStatus = GameStatus.GameStatus(extractWithFilter(xml, "boardStatus")) match {
             case Left(status) => status
             case Right(message) =>
               Error error s"$message"
               StandardReq
           }
-        ))
+
+          Some(io => new ChessBoard(squares.toMap, history, positions, color, io, gameStatus))
         case _ => None
       }
     }

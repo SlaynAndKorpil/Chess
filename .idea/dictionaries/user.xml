@@ -4,6 +4,7 @@
       <w>castleing</w>
       <w>indx</w>
       <w>intersectable</w>
+      <w>lehner</w>
       <w>nocolor</w>
       <w>passant</w>
       <w>sqrs</w>
@@ -11,6 +12,7 @@
       <w>unattacked</w>
       <w>unselect</w>
       <w>unsufficent</w>
+      <w>usecase</w>
     </words>
   </dictionary>
 </component>
