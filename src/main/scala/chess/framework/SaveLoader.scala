@@ -63,7 +63,11 @@ class SaveLoader {
               extractWithFilter(move, "capture").toBoolean
             )) toList
 
-          val positions = Positions() //TODO load from save
+          val positions: Positions = {
+            val pos = xml \ "positions" \ "pos"
+
+            (pos foldRight Positions.empty) ((x: NodeSeq, y: Positions) => y + Position(x))
+          }
 
           val color = col
 
@@ -73,11 +77,13 @@ class SaveLoader {
               Error error s"$message"
               StandardReq
           }
+          Debugger debug s"last position: ${positions.positions.head}"
 
           Some(io => new ChessBoard(squares.toMap, history, positions, color, io, gameStatus))
         case _ => None
       }
     }
+
   }
 
 }

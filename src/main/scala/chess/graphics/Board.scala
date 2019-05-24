@@ -70,7 +70,7 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
 
   override def showPromotion(): Unit = {
     promoMenu.open
-    Debugger debug s"promote!"
+    Debugger debug s"promote?"
   }
 
   override def removePromotion(): Unit = {
@@ -80,5 +80,13 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
 
   override def showResign(): Unit = {
     Debugger debug s"resign!"
+  }
+
+  override def showTakeback(): Unit = {
+    Debugger debug s"takeback?"
+  }
+
+  override def removeTakeback(): Unit = {
+    Debugger debug s"takeback!"
   }
 }

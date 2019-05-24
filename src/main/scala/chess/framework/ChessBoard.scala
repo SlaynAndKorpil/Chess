@@ -4,7 +4,7 @@ import chess.framework.GameStatus._
 
 import scala.annotation.tailrec
 import scala.language.{implicitConversions, postfixOps}
-import scala.xml.Elem
+import scala.xml.{Elem, NodeSeq}
 
 /**
   * Defines a classical 1 vs 1 chess board.
@@ -76,21 +76,39 @@ class ChessBoard(
   def receive[T](input: Input[T]): Option[ChessBoard] = input match {
     case MoveParams(from, to) if gameStatus == StandardReq =>
       move(from, to)
+
     case Promotion(piece) if gameStatus.isInstanceOf[PromoReq] =>
       promote(piece)
+
     case DrawOffer if gameStatus == StandardReq =>
       io.showDrawOffer()
       Some(new ChessBoard(squares, history, positions, turn, io, DrawAcceptanceReq))
+
     case DrawReject if gameStatus == DrawAcceptanceReq =>
-      //TODO test for repetition
       io.removeDrawOffer()
       Some(new ChessBoard(squares, history, positions, turn, io, StandardReq))
+
     case DrawAcceptance if gameStatus == DrawAcceptanceReq =>
       io.removeDrawOffer()
-      Some(new ChessBoard(squares, history, positions, turn, io, Ended(Draw(DrawAgreement))))
+      Some(clone(gameStatus = Ended(Draw(DrawAgreement))))
+
+    case TakebackProposal if gameStatus == StandardReq =>
+      io.showTakeback()
+      Some(clone(gameStatus = TakebackAcceptanceReq))
+
+    case TakebackAcceptance if gameStatus == TakebackAcceptanceReq =>
+      io.removeTakeback()
+      //TODO load last position as squares
+      Some(clone(gameStatus = StandardReq))
+
+    case TakebackReject if gameStatus == TakebackAcceptanceReq =>
+      io.removeTakeback()
+      Some(clone(gameStatus = StandardReq))
+
     case Resign if gameStatus == StandardReq =>
       io.showResign()
       Some(resign)
+
     case _ => None
   }
 
@@ -174,7 +192,7 @@ class ChessBoard(
       val updatedHistory = MoveData(from, movingPiece, to, startColor.opposite == endColor) :: history
 
       //adds the position to the position history
-      val updatedPositions = positions + Position(saveCSV)
+      val updatedPositions = positions + Position(saveSquares)
 
       var result: ChessBoard =
         clone(history = updatedHistory, positions = updatedPositions, turn = turn.opposite, gameStatus = nxtStatus)
@@ -436,17 +454,23 @@ class ChessBoard(
              gameStatus: GameStatus = this.gameStatus) =
     new ChessBoard(squares, history, positions, turn, io, gameStatus)
 
-  /**
-    * Saves the [[squares]] as comma seperated values (CSV)
-    *
-    * @usecase Used to save positions
-    * @see [[chess.framework.Positions]]
-    * @return a string containing all relevant information about the board.
-    */
-  def saveCSV: String = {
-    val lines = squares.toArray map (_._2) map (_.asCSVLine)
-    lines mkString "\n"
-  }
+  ///**
+  //  * Saves the [[squares]] as comma separated values (CSV)
+  //  *
+  //  * @usecase Used to save positions
+  //  * @see [[chess.framework.Positions]]
+  //  * @return a string containing all relevant information about the board.
+  //  */
+  //private def saveCSV: String = {
+  //  val lines = squares.toArray map (_._2) map (_.asCSVLine)
+  //  lines mkString "\n"
+  //}
+
+  private def saveSquares: NodeSeq =
+    for (x <- 1 to 8; col = columnLetter(x)) yield
+      <col>
+        {squares(col).saveData}
+      </col> copy (label = col.toUpper toString)
 
 
   /**
@@ -461,10 +485,7 @@ class ChessBoard(
   def save: Elem =
     <chessboard version={Version.toString}>
       <board>
-        {for (x <- 1 to 8; col = columnLetter(x)) yield
-        <col>
-          {squares(col).saveData}
-        </col> copy (label = col.toUpper toString)}
+        {saveSquares}
       </board>
       <moves>
         {history map (m =>
@@ -603,7 +624,7 @@ object ChessBoard {
         7 -> Pawn(Black),
         8 -> Rook(Black)
       ))
-    ), Nil, Positions(), White, io, StandardReq
+    ), Nil, Positions.empty, White, io, StandardReq
   )
 
   /**
@@ -611,9 +632,9 @@ object ChessBoard {
     *
     * @return a fully filled [[chess.framework.ChessBoard]]
     */
-  def fill(piece: Piece, io: ChessIO): ChessBoard = this (Array.fill(8)(Column(piece)), Nil, Positions(), White, io).get
+  def fill(piece: Piece, io: ChessIO): ChessBoard = this (Array.fill(8)(Column(piece)), Nil, Positions.empty, White, io).get
 
-  def apply(columns: Array[Column], history: List[MoveData] = Nil, positions: Positions = Positions(), turn: AnyColor = White, io: ChessIO): Option[ChessBoard] =
+  def apply(columns: Array[Column], history: List[MoveData] = Nil, positions: Positions = Positions.empty, turn: AnyColor = White, io: ChessIO): Option[ChessBoard] =
     if (columns.length >= 8)
       Some(new ChessBoard(
         Map(
@@ -659,7 +680,7 @@ object ChessBoard {
     }
   }
 
-  /** @return `true` if a column with this identifier does exist, else `false` */
+  /** @return `true` if a column with this identifier does exist, else `false`*/
   def isValidColumn(column: Char): Boolean =
     columnIndex(column) <= 8 && columnIndex(column) >= 1
 

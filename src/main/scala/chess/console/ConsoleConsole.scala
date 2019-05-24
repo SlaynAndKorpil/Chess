@@ -2,8 +2,7 @@ package chess.console
 
 import chess.{ConsoleError, ConsoleDebugger}
 
-sealed trait ConsoleConsole {
-  self: chess.ConsoleOutput =>
+sealed trait ConsoleConsole extends chess.ConsoleOutput {
   override val name = "console-interface"
 }
 

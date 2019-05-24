@@ -73,4 +73,8 @@ class InputInterpreter (plainBoard: ChessIO => ChessBoard) extends ChessIO {
   override def removePromotion(): Unit = ()
 
   override def showResign(): Unit = ()
+
+  override def showTakeback(): Unit = ()
+
+  override def removeTakeback(): Unit = ()
 }

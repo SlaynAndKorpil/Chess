@@ -2,8 +2,7 @@ package chess.graphics
 
 import chess.{ConsoleDebugger, ConsoleError}
 
-trait GraphicsConsole {
-  self: chess.ConsoleOutput =>
+trait GraphicsConsole extends chess.ConsoleOutput {
   override val name: String = "graphics"
 }
 

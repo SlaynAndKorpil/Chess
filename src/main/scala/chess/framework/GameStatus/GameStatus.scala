@@ -31,6 +31,7 @@ object GameStatus {
       }
     }
     else if (state == DrawAcceptanceReq.toString) Left(DrawAcceptanceReq)
+    else if (state == TakebackAcceptanceReq.toString) Left(TakebackAcceptanceReq)
     else failMessage
   }
 }
@@ -51,4 +52,8 @@ case class PromoReq(square: SquareCoordinate) extends Active
 
 object DrawAcceptanceReq extends Active {
   override def toString: String = "Draw reaction"
+}
+
+object TakebackAcceptanceReq extends Active {
+  override def toString: String = "TakebackAcceptanceReq"
 }

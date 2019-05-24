@@ -2,8 +2,7 @@ package chess.framework
 
 import chess.{ConsoleDebugger, ConsoleError}
 
-trait FrameworkConsole {
-  self: chess.ConsoleOutput =>
+trait FrameworkConsole extends chess.ConsoleOutput {
   override val name = "framework"
 }
 

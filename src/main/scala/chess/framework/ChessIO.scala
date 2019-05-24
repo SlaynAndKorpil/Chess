@@ -10,4 +10,8 @@ trait ChessIO {
   def removePromotion(): Unit
 
   def showResign(): Unit
+
+  def showTakeback(): Unit
+
+  def removeTakeback(): Unit
 }
