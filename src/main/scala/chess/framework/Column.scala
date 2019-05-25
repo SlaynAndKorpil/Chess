@@ -16,8 +16,8 @@ import scala.xml.{Elem, NodeSeq}
 final class Column extends IndexedSeq[Piece] with IndexedSeqLike[Piece, Column] {
   val length = 8
 
-  /**@note to give a more intuitive access all accessors of this variable should always take an index
-    *       between 1 and 8 and subtract it by 1 so the typical chess notation can be used.*/
+  /** @note to give a more intuitive access all accessors of this variable should always take an index
+    *       between 1 and 8 and subtract it by 1 so the typical chess notation can be used. */
   private var pieces: Array[Piece] = Array.fill(8)(NoPiece)
 
   def this(ps: Map[Int, Piece]) = {
@@ -31,7 +31,7 @@ final class Column extends IndexedSeq[Piece] with IndexedSeqLike[Piece, Column] 
       ps.indices foreach (lineNr => pieces.update(lineNr, ps(lineNr)))
   }
 
-  /**@return a [[chess.framework.Column]] that */
+  /** @return a [[chess.framework.Column]] that */
   def this(piece: Piece) = {
     this()
     pieces = Array.fill(8)(piece)
@@ -83,6 +83,7 @@ final class Column extends IndexedSeq[Piece] with IndexedSeqLike[Piece, Column] 
 
   /**
     * Creates a [[String]] that can be displayed in the console
+    *
     * @see [[chess.console.InputInterpreter]]
     */
   override def toString: String = pieces.mkString("|", "|", "|")
@@ -105,14 +106,14 @@ object Column {
 
   /**
     * Loads a [[chess.framework.Column]] from xml data.
+    *
     * @param xml data formatted as xml
     * @return the loaded column
     */
   def loadFromXML(xml: NodeSeq): Column = {
-    //TODO rewrite in functional style
-    var result = new Column(NoPiece)
-    for (i <- 1 to 8; label = "l" + i; if (xml \ label) != NodeSeq.Empty; data = xml \ label)
-      result = result.updated(i, Piece((data \ "id").text.filter(c => c != ' ' && c != '\n').head, Color((data \ "color").text.filter(c => c != ' ' && c != '\n')), (data \ "moved").text.filter(c => c != ' ' && c != '\n').toBoolean))
-    result
+    val result =
+      for (i <- 1 to 8; label = "l" + i; data = xml \ label)
+        yield Piece.fromXML(data)
+    new Column(result)
   }
 }

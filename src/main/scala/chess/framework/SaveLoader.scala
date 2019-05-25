@@ -10,8 +10,8 @@ import scala.xml._
   * A loader for in `.save` files saved chessboards.
   */
 class SaveLoader {
-  private def extractWithFilter(xml: Node, nodeName: String): String =
-    (xml \ nodeName).text.filter(c => c != ' ' && c != '\n')
+
+  import SaveLoader._
 
   /**
     * Matches the input's version with known versions to find the correct way of handling the data.
@@ -31,8 +31,17 @@ class SaveLoader {
     }
     loader.load(xml)
   }
+}
 
-  private trait Loader {
+object SaveLoader {
+  val preferredLoader: Loader = SaveLoader.Loader1
+
+  def extractWithFilter(xml: Node, nodeName: String): String =
+    (xml \ nodeName).text.filter(c => c != ' ' && c != '\n')
+
+  trait Loader {
+    def loadSquaresFromXML(xml: Node): Seq[(Char, Column)]
+
     /** Loads a board from xml */
     def load(xml: Elem): Option[ChessIO => ChessBoard]
   }
@@ -40,20 +49,30 @@ class SaveLoader {
   /**
     * Chosen when no other loader is defined for this version
     */
-  private object NoLoaderDefined extends Loader {
+  object NoLoaderDefined extends Loader {
+    /** @return always returns [[scala.collection.immutable.Seq#empty]] */
+    override def loadSquaresFromXML(xml: Node): Seq[(Char, Column)] = Seq.empty
+
     /** @return always returns [[scala.None]] because there is no loading operation known for this version */
     override def load(xml: Elem): Option[ChessIO => ChessBoard] = None
   }
 
-  private object Loader1 extends Loader {
+  object Loader1 extends Loader {
+    override def loadSquaresFromXML(xml: Node): Seq[(Char, Column)] = {
+      for (x <- 1 to 8; col = columnLetter(x))
+        yield {
+          val colXML = xml \ col.toString.toUpperCase
+          col -> Column.loadFromXML(colXML)
+        }
+    }
+
     override def load(xml: Elem): Option[ChessIO => ChessBoard] = {
       val boardData = xml \ "board"
       val moves = xml \ "moves" \ "move"
       val color = Color(extractWithFilter(xml, "turn"))
       color match {
         case col: AnyColor =>
-          val squares = for (x <- 1 to 8; col = columnLetter(x).toString.toUpperCase)
-            yield columnLetter(x) -> Column.loadFromXML(boardData \ col)
+          val squares = loadSquaresFromXML(boardData.head).toMap
 
           val history = moves map (move =>
             MoveData(
@@ -65,8 +84,8 @@ class SaveLoader {
 
           val positions: Positions = {
             val pos = xml \ "positions" \ "pos"
-
-            (pos foldRight Positions.empty) ((x: NodeSeq, y: Positions) => y + Position(x))
+            if (pos.isEmpty) Positions.empty
+            else (pos foldRight Positions.empty) ((x: NodeSeq, y: Positions) => y + Position(x))
           }
 
           val color = col
@@ -77,13 +96,11 @@ class SaveLoader {
               Error error s"$message"
               StandardReq
           }
-          Debugger debug s"last position: ${positions.positions.head}"
 
-          Some(io => new ChessBoard(squares.toMap, history, positions, color, io, gameStatus))
+          Some(io => new ChessBoard(squares, history, positions, color, io, gameStatus))
         case _ => None
       }
     }
-
   }
 
 }

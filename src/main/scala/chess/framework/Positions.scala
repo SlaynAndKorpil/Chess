@@ -1,5 +1,7 @@
 package chess.framework
 
+import chess.framework.ChessBoard.columnLetter
+
 import scala.xml._
 
 /**
@@ -29,6 +31,8 @@ class Positions(val positions: Array[Position], val maxRepetition: Int) {
     * @return
     */
   def -- : Positions = Positions(positions.tail)
+
+  def length: Int = positions.length
 
   /**
     * Converts this object to xml.
@@ -76,4 +80,30 @@ object NoPositions extends Positions(Array(), 0) {
 }
 
 /** Stores a position in XML format. */
-case class Position(/*FIXME moved attribute of most pieces should be ignored*/pos: NodeSeq) extends AnyVal
+case class Position(/*FIXME moved attribute of most pieces should be ignored*/ pos: NodeSeq) extends AnyVal {
+  /**
+    * Compares this position with another.
+    * @note This tests only for things relevant for repetition.
+    * @param other another position to compare with
+    * @return `true` if equal otherwise `false`
+    */
+  def ==(other: Position): Boolean = {
+    val compared: Seq[Seq[Boolean]] = for (x <- 1 to 8; col = columnLetter(x).toString.toUpperCase) yield {
+      val otherPos = other.pos \ col
+      val thisPos = pos \ col
+      for (y <- 1 to 8; row = "l"+y) yield {
+        otherPos.theSeq.exists(_.label == row) == thisPos.theSeq.exists(_.label == row) && {
+          val otherPiece = Piece.fromXML(otherPos \ row)
+          val piece = Piece.fromXML(pos \ row)
+          piece match {
+            case Pawn(_, _) => piece == otherPiece //TODO moved is not the only relevance for en passant
+            case King(_, _) => piece == otherPiece
+            case Rook(_, _) => piece == otherPiece
+            case _ => piece.color == otherPiece.color && piece.isInstanceOf[otherPiece.type]
+          }
+        }
+      }
+    }
+    compared.flatten forall (_ == true)
+  }
+}

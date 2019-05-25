@@ -98,8 +98,7 @@ class ChessBoard(
 
     case TakebackAcceptance if gameStatus == TakebackAcceptanceReq =>
       io.removeTakeback()
-      //TODO load last position as squares
-      Some(clone(gameStatus = StandardReq))
+      takeback
 
     case TakebackReject if gameStatus == TakebackAcceptanceReq =>
       io.removeTakeback()
@@ -110,6 +109,12 @@ class ChessBoard(
       Some(resign)
 
     case _ => None
+  }
+
+  private def takeback: Option[ChessBoard] = {
+    if (positions.length >= 1)
+      Some(clone(squares = SaveLoader.preferredLoader.loadSquaresFromXML(<positions>positions.positions.head.pos</positions>).toMap, positions = this.positions.--, gameStatus = StandardReq))
+    else None
   }
 
   /**

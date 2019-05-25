@@ -1,6 +1,6 @@
 package chess.framework
 
-import scala.xml.Elem
+import scala.xml._
 
 sealed trait Piece {
   val color: Color
@@ -65,6 +65,15 @@ final case class King(color: AnyColor, moved: Boolean = false) extends AnyPiece(
 
 
 object Piece {
+  def fromXML(xml: NodeSeq): Piece = {
+    import SaveLoader.extractWithFilter
+    if (xml.isEmpty || xml.head.isEmpty) NoPiece
+    else {
+      val data = xml.head
+      apply(extractWithFilter(data, "id").head, Color(extractWithFilter(data, "color")), extractWithFilter(data, "moved").toBoolean)
+    }
+  }
+
   def apply(id: Char, col: Color, moved: Boolean): Piece = col match {
     case any: AnyColor => id match {
       case 'P' => Pawn(any, moved)
