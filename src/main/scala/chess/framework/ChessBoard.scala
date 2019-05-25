@@ -111,44 +111,6 @@ class ChessBoard(
     case _ => None
   }
 
-  private def takeback: Option[ChessBoard] = {
-    if (positions.length >= 1)
-      Some(clone(squares = SaveLoader.preferredLoader.loadSquaresFromXML(<positions>positions.positions.head.pos</positions>).toMap, positions = this.positions.--, gameStatus = StandardReq))
-    else None
-  }
-
-  /**
-    * Promotes a pawn to a given piece.
-    *
-    * @param piece the piece's apply method
-    * @return an updated [[ChessBoard]] of [[None]] when the piece type is incorrect
-    */
-  private def promote(piece: (AnyColor, Boolean) => AnyPiece): Option[ChessBoard] = {
-    val promoColor = turn.opposite
-    val promoPiece = piece match {
-      case Queen =>
-        Queen(promoColor)
-      case Bishop =>
-        Bishop(promoColor)
-      case Knight =>
-        Knight(promoColor)
-      case Rook =>
-        Rook(promoColor)
-      case _ => NoPiece
-    }
-
-    if (promoPiece != NoPiece) {
-      gameStatus match {
-        case PromoReq(sqr: SquareCoordinate) =>
-          val result = updated(sqr, promoPiece).clone(gameStatus = StandardReq)
-          io.removePromotion()
-          Some(result)
-        case _ => None
-      }
-    }
-    else None
-  }
-
 
   /**
     * Moves a piece after testing for validity of the move which depends on the following aspects:
@@ -426,19 +388,13 @@ class ChessBoard(
   }
 
   /**
-    * Resigns the game, i.e. grants the win to the opposite color.
-    */
-  private def resign: ChessBoard =
-    clone(gameStatus = Ended(Win(turn.opposite)(Resignation)))
-
-  /**
     * Updates the board.
     *
     * @param square the coordinate of the square to updated
     * @param piece  the piece the square shall be updated to
     * @return a ChessBoard with updated squares.
     */
-  private def updated(square: SquareCoordinate, piece: Piece): ChessBoard = {
+  private[framework] def updated(square: SquareCoordinate, piece: Piece): ChessBoard = {
     val updated = squares(square._1).updated(square._2, piece)
     clone(squares = squares.updated(square._1, updated))
   }
@@ -458,18 +414,6 @@ class ChessBoard(
              io: ChessIO = this.io,
              gameStatus: GameStatus = this.gameStatus) =
     new ChessBoard(squares, history, positions, turn, io, gameStatus)
-
-  ///**
-  //  * Saves the [[squares]] as comma separated values (CSV)
-  //  *
-  //  * @usecase Used to save positions
-  //  * @see [[chess.framework.Positions]]
-  //  * @return a string containing all relevant information about the board.
-  //  */
-  //private def saveCSV: String = {
-  //  val lines = squares.toArray map (_._2) map (_.asCSVLine)
-  //  lines mkString "\n"
-  //}
 
   private def saveSquares: NodeSeq =
     for (x <- 1 to 8; col = columnLetter(x)) yield

@@ -17,17 +17,17 @@ class Square(
 
   //contentAreaFilled = true; rendering the background(images, color)
 
+  override val eventType: Square.this.type => ActionEvent = SquarePressed
+
+  def unselect(): Unit = if (isSelected) setUnselected()
+
   //selection/ being clicked; doClick() takes 60 ms to perform
   //selectedIcon = icon
   def isSelected: Boolean = peer.isSelected
-
-  def unselect(): Unit = if (isSelected) setUnselected()
 
   def setUnselected(): Unit = {
     val model = peer.getModel
     model.setSelected(false)
     peer.setModel(model)
   }
-
-  override val eventType: Square.this.type => ActionEvent = SquarePressed
 }

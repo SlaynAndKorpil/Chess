@@ -13,29 +13,21 @@ import scala.xml.{Elem, NodeSeq}
   * @version alpha 0.1
   * @author Felix Lehner
   */
-final class Column extends IndexedSeq[Piece] with IndexedSeqLike[Piece, Column] {
+final class Column(ps: Array[Piece]) extends IndexedSeq[Piece] with IndexedSeqLike[Piece, Column] {
   val length = 8
 
-  /** @note to give a more intuitive access all accessors of this variable should always take an index
-    *       between 1 and 8 and subtract it by 1 so the typical chess notation can be used. */
-  private var pieces: Array[Piece] = Array.fill(8)(NoPiece)
+  val pieces: Array[Piece] = if (ps.length == 8) ps else Array.fill(8)(NoPiece)
 
-  def this(ps: Map[Int, Piece]) = {
-    this()
-    ps foreach (line => if (line._1 > 0 && line._1 < 9) pieces = pieces.updated(line._1 - 1, line._2))
-  }
+  def this(ps: Map[Int, Piece]) =
+    this(ps.toArray.foldRight(Array.fill[Piece](8)(NoPiece)) {
+      (a: (Int, Piece), b: Array[Piece]) =>
+        if (a._1 <= 8 && a._1 >= 1) b.updated(a._1 - 1, a._2)
+        else b
+    })
 
-  def this(ps: Seq[Piece]) = {
-    this()
-    if (ps.length == 8)
-      ps.indices foreach (lineNr => pieces.update(lineNr, ps(lineNr)))
-  }
-
-  /** @return a [[chess.framework.Column]] that */
-  def this(piece: Piece) = {
-    this()
-    pieces = Array.fill(8)(piece)
-  }
+  /** @return a [[chess.framework.Column]] that is filled with a certain piece */
+  def this(piece: Piece) =
+    this(Array.fill(8)(piece))
 
   /** @return the piece at a specific position in the array */
   def apply(idx: Int): Piece = pieces(idx - 1)
@@ -92,7 +84,7 @@ final class Column extends IndexedSeq[Piece] with IndexedSeqLike[Piece, Column] 
 }
 
 object Column {
-  def fromSeq(buf: Seq[Piece]): Column = new Column(buf)
+  def fromSeq(buf: Seq[Piece]): Column = new Column(buf.toArray)
 
   def apply(pieces: Piece*): Column = fromSeq(pieces)
 
@@ -114,6 +106,6 @@ object Column {
     val result =
       for (i <- 1 to 8; label = "l" + i; data = xml \ label)
         yield Piece.fromXML(data)
-    new Column(result)
+    new Column(result.toArray)
   }
 }
