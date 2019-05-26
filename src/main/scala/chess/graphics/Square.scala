@@ -27,7 +27,7 @@ class Square(
 
   def setUnselected(): Unit = {
     val model = peer.getModel
-    model.setSelected(false)
-    peer.setModel(model)
+    model setSelected false
+    peer setModel model
   }
 }

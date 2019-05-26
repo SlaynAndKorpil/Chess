@@ -56,16 +56,6 @@ class ChessBoard(
   def getColumn(column: Char): Option[Column] =
     if (isValidColumn(column)) Some(squares(column)) else None
 
-
-  /**
-    * Empties a square.
-    *
-    * @param sqr the square to be emptied
-    */
-  private def emptySquare(sqr: SquareCoordinate): ChessBoard =
-    if (sqr.isValid) updated(sqr, NoPiece)
-    else this
-
   /**
     * Handles different input types depending on the [[gameStatus]].
     *
@@ -75,14 +65,23 @@ class ChessBoard(
     */
   def receive[T](input: Input[T]): Option[ChessBoard] = input match {
     case MoveParams(from, to) if gameStatus == StandardReq =>
-      move(from, to)
+      move(from, to) match {
+        case Some((board, action)) =>
+          action()
+          Some(board)
+        case None =>
+          None
+      }
 
     case Promotion(piece) if gameStatus.isInstanceOf[PromoReq] =>
       promote(piece)
 
     case DrawOffer if gameStatus == StandardReq =>
-      io.showDrawOffer()
-      Some(new ChessBoard(squares, history, positions, turn, io, DrawAcceptanceReq))
+      if (positions.maxRepetition >= 3) Some(clone(gameStatus = Ended(Draw(Repetition))))
+      else {
+        io.showDrawOffer()
+        Some(clone(gameStatus = DrawAcceptanceReq))
+      }
 
     case DrawReject if gameStatus == DrawAcceptanceReq =>
       io.removeDrawOffer()
@@ -111,6 +110,91 @@ class ChessBoard(
     case _ => None
   }
 
+  /**
+    * Generates a new [[ChessBoard]] which shares all attributes with this one
+    * but all that are defined in the parameters.
+    *
+    * @usecase Used to change specific values of the board.
+    * @return the new board
+    */
+  def clone(
+             squares: Map[Char, Column] = this.squares,
+             history: List[MoveData] = this.history,
+             positions: Positions = this.positions,
+             turn: AnyColor = this.turn,
+             io: ChessIO = this.io,
+             gameStatus: GameStatus = this.gameStatus) =
+    new ChessBoard(squares, history, positions, turn, io, gameStatus)
+
+  /**
+    * Stores the board in the xml format.
+    *
+    * @note The version attribute is used when loading to find the right loading method.
+    * @usecase Used to save&load [[ChessBoard]]s
+    * @see [[chess.framework.SaveLoader]]
+    * @see [[chess.framework.ChessBoard#save]]
+    * @return an xml-[[scala.xml.Elem]] with all data of the [[chess.framework.ChessBoard]]
+    */
+  def save: Elem =
+    <chessboard version={Version.toString}>
+      <board>
+        {saveSquares}
+      </board>
+      <moves>
+        {history map (m =>
+        <move>
+          <start>
+            {m.startPos.column}{m.startPos.row}
+          </start>
+          <end>
+            {m.endPos.column}{m.endPos.row}
+          </end>
+          <movedPiece>
+            {m.piece}
+          </movedPiece>
+          <capture>
+            {m.captured}
+          </capture>
+        </move>)}
+      </moves>
+      <turn>
+        {turn}
+      </turn>
+      <positions>
+        {positions.toXML}
+      </positions>
+      <boardStatus>
+        {gameStatus}
+      </boardStatus>
+    </chessboard>
+
+  private def saveSquares: NodeSeq =
+    for (x <- 1 to 8; col = columnLetter(x)) yield
+      <col>
+        {squares(col).saveData}
+      </col> copy (label = col.toUpper toString)
+
+  /**
+    * Formats the board as a [[String]]
+    *
+    * @usecase Used in consoleUI to show the board in console
+    * @see [[chess.console.InputInterpreter]]
+    * @return a formatted representation of the board
+    */
+  override def toString: String = {
+    val separationLine: String = "  +---+---+---+---+---+---+---+---+\n"
+    val lines = for (x <- 1 to 8; c = columnLetter(x)) yield c + " " + squares(c)
+    lines mkString("    1   2   3   4   5   6   7   8\n" + separationLine, "\n" + separationLine, "\n" + separationLine)
+  }
+
+  /**
+    * Empties a square.
+    *
+    * @param sqr the square to be emptied
+    */
+  private def emptySquare(sqr: SquareCoordinate): ChessBoard =
+    if (sqr.isValid) updated(sqr, NoPiece)
+    else this
 
   /**
     * Moves a piece after testing for validity of the move which depends on the following aspects:
@@ -123,46 +207,34 @@ class ChessBoard(
     * @param to   the end-coordinates
     * @return the updated board
     */
-  private def move(from: SquareCoordinate, to: SquareCoordinate): Option[ChessBoard] = {
+  private def move(from: SquareCoordinate, to: SquareCoordinate): Option[(ChessBoard, () => Unit)] = {
     val movingPiece = apply(from)
     val endPiece = apply(to)
     val startColor = movingPiece.color
     val endColor = endPiece.color
 
-    def isValid: Boolean =
-      from.isValid &&
-        to.isValid &&
-        from != to &&
-        startColor == turn &&
-        startColor != endColor &&
-        isLegalMove(from, to, movingPiece, endPiece) &&
-        !doMove._1.isCheck(turn)
-
     def doMove: (ChessBoard, () => Unit) = {
       //TODO rework code
-      var action: () => Unit = () => ()
-      val nxtStatus: GameStatus = movingPiece match {
-        case Pawn(color, _) =>
-          color match {
-            case White if to.row == 8 =>
-              action = () => io.showPromotion()
-              PromoReq(to)
-            case Black if to.row == 1 =>
-              action = () => io.showPromotion()
-              PromoReq(to)
-            case _ => gameStatus
-          }
-        case _ => gameStatus
+      val action: () => Unit = movingPiece match {
+        case Pawn(color, _) if to.row == ClassicalValues.piecesStartLine(color.opposite) =>
+          () => io.showPromotion()
+        case _ => () => Unit
+      }
+
+      val updatedStatus: GameStatus = movingPiece match {
+        case Pawn(color, _) if to.row == ClassicalValues.piecesStartLine(color.opposite) =>
+          PromoReq(to)
+        case _ =>
+          StandardReq
       }
 
       //adds the currently evaluated move to the history
-      val updatedHistory = MoveData(from, movingPiece, to, startColor.opposite == endColor) :: history
+      val updatedHistory: List[MoveData] = MoveData(from, movingPiece, to, startColor.opposite == endColor) :: history
 
       //adds the position to the position history
-      val updatedPositions = positions + Position(saveSquares)
+      val updatedPositions: Positions = positions + Position(saveSquares)
 
-      var result: ChessBoard =
-        clone(history = updatedHistory, positions = updatedPositions, turn = turn.opposite, gameStatus = nxtStatus)
+      var result: ChessBoard = clone(history = updatedHistory, positions = updatedPositions, turn = turn.opposite, gameStatus = updatedStatus)
 
       //testing for en passant and castling
       movingPiece match {
@@ -183,12 +255,30 @@ class ChessBoard(
       result.updated(to, resPiece).emptySquare(from) -> action
     }
 
-    val movedBoard = doMove
+    val (movedBoard, action) = doMove
 
-    //TODO maybe pass action via class-system back to receive?
-    movedBoard._2()
+    def isValid: Boolean =
+      from.isValid &&
+        to.isValid &&
+        from != to &&
+        startColor == turn &&
+        startColor != endColor &&
+        isLegalMove(from, to, movingPiece, endPiece) &&
+        !movedBoard.isCheck(turn)
 
-    if (isValid) Some(doMove._1)
+    val updatedStatus: GameStatus =
+      if (movedBoard.isBlocked) Ended(Draw(Blocked))
+      else if (movedBoard.isFivefoldRepetition) Ended(Draw(Repetition))
+      else if (movedBoard.isStalemate) Ended(Draw(Stalemate))
+      else if (movedBoard.isMate) Ended(turn match {
+        case White => WhiteWins(Mate)
+        case Black => BlackWins(Mate)
+      })
+      else if (movedBoard.isInsufficientMaterial) Ended(Draw(InsufficientMaterial))
+      else movedBoard.gameStatus
+
+
+    if (isValid) Some(movedBoard.clone(gameStatus = updatedStatus), action)
     else None
   }
 
@@ -269,7 +359,6 @@ class ChessBoard(
     }
   }
 
-
   /**
     * An overloading method. It takes the color of the piece on the square as
     * the ''defender'', i.e. the not-attacking color.
@@ -336,6 +425,20 @@ class ChessBoard(
     attackedByKnight || attackedByPawn || attackedByKing || attackedDiagonally || attackedOrthogonally
   }
 
+  //TODO implement
+  private def isBlocked: Boolean = false
+
+  //TODO implement
+  private def isMate: Boolean = false
+
+  //TODO implement
+  private def isStalemate: Boolean = false
+
+  //TODO implement
+  private def isInsufficientMaterial: Boolean = false
+
+  private def isFivefoldRepetition: Boolean = positions.maxRepetition >= 5
+
   /**
     * Searches for the next piece.
     *
@@ -398,83 +501,6 @@ class ChessBoard(
     val updated = squares(square._1).updated(square._2, piece)
     clone(squares = squares.updated(square._1, updated))
   }
-
-  /**
-    * Generates a new [[ChessBoard]] which shares all attributes with this one
-    * but all that are defined in the parameters.
-    *
-    * @usecase Used to change specific values of the board.
-    * @return the new board
-    */
-  def clone(
-             squares: Map[Char, Column] = this.squares,
-             history: List[MoveData] = this.history,
-             positions: Positions = this.positions,
-             turn: AnyColor = this.turn,
-             io: ChessIO = this.io,
-             gameStatus: GameStatus = this.gameStatus) =
-    new ChessBoard(squares, history, positions, turn, io, gameStatus)
-
-  private def saveSquares: NodeSeq =
-    for (x <- 1 to 8; col = columnLetter(x)) yield
-      <col>
-        {squares(col).saveData}
-      </col> copy (label = col.toUpper toString)
-
-
-  /**
-    * Stores the board in the xml format.
-    *
-    * @note The version attribute is used when loading to find the right loading method.
-    * @usecase Used to save&load [[ChessBoard]]s
-    * @see [[chess.framework.SaveLoader]]
-    * @see [[chess.framework.ChessBoard#save]]
-    * @return an xml-[[scala.xml.Elem]] with all data of the [[chess.framework.ChessBoard]]
-    */
-  def save: Elem =
-    <chessboard version={Version.toString}>
-      <board>
-        {saveSquares}
-      </board>
-      <moves>
-        {history map (m =>
-        <move>
-          <start>
-            {m.startPos.column}{m.startPos.row}
-          </start>
-          <end>
-            {m.endPos.column}{m.endPos.row}
-          </end>
-          <movedPiece>
-            {m.piece}
-          </movedPiece>
-          <capture>
-            {m.captured}
-          </capture>
-        </move>)}
-      </moves>
-      <turn>
-        {turn}
-      </turn>
-      <positions>
-        {positions.toXML}
-      </positions>
-      <boardStatus>
-        {gameStatus}
-      </boardStatus>
-    </chessboard>
-
-  /**
-    * Formats the board as a [[String]]; useful for console output
-    *
-    * @see [[chess.console.InputInterpreter]]
-    * @return a formatted representation of the board
-    */
-  override def toString: String = {
-    val separationLine: String = "  +---+---+---+---+---+---+---+---+\n"
-    val lines = for (x <- 1 to 8; c = columnLetter(x)) yield c + " " + squares(c)
-    lines mkString("    1   2   3   4   5   6   7   8\n" + separationLine, "\n" + separationLine, "\n" + separationLine)
-  }
 }
 
 
@@ -488,35 +514,16 @@ object ChessBoard {
   val Version = 0L
 
   /**
-    * Standard values for a classical chess game.
-    */
-  object ClassicalValues {
-    /** @return the row where all pawns of this color are placed. */
-    def pawnStartLine(color: AnyColor): Int =
-      if (color == White) 2 else 7
-
-    /** @return the row where all pieces of this color are generated. */
-    def piecesStartLine(color: AnyColor): Int =
-      if (color == White) 1 else 8
-
-    /** @return the [[chess.framework.SquareCoordinate]] where the king of this color is placed. */
-    def kingStartSquare(color: AnyColor): SquareCoordinate =
-      SquareCoordinate('e', piecesStartLine(color))
-
-    /**
-      * The moving-direction of pawns of this color (i.e. the line difference they are taking in every normal move)
-      *
-      * @return `1` for [[chess.framework.White]] and `-1` for [[chess.framework.Black]]
-      */
-    def pawnDir(color: AnyColor): Int =
-      if (color == White) 1 else -1
-  }
-
-
-  /**
     * @return An empty chess board
     */
   def empty(io: ChessIO): ChessBoard = fill(NoPiece, io)
+
+  /**
+    * Fills a 8 * 8 board with a specific piece.
+    *
+    * @return a fully filled [[chess.framework.ChessBoard]]
+    */
+  def fill(piece: Piece, io: ChessIO): ChessBoard = this (Array.fill(8)(Column(piece)), Nil, Positions.empty, White, io).get
 
   /**
     * Defines the classical chess standard board
@@ -575,13 +582,6 @@ object ChessBoard {
       ))
     ), Nil, Positions.empty, White, io, StandardReq
   )
-
-  /**
-    * Fills a 8 * 8 board with a specific piece.
-    *
-    * @return a fully filled [[chess.framework.ChessBoard]]
-    */
-  def fill(piece: Piece, io: ChessIO): ChessBoard = this (Array.fill(8)(Column(piece)), Nil, Positions.empty, White, io).get
 
   def apply(columns: Array[Column], history: List[MoveData] = Nil, positions: Positions = Positions.empty, turn: AnyColor = White, io: ChessIO): Option[ChessBoard] =
     if (columns.length >= 8)
@@ -670,4 +670,30 @@ object ChessBoard {
     case 8 => 'h'
     case _ => ' '
   }
+
+  /**
+    * Standard values for a classical chess game.
+    */
+  object ClassicalValues {
+    /** @return the row where all pawns of this color are placed. */
+    def pawnStartLine(color: AnyColor): Int =
+      if (color == White) 2 else 7
+
+    /** @return the [[chess.framework.SquareCoordinate]] where the king of this color is placed. */
+    def kingStartSquare(color: AnyColor): SquareCoordinate =
+      SquareCoordinate('e', piecesStartLine(color))
+
+    /** @return the row where all pieces of this color are generated. */
+    def piecesStartLine(color: AnyColor): Int =
+      if (color == White) 1 else 8
+
+    /**
+      * The moving-direction of pawns of this color (i.e. the line difference they are taking in every normal move)
+      *
+      * @return `1` for [[chess.framework.White]] and `-1` for [[chess.framework.Black]]
+      */
+    def pawnDir(color: AnyColor): Int =
+      if (color == White) 1 else -1
+  }
+
 }

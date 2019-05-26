@@ -7,9 +7,8 @@ import chess.graphics.BoardColors.Brown._
 import scala.swing._
 
 class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
-  var board: ChessBoard = ChessBoard.classicalBoard(this)
-
   val promoMenu = new PromotionChooser(400, 100)
+  var board: ChessBoard = ChessBoard.classicalBoard(this)
   listenTo(promoMenu)
 
   setup()
@@ -21,6 +20,18 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
     }
     repaint()
   }
+
+  override def repaint(): Unit = {
+    reload()
+    super.repaint()
+  }
+
+  def reload(): Unit =
+    contents foreach {
+      case sq: Square =>
+        sq.piece = board(sq.pos)
+      case _ =>
+    }
 
   def setup(): Unit = {
     contents ++= {
@@ -38,18 +49,6 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
     contents foreach (comp => listenTo(comp))
   }
 
-  def reload(): Unit =
-    contents foreach {
-      case sq: Square =>
-        sq.piece = board(sq.pos)
-      case _ =>
-    }
-
-  override def repaint(): Unit = {
-    reload()
-    super.repaint()
-  }
-
   def unselect(square: SquareCoordinate): Unit = {
     val row = 9 - square.row
     val col = square.colIndx + 1
@@ -59,6 +58,12 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
       case _ =>
     }
   }
+
+  def unselectAll(): Unit =
+    contents foreach {
+      case s: Square => s.unselect()
+      case _ =>
+    }
 
   override def showDrawOffer(): Unit = {
     Debugger debug s"draw?"

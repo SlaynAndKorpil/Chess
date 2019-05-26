@@ -43,9 +43,7 @@ trait BoardEventHandler {
     }
   }
 
-  private def promote(piece: (AnyColor, Boolean) => AnyPiece): Unit = {
-    promoMenu.close()
+  private def promote(piece: (AnyColor, Boolean) => AnyPiece): Unit =
     update(board.receive(Promotion(piece)))
-  }
 
 }

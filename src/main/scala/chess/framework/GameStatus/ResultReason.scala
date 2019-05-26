@@ -43,3 +43,12 @@ object DrawAgreement extends DrawResultReason {
 object Repetition extends DrawResultReason {
   override val toString: String = "Repetition"
 }
+
+//TODO add to loading
+object Blocked extends DrawResultReason {
+  override val toString: String = "Blocked"
+}
+
+object InsufficientMaterial extends DrawResultReason {
+  override val toString: String = "InsufficientMaterial"
+}

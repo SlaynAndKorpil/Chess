@@ -52,6 +52,7 @@ trait CMenuBar {
     object restart extends CMenuItem("Restart", KeyEvent.VK_S, _ => {
       gameFrame.board = chess.framework.ChessBoard.classicalBoard(gameFrame)
       gameFrame.repaint()
+      gameFrame.unselectAll()
     })
 
     object save extends CMenuItem("Save", KeyEvent.VK_S, Shortcut.save, _ => {
