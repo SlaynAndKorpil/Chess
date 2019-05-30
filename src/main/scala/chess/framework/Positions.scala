@@ -13,7 +13,7 @@ import scala.xml._
   */
 class Positions(val positions: Array[Position], val maxRepetition: Int) {
 
-  /** Adds a new position */
+  /** Adds a new position and updates the repetition counter. */
   def +(that: Position): Positions = {
     val maxRep: Int = {
       val temp: Int = positions count (that == _)
@@ -33,6 +33,7 @@ class Positions(val positions: Array[Position], val maxRepetition: Int) {
     */
   def -- : Positions = Positions(positions.tail)
 
+  /** @return the number of stored positions */
   def length: Int = positions.length
 
   /**
@@ -52,9 +53,13 @@ class Positions(val positions: Array[Position], val maxRepetition: Int) {
 }
 
 object Positions {
+  /** @return an empty list of positions */
   def empty: Positions = NoPositions
 
-  /** Creates a [[chess.framework.Positions]] from existing positions. */
+  /**
+    * Creates a [[chess.framework.Positions]] from existing positions
+    * and calculates the highest number of repetitions.
+    */
   def apply(positions: Array[Position]): Positions = {
     var currentMax = 0
     positions foreach { pos: Position =>
@@ -67,6 +72,11 @@ object Positions {
   def apply(positions: Array[Position], maxRepetitionCount: Int): Positions = new Positions(positions, maxRepetitionCount)
 }
 
+/**
+  * Represents an empty list of positions.
+  *
+  * @author Felix Lehner
+  */
 object NoPositions extends Positions(Array(), 0) {
   override def +(pos: Position): Positions = Positions(Array(pos), 0)
 
@@ -90,13 +100,15 @@ case class Position(pos: Node) extends AnyVal {
         val otherPos = other.pos \ col
         val thisPos = this.pos \ col
         for (y <- 1 to 8; row = "l" + y) yield {
-          {otherPos.theSeq.exists(_.label == row) == thisPos.theSeq.exists(_.label == row)} && {
+          {
+            otherPos.theSeq.exists(_.label == row) == thisPos.theSeq.exists(_.label == row)
+          } && {
             val otherPiece = Piece.fromXML(otherPos \ row)
             val piece = Piece.fromXML(thisPos \ row)
             piece match {
-//              case Pawn(_, _) => piece == otherPiece //TODO moved is not the only relevance for en passant
-//              case King(_, _) => piece == otherPiece
-//              case Rook(_, _) => piece == otherPiece
+              case Pawn(_, _) => piece == otherPiece //TODO moved is not the only relevance for en passant
+              case King(_, _) => piece == otherPiece
+              case Rook(_, _) => piece == otherPiece
               case _ =>
                 piece === otherPiece
             }
@@ -104,12 +116,17 @@ case class Position(pos: Node) extends AnyVal {
         }
       }
     val neg = compared.flatten contains false
-    Debugger debug s"${!neg} -- ${compared.flatten}"
     !neg
   }
 }
 
 object Position {
+  /**
+    * Builds a [[chess.framework.Position]] from a sequence of nodes.
+    *
+    * @usecase This is used to build positions from the sequence returned by [[chess.framework.ChessBoard#saveSquares]]
+    * @param pos a sequence of columns in xml format
+    */
   def apply(pos: NodeSeq): Position = Position(<pos>
     {pos}
   </pos>)

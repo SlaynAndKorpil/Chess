@@ -442,10 +442,8 @@ class ChessBoard(
   //TODO implement
   private def isInsufficientMaterial: Boolean = false
 
-  private def isFivefoldRepetition: Boolean = {
-    Debugger debug s"length: ${positions.length}, rep: ${positions.maxRepetition}"
+  private def isFivefoldRepetition: Boolean =
     positions.maxRepetition >= 5
-  }
 
   /**
     * Searches for the next piece.
