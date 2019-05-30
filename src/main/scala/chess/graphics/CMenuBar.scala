@@ -33,6 +33,7 @@ trait CMenuBar {
     contents += new Menu("Game") {
       mnemonic = event.Key.G
       contents += resign
+      contents += draw
       contents += restart
     }
 
@@ -53,6 +54,10 @@ trait CMenuBar {
       gameFrame.board = chess.framework.ChessBoard.classicalBoard(gameFrame)
       gameFrame.repaint()
       gameFrame.unselectAll()
+    })
+
+    object draw extends CMenuItem("Draw", KeyEvent.VK_D, _ => {
+      gameFrame.update(gameFrame.board.receive(DrawOffer))
     })
 
     object save extends CMenuItem("Save", KeyEvent.VK_S, Shortcut.save, _ => {

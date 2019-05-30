@@ -52,6 +52,6 @@ trait BoardMeta {
   /**
     * Resigns the game, i.e. grants the win to the opposite color.
     */
-  private[framework] def resign: ChessBoard =
-    clone(gameStatus = Ended(Win(turn.opposite)(Resignation)))
+  private[framework] def resign: Ended =
+    Ended(Win(turn.opposite)(Resignation))
 }

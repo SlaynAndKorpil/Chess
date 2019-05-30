@@ -2,6 +2,8 @@ package chess.console
 
 import chess.framework._
 import ChessBoard._
+import chess.framework.GameStatus.GameResult
+
 import scala.language.postfixOps
 
 /**
@@ -72,9 +74,9 @@ class InputInterpreter (plainBoard: ChessIO => ChessBoard) extends ChessIO {
 
   override def removePromotion(): Unit = ()
 
-  override def showResign(): Unit = ()
-
   override def showTakeback(): Unit = ()
 
   override def removeTakeback(): Unit = ()
+
+  override def showEnded(result: GameResult): Unit = Debugger debug s"ended with $result"
 }

@@ -1,5 +1,9 @@
 package chess.framework
 
+/**
+  * @since alpha 0.1
+  * @author Felix Lehner
+  */
 trait ChessIO {
   def showDrawOffer(): Unit
 
@@ -9,9 +13,9 @@ trait ChessIO {
 
   def removePromotion(): Unit
 
-  def showResign(): Unit
-
   def showTakeback(): Unit
 
   def removeTakeback(): Unit
+
+  def showEnded(result: GameStatus.GameResult)
 }

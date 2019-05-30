@@ -18,7 +18,7 @@ import scala.xml.{Elem, NodeSeq}
 class ChessBoard(
                   val squares: Map[Char, Column],
                   val history: List[MoveData],
-                  val positions: Positions,
+                  override val positions: Positions,
                   val turn: AnyColor = White,
                   val io: ChessIO,
                   val gameStatus: GameStatus
@@ -28,7 +28,7 @@ class ChessBoard(
 
   //TODO find better identifier
   /**
-    * The move number
+    * The move counter
     */
   val turnCounter: Int = history.length / 2
 
@@ -77,7 +77,11 @@ class ChessBoard(
       promote(piece)
 
     case DrawOffer if gameStatus == StandardReq =>
-      if (positions.maxRepetition >= 3) Some(clone(gameStatus = Ended(Draw(Repetition))))
+      if (positions.maxRepetition >= 3) {
+        val res = Draw(Repetition)
+        io.showEnded(res)
+        Some(clone(gameStatus = Ended(res)))
+      }
       else {
         io.showDrawOffer()
         Some(clone(gameStatus = DrawAcceptanceReq))
@@ -85,7 +89,7 @@ class ChessBoard(
 
     case DrawReject if gameStatus == DrawAcceptanceReq =>
       io.removeDrawOffer()
-      Some(new ChessBoard(squares, history, positions, turn, io, StandardReq))
+      Some(clone(gameStatus = StandardReq))
 
     case DrawAcceptance if gameStatus == DrawAcceptanceReq =>
       io.removeDrawOffer()
@@ -104,8 +108,9 @@ class ChessBoard(
       Some(clone(gameStatus = StandardReq))
 
     case Resign if gameStatus == StandardReq =>
-      io.showResign()
-      Some(resign)
+      val res = resign
+      io.showEnded(res.result)
+      Some(clone(gameStatus = res))
 
     case _ => None
   }
@@ -213,14 +218,7 @@ class ChessBoard(
     val startColor = movingPiece.color
     val endColor = endPiece.color
 
-    def doMove: (ChessBoard, () => Unit) = {
-      //TODO rework code
-      val action: () => Unit = movingPiece match {
-        case Pawn(color, _) if to.row == ClassicalValues.piecesStartLine(color.opposite) =>
-          () => io.showPromotion()
-        case _ => () => Unit
-      }
-
+    def doMove: ChessBoard = {
       val updatedStatus: GameStatus = movingPiece match {
         case Pawn(color, _) if to.row == ClassicalValues.piecesStartLine(color.opposite) =>
           PromoReq(to)
@@ -231,10 +229,7 @@ class ChessBoard(
       //adds the currently evaluated move to the history
       val updatedHistory: List[MoveData] = MoveData(from, movingPiece, to, startColor.opposite == endColor) :: history
 
-      //adds the position to the position history
-      val updatedPositions: Positions = positions + Position(saveSquares)
-
-      var result: ChessBoard = clone(history = updatedHistory, positions = updatedPositions, turn = turn.opposite, gameStatus = updatedStatus)
+      var result: ChessBoard = clone(history = updatedHistory, turn = turn.opposite, gameStatus = updatedStatus)
 
       //testing for en passant and castling
       movingPiece match {
@@ -252,10 +247,10 @@ class ChessBoard(
       }
 
       val resPiece = Piece(movingPiece.identifier, movingPiece.color, moved = true)
-      result.updated(to, resPiece).emptySquare(from) -> action
+      result.updated(to, resPiece).emptySquare(from)
     }
 
-    val (movedBoard, action) = doMove
+    val movedBoard = doMove.clone(positions = positions + Position(saveSquares))
 
     def isValid: Boolean =
       from.isValid &&
@@ -277,6 +272,16 @@ class ChessBoard(
       else if (movedBoard.isInsufficientMaterial) Ended(Draw(InsufficientMaterial))
       else movedBoard.gameStatus
 
+
+    val action: () => Unit = updatedStatus match {
+      case res: Ended =>
+        () => io.showEnded(res.result)
+      case _ => movingPiece match {
+        case Pawn(color, _) if to.row == ClassicalValues.piecesStartLine(color.opposite) =>
+          () => io.showPromotion()
+        case _ => () => Unit
+      }
+    }
 
     if (isValid) Some(movedBoard.clone(gameStatus = updatedStatus), action)
     else None
@@ -383,7 +388,7 @@ class ChessBoard(
     */
   private def isAttacked(sqr: SquareCoordinate, attacked: AnyColor): Boolean = {
     implicit class Intersectable[P <: Piece](val content: Array[P]) {
-      def ^[OtherP <: Piece](other: Array[OtherP]): Boolean = (for (i <- content; j <- other) yield j == i) contains true
+      def ^[OtherP <: Piece](other: Array[OtherP]): Boolean = (for (i <- content; j <- other) yield j === i) contains true
     }
 
     val opponent = attacked.opposite
@@ -395,12 +400,12 @@ class ChessBoard(
     def partApply(inc: (Int, Int)) = apply(NumericSquareCoordinate(colI, row) + inc)
 
 
-    val knight: Array[Knight] = Array(Knight(opponent, moved = true), Knight(opponent))
-    val king: Array[King] = Array(King(opponent), King(opponent, moved = true))
-    val queen: Array[Queen] = Array(Queen(opponent, moved = true), Queen(opponent))
-    val bishop: Array[Bishop] = Array(Bishop(opponent, moved = true), Bishop(opponent))
-    val rook: Array[Rook] = Array(Rook(opponent, moved = true), Rook(opponent))
-    val pawn: Array[Pawn] = Array(Pawn(opponent, moved = true), Pawn(opponent))
+    val knight: Array[Knight] = Array(Knight(opponent))
+    val king: Array[King] = Array(King(opponent))
+    val queen: Array[Queen] = Array(Queen(opponent))
+    val bishop: Array[Bishop] = Array(Bishop(opponent))
+    val rook: Array[Rook] = Array(Rook(opponent))
+    val pawn: Array[Pawn] = Array(Pawn(opponent))
 
     def attackedByKnight: Boolean =
       knight ^ Array(partApply(1, 2), partApply(2, 1), partApply(2, -1), partApply(1, -2), partApply(-1, 2), partApply(-2, 1), partApply(-2, -1), partApply(-1, -2))
@@ -437,7 +442,10 @@ class ChessBoard(
   //TODO implement
   private def isInsufficientMaterial: Boolean = false
 
-  private def isFivefoldRepetition: Boolean = positions.maxRepetition >= 5
+  private def isFivefoldRepetition: Boolean = {
+    Debugger debug s"length: ${positions.length}, rep: ${positions.maxRepetition}"
+    positions.maxRepetition >= 5
+  }
 
   /**
     * Searches for the next piece.
@@ -629,7 +637,7 @@ object ChessBoard {
     }
   }
 
-  /** @return `true` if a column with this identifier does exist, else `false`*/
+  /** @return `true` if a column with this identifier does exist, else `false` */
   def isValidColumn(column: Char): Boolean =
     columnIndex(column) <= 8 && columnIndex(column) >= 1
 

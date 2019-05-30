@@ -1,5 +1,6 @@
 package chess.graphics
 
+import chess.framework.GameStatus.GameResult
 import chess.framework.{ChessBoard, ChessIO, SquareCoordinate}
 import chess.graphics.BoardColors.BoardColor
 import chess.graphics.BoardColors.Brown._
@@ -83,15 +84,15 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
     Debugger debug s"promoted!"
   }
 
-  override def showResign(): Unit = {
-    Debugger debug s"resign!"
-  }
-
   override def showTakeback(): Unit = {
     Debugger debug s"takeback?"
   }
 
   override def removeTakeback(): Unit = {
     Debugger debug s"takeback!"
+  }
+
+  override def showEnded(result: GameResult): Unit = {
+    Debugger debug s"Ended with $result"
   }
 }

@@ -85,7 +85,7 @@ object SaveLoader {
           val positions: Positions = {
             val pos = xml \ "positions" \ "pos"
             if (pos.isEmpty) Positions.empty
-            else (pos foldRight Positions.empty) ((x: NodeSeq, y: Positions) => y + Position(x))
+            else (pos foldRight Positions.empty) ((x: NodeSeq, y: Positions) => y + Position(x.head))
           }
 
           val color = col

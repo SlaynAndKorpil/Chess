@@ -8,6 +8,8 @@ sealed trait Piece {
 
   val identifier: Char
 
+  val value: Int
+
   def xml: Elem =
     <piece>
       <id>
@@ -24,6 +26,10 @@ sealed trait Piece {
   def isEmpty: Boolean
 
   def nonEmpty: Boolean = !isEmpty
+
+  //TODO needs rework, should not depend on uniquity of the identifier
+  def ===[T <: Piece] (other: T): Boolean =
+    this.identifier == other.identifier && this.color == other.color
 
   override def toString: String = " " + identifier + (color match {
     case White => "w"
@@ -43,6 +49,8 @@ object NoPiece extends Piece {
   override val isEmpty: Boolean = true
 
   val moved: Boolean = false
+
+  val value = 0
 }
 
 sealed abstract class AnyPiece(override val identifier: Char) extends Piece {
@@ -51,17 +59,30 @@ sealed abstract class AnyPiece(override val identifier: Char) extends Piece {
   val color: AnyColor
 }
 
-final case class Pawn(color: AnyColor, moved: Boolean = false) extends AnyPiece('P')
+case class Pawn(color: AnyColor, moved: Boolean = false) extends AnyPiece('P') {
+  val value = 1
+}
 
-final case class Bishop(color: AnyColor, moved: Boolean = false) extends AnyPiece('B')
+case class Bishop(color: AnyColor, moved: Boolean = false) extends AnyPiece('B') {
+  val value = 3
+}
 
-final case class Knight(color: AnyColor, moved: Boolean = false) extends AnyPiece('N')
+case class Knight(color: AnyColor, moved: Boolean = false) extends AnyPiece('N') {
+  val value = 3
+}
 
-final case class Rook(color: AnyColor, moved: Boolean = false) extends AnyPiece('R')
+case class Rook(color: AnyColor, moved: Boolean = false) extends AnyPiece('R') {
+  val value = 5
+}
 
-final case class Queen(color: AnyColor, moved: Boolean = false) extends AnyPiece('Q')
+case class Queen(color: AnyColor, moved: Boolean = false) extends AnyPiece('Q') {
+  val value = 9
+}
 
-final case class King(color: AnyColor, moved: Boolean = false) extends AnyPiece('K')
+case class King(color: AnyColor, moved: Boolean = false) extends AnyPiece('K') {
+  //evaluation according to Dr. Emanual Lasker
+  val value: Int = 4
+}
 
 
 object Piece {

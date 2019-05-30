@@ -2,8 +2,10 @@
   <dictionary name="user">
     <words>
       <w>castleing</w>
+      <w>emanual</w>
       <w>indx</w>
       <w>intersectable</w>
+      <w>lasker</w>
       <w>lehner</w>
       <w>nocolor</w>
       <w>passant</w>
@@ -11,6 +13,7 @@
       <w>takeback</w>
       <w>takebacks</w>
       <w>unattacked</w>
+      <w>uniquity</w>
       <w>unselect</w>
       <w>unsufficent</w>
       <w>usecase</w>

@@ -14,13 +14,14 @@ import scala.xml._
 class Positions(val positions: Array[Position], val maxRepetition: Int) {
 
   /** Adds a new position */
-  def +(pos: Position): Positions = {
-    val maxRepetition: Int = {
-      val temp = positions filter (_ == pos)
-      if (temp.length > this.maxRepetition) temp.length
-      else this.maxRepetition
+  def +(that: Position): Positions = {
+    val maxRep: Int = {
+      val temp: Int = positions count (that == _)
+      val len = temp
+      if (len > maxRepetition) len
+      else maxRepetition
     }
-    Positions(positions :+ pos, maxRepetition)
+    Positions(that +: positions, maxRep)
   }
 
   /**
@@ -41,38 +42,33 @@ class Positions(val positions: Array[Position], val maxRepetition: Int) {
     * @see [[chess.framework.SaveLoader]]
     * @return an xml object
     */
-
-  import scala.xml.NodeSeq.seqToNodeSeq
-
-  def toXML: NodeSeq = seqToNodeSeq(positions.foldLeft(NodeSeq.Empty)((node: Seq[Node], pos: Position) => {
-    //TODO does not work properly yet
-    seqToNodeSeq(node.theSeq ++ <pos>
-      {pos.pos}
-    </pos>)
-  }))
+  def toXML: NodeSeq = {
+    import scala.xml.NodeSeq.seqToNodeSeq
+    seqToNodeSeq(positions.foldLeft(NodeSeq.Empty)((node: Seq[Node], pos: Position) => {
+      //TODO does not work properly yet
+      seqToNodeSeq(node.theSeq ++ pos.pos)
+    }))
+  }
 }
 
 object Positions {
   def empty: Positions = NoPositions
 
-  def apply(positions: Array[Position], maxRepetitionCount: Int): Positions = new Positions(positions, maxRepetitionCount)
-
   /** Creates a [[chess.framework.Positions]] from existing positions. */
   def apply(positions: Array[Position]): Positions = {
-    val maxRepetition: Int = {
-      var currMax = 0
-      positions foreach { pos =>
-        val max = positions.count(_ == pos)
-        if (max > currMax) currMax = max
-      }
-      currMax
+    var currentMax = 0
+    positions foreach { pos: Position =>
+      val max = positions.count(pos == _) - 1
+      if (max > currentMax) currentMax = max
     }
-    Positions(positions, maxRepetition)
+    Positions(positions, currentMax)
   }
+
+  def apply(positions: Array[Position], maxRepetitionCount: Int): Positions = new Positions(positions, maxRepetitionCount)
 }
 
 object NoPositions extends Positions(Array(), 0) {
-  override def +(pos: Position): Positions = Positions(Array(pos), 1)
+  override def +(pos: Position): Positions = Positions(Array(pos), 0)
 
   override def -- : Positions = this
 
@@ -80,30 +76,41 @@ object NoPositions extends Positions(Array(), 0) {
 }
 
 /** Stores a position in XML format. */
-case class Position(/*FIXME moved attribute of most pieces should be ignored*/ pos: NodeSeq) extends AnyVal {
+case class Position(pos: Node) extends AnyVal {
   /**
     * Compares this position with another.
+    *
     * @note This tests only for things relevant for repetition.
     * @param other another position to compare with
     * @return `true` if equal otherwise `false`
     */
   def ==(other: Position): Boolean = {
-    val compared: Seq[Seq[Boolean]] = for (x <- 1 to 8; col = columnLetter(x).toString.toUpperCase) yield {
-      val otherPos = other.pos \ col
-      val thisPos = pos \ col
-      for (y <- 1 to 8; row = "l"+y) yield {
-        otherPos.theSeq.exists(_.label == row) == thisPos.theSeq.exists(_.label == row) && {
-          val otherPiece = Piece.fromXML(otherPos \ row)
-          val piece = Piece.fromXML(pos \ row)
-          piece match {
-            case Pawn(_, _) => piece == otherPiece //TODO moved is not the only relevance for en passant
-            case King(_, _) => piece == otherPiece
-            case Rook(_, _) => piece == otherPiece
-            case _ => piece.color == otherPiece.color && piece.isInstanceOf[otherPiece.type]
+    val compared: Seq[Seq[Boolean]] =
+      for (x <- 1 to 8; col = columnLetter(x).toString.toUpperCase) yield {
+        val otherPos = other.pos \ col
+        val thisPos = this.pos \ col
+        for (y <- 1 to 8; row = "l" + y) yield {
+          {otherPos.theSeq.exists(_.label == row) == thisPos.theSeq.exists(_.label == row)} && {
+            val otherPiece = Piece.fromXML(otherPos \ row)
+            val piece = Piece.fromXML(thisPos \ row)
+            piece match {
+//              case Pawn(_, _) => piece == otherPiece //TODO moved is not the only relevance for en passant
+//              case King(_, _) => piece == otherPiece
+//              case Rook(_, _) => piece == otherPiece
+              case _ =>
+                piece === otherPiece
+            }
           }
         }
       }
-    }
-    compared.flatten forall (_ == true)
+    val neg = compared.flatten contains false
+    Debugger debug s"${!neg} -- ${compared.flatten}"
+    !neg
   }
+}
+
+object Position {
+  def apply(pos: NodeSeq): Position = Position(<pos>
+    {pos}
+  </pos>)
 }
