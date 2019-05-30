@@ -62,7 +62,9 @@ class InputInterpreter (plainBoard: ChessIO => ChessBoard) extends ChessIO {
   }
 
   def move (from: SquareCoordinate, to: SquareCoordinate): Unit = board.receive(MoveParams(from, to)) match {
-    case Some(b) => board = b
+    case Some(b) =>
+      board = b._1
+      b._2()
     case None =>
   }
 

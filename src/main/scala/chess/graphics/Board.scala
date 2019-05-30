@@ -1,7 +1,7 @@
 package chess.graphics
 
-import chess.framework.GameStatus.GameResult
-import chess.framework.{ChessBoard, ChessIO, SquareCoordinate}
+import chess.framework.GameStatus._
+import chess.framework.{Black => _, White => _, _}
 import chess.graphics.BoardColors.BoardColor
 import chess.graphics.BoardColors.Brown._
 
@@ -12,27 +12,9 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
   var board: ChessBoard = ChessBoard.classicalBoard(this)
   listenTo(promoMenu)
 
+  implicit lazy private val promotionLoc: Component = contents.head
+
   setup()
-
-  def update(boardOpt: Option[ChessBoard]): Unit = {
-    boardOpt match {
-      case Some(b) => board = b
-      case None =>
-    }
-    repaint()
-  }
-
-  override def repaint(): Unit = {
-    reload()
-    super.repaint()
-  }
-
-  def reload(): Unit =
-    contents foreach {
-      case sq: Square =>
-        sq.piece = board(sq.pos)
-      case _ =>
-    }
 
   def setup(): Unit = {
     contents ++= {
@@ -67,12 +49,13 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
     }
 
   override def showDrawOffer(): Unit = {
-    Debugger debug s"draw?"
+    CDialog.showConfirmation(message = "Do you want a draw?", title = "Draw offer", onSuccess = () => {
+      Debugger debug s"onSuccess draw evaluated"
+      update(board.receive(DrawAcceptance))
+    }, onRejection = () => update(board.receive(DrawReject)))
   }
 
-  override def removeDrawOffer(): Unit = {
-    Debugger debug s"draw decided"
-  }
+  override def removeDrawOffer(): Unit = {}
 
   override def showPromotion(): Unit = {
     promoMenu.open
@@ -85,14 +68,49 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
   }
 
   override def showTakeback(): Unit = {
-    Debugger debug s"takeback?"
+    CDialog.showConfirmation(message = "Do you want to allow your opponent a takeback?", title = "Takeback", onSuccess = () => {
+      Debugger debug s"onSuccess takeback evaluated"
+      update(board.receive(TakebackAcceptance))
+    }, onRejection = () => update(board.receive(TakebackReject)))
   }
+
+  def update(boardOpt: Option[(ChessBoard, () => Unit)]): Unit = {
+    Debugger debug s"update called"
+    boardOpt match {
+      case Some(b) =>
+        board = b._1
+        b._2()
+      case None =>
+    }
+    repaint()
+  }
+
+  override def repaint(): Unit = {
+    reload()
+    super.repaint()
+  }
+
+  def reload(): Unit =
+    contents foreach {
+      case sq: Square =>
+        sq.piece = board(sq.pos)
+      case _ =>
+    }
 
   override def removeTakeback(): Unit = {
     Debugger debug s"takeback!"
   }
 
   override def showEnded(result: GameResult): Unit = {
-    Debugger debug s"Ended with $result"
+    val resultMessage: String = {
+      val res = result match {
+        case BlackWins(reason) => "win for black due to " + reason.toString
+        case WhiteWins(reason) => "win for white due to " + reason.toString
+        case Draw(reason) => "draw due to " + reason.toString
+      }
+      s"The game ended with a $res."
+    }
+
+    CDialog.showMessage(resultMessage, "")
   }
 }

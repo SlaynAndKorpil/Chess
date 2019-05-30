@@ -14,15 +14,6 @@ trait CMenuBar {
   //TODO find better solution for self-reference when opening a FileChooser
   private val reference: CWindow = this
 
-  /*
-  TODO menus:
-  TODO - propose takeback
-  TODO - propose draw
-  TODO - change board color scheme
-  TODO - change main frame (main menu, chess puzzles, ...)
-  TODO - ...
-  */
-
   object Menu extends MenuBar {
     contents += new Menu("File") {
       mnemonic = event.Key.F
@@ -32,6 +23,7 @@ trait CMenuBar {
 
     contents += new Menu("Game") {
       mnemonic = event.Key.G
+      contents += takeback
       contents += resign
       contents += draw
       contents += restart
@@ -46,6 +38,9 @@ trait CMenuBar {
     object boardColor extends CMenuItem("Board color", KeyEvent.VK_B, _ => ())
 
     object colorMode extends CMenuItem("Color mode", KeyEvent.VK_C, _ => ())
+
+    object takeback extends CMenuItem("Takeback", KeyEvent.VK_T, _ =>
+      gameFrame.update(gameFrame.board.receive(TakebackProposal)))
 
     object resign extends CMenuItem("Resign", KeyEvent.VK_R, _ =>
       gameFrame.update(gameFrame.board.receive(Resign)))
@@ -91,4 +86,5 @@ trait CMenuBar {
     })
 
   }
+
 }

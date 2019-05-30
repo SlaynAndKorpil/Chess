@@ -63,56 +63,49 @@ class ChessBoard(
     * @return an updated [[ChessBoard]] or [[None]] when the input is either unknown
     *         or does not match the current input requirements given by [[gameStatus]].
     */
-  def receive[T](input: Input[T]): Option[ChessBoard] = input match {
-    case MoveParams(from, to) if gameStatus == StandardReq =>
-      move(from, to) match {
-        case Some((board, action)) =>
-          action()
-          Some(board)
-        case None =>
-          None
-      }
+  def receive[T](input: Input[T]): Option[(ChessBoard, () => Unit)] = {
+    Debugger debug s"receiving input $input in status $gameStatus"
+    input match {
+      case MoveParams(from, to) if gameStatus == StandardReq =>
+        move(from, to)
 
-    case Promotion(piece) if gameStatus.isInstanceOf[PromoReq] =>
-      promote(piece)
+      case Promotion(piece) if gameStatus.isInstanceOf[PromoReq] =>
+        promote(piece)
 
-    case DrawOffer if gameStatus == StandardReq =>
-      if (positions.maxRepetition >= 3) {
-        val res = Draw(Repetition)
-        io.showEnded(res)
-        Some(clone(gameStatus = Ended(res)))
-      }
-      else {
-        io.showDrawOffer()
-        Some(clone(gameStatus = DrawAcceptanceReq))
-      }
+      case DrawOffer if gameStatus == StandardReq =>
+        if (positions.maxRepetition >= 3) {
+          val res = Draw(Repetition)
+          Some(clone(gameStatus = Ended(res)), () => io.showEnded(res))
+        }
+        else {
+          Some(clone(gameStatus = DrawAcceptanceReq), () => io.showDrawOffer())
+        }
 
-    case DrawReject if gameStatus == DrawAcceptanceReq =>
-      io.removeDrawOffer()
-      Some(clone(gameStatus = StandardReq))
+      case DrawReject if gameStatus == DrawAcceptanceReq =>
+        io.removeDrawOffer()
+        Some(clone(gameStatus = StandardReq), () => ())
 
-    case DrawAcceptance if gameStatus == DrawAcceptanceReq =>
-      io.removeDrawOffer()
-      Some(clone(gameStatus = Ended(Draw(DrawAgreement))))
+      case DrawAcceptance if gameStatus == DrawAcceptanceReq =>
+        io.removeDrawOffer()
+        val res = Draw(DrawAgreement)
+        Some(clone(gameStatus = Ended(res)), () => io.showEnded(res))
 
-    case TakebackProposal if gameStatus == StandardReq =>
-      io.showTakeback()
-      Some(clone(gameStatus = TakebackAcceptanceReq))
+      case TakebackProposal if gameStatus == StandardReq =>
+        Some(clone(gameStatus = TakebackAcceptanceReq), () => io.showTakeback())
 
-    case TakebackAcceptance if gameStatus == TakebackAcceptanceReq =>
-      io.removeTakeback()
-      takeback
+      case TakebackAcceptance if gameStatus == TakebackAcceptanceReq =>
+        io.removeTakeback()
+        takeback
 
-    case TakebackReject if gameStatus == TakebackAcceptanceReq =>
-      io.removeTakeback()
-      Some(clone(gameStatus = StandardReq))
+      case TakebackReject if gameStatus == TakebackAcceptanceReq =>
+        Some(clone(gameStatus = StandardReq), () => io.removeTakeback())
 
-    case Resign if gameStatus == StandardReq =>
-      val res = resign
-      io.showEnded(res.result)
-      Some(clone(gameStatus = res))
+      case Resign if gameStatus == StandardReq =>
+        val res = resign
+        Some(clone(gameStatus = res), () => io.showEnded(res.result))
 
-    case _ => None
+      case _ => None
+    }
   }
 
   /**

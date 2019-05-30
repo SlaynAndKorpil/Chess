@@ -11,11 +11,13 @@ trait BoardMeta {
 
   val gameStatus: GameStatus
 
-  private[framework] def takeback: Option[ChessBoard] = {
-    if (positions.length >= 1)
-      Some(clone(squares = SaveLoader.preferredLoader.loadSquaresFromXML(<positions>positions.positions.head.pos</positions>).toMap, positions = this.positions.--, gameStatus = StandardReq))
+  private[framework] def takeback: Option[(ChessBoard, () => Unit)] =
+    if (positions.length >= 1) {
+      //FIXME always loads empty board
+      Some(clone(squares = SaveLoader.preferredLoader.loadSquaresFromXML(<positions>positions.positions.head.pos</positions>).toMap, positions = this.positions.--, gameStatus = StandardReq), () => io.removeTakeback())
+    }
     else None
-  }
+
 
   /**
     * Promotes a pawn to a given piece.
@@ -23,7 +25,7 @@ trait BoardMeta {
     * @param piece the piece's apply method
     * @return an updated [[ChessBoard]] of [[None]] when the piece type is incorrect
     */
-  private[framework] def promote(piece: (AnyColor, Boolean) => AnyPiece): Option[ChessBoard] = {
+  private[framework] def promote(piece: (AnyColor, Boolean) => AnyPiece): Option[(ChessBoard, () => Unit)] = {
     val promoColor = turn.opposite
     val promoPiece = piece match {
       case Queen =>
@@ -41,8 +43,7 @@ trait BoardMeta {
       gameStatus match {
         case PromoReq(sqr: SquareCoordinate) =>
           val result = updated(sqr, promoPiece).clone(gameStatus = StandardReq)
-          io.removePromotion()
-          Some(result)
+          Some(result, () => io.removePromotion())
         case _ => None
       }
     }
