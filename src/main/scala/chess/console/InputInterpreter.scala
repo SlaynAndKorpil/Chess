@@ -12,7 +12,7 @@ import scala.language.postfixOps
   * @param plainBoard a board to play on
   */
 class InputInterpreter (plainBoard: ChessIO => ChessBoard) extends ChessIO {
-  private var board = plainBoard(this)
+  private[chess] override var board: ChessBoard = plainBoard(this)
 
   /**
     * runs an interpretation of the console and plays the interpreted moves on the [[board]]
@@ -61,12 +61,7 @@ class InputInterpreter (plainBoard: ChessIO => ChessBoard) extends ChessIO {
       s(0).isLetter && s(1).isValidInt && s(2).isLetter && s(3).isValidInt && SquareCoordinate(s(0), s(1).asDigit).isValid && SquareCoordinate(s(2), s(3).asDigit).isValid
   }
 
-  def move (from: SquareCoordinate, to: SquareCoordinate): Unit = board.receive(MoveParams(from, to)) match {
-    case Some(b) =>
-      board = b._1
-      b._2()
-    case None =>
-  }
+  def move (from: SquareCoordinate, to: SquareCoordinate): Unit = receiveInput(MoveParams(from, to))
 
   override def showDrawOffer(): Unit = {}
 

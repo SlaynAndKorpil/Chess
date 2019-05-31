@@ -26,7 +26,6 @@ class ChessBoard(
 
   import ChessBoard._
 
-  //TODO find better identifier
   /**
     * The move counter
     */
@@ -59,7 +58,7 @@ class ChessBoard(
     * @param input some [[Input]]
     * @return an updated [[ChessBoard]] or [[None]] when the input is either unknown
     *         or does not match the current input requirements given by [[gameStatus]].
-     */
+    */
   def receive[T](input: Input[T]): Option[(ChessBoard, () => Unit)] =
     input match {
       case MoveParams(from, to) if gameStatus == StandardReq =>
@@ -254,8 +253,8 @@ class ChessBoard(
       else if (movedBoard.isFivefoldRepetition) Ended(Draw(Repetition))
       else if (movedBoard.isStalemate) Ended(Draw(Stalemate))
       else if (movedBoard.isMate) Ended(turn match {
-        case White => WhiteWins(Mate)
-        case Black => BlackWins(Mate)
+        case White => WhiteWins by Mate
+        case Black => BlackWins by Mate
       })
       else if (movedBoard.isInsufficientMaterial) Ended(Draw(InsufficientMaterial))
       else movedBoard.gameStatus
@@ -310,19 +309,20 @@ class ChessBoard(
     startPiece match {
       case Pawn(color, moved) =>
         val direction = ClassicalValues.pawnDir(color)
-        if (!endPiece.isEmpty) (columnDif == 1 || columnDif == -1) && lineDif == direction
-        else (columnDif == 0 &&
-          (lineDif == direction || (!moved && lineDif == 2 * direction && apply(start + (0, direction)).isEmpty))) ||
+        if (endPiece nonEmpty) (columnDif == 1 || columnDif == -1) && lineDif == direction
+        else (columnDif == 0 && (lineDif == direction || (!moved && lineDif == 2 * direction && apply(start + (0, direction)).isEmpty))) ||
           //en passant
-          history.nonEmpty && (history.head match {
-            case MoveData(sPos, piece, ePos, _) =>
-              piece == Pawn(color.opposite, moved = true) &&
-                sPos == SquareCoordinate(end.column, ClassicalValues.pawnStartLine(color.opposite)) &&
-                ePos == sPos + (0, -2 * direction) &&
-                lineDif == direction &&
-                (columnDif == 1 || columnDif == -1) &&
-                end == ePos + (0, direction)
-          })
+          history.nonEmpty && {
+            val piece = history.head.piece
+            val sPos = history.head.startPos
+            val ePos = history.head.endPos
+            piece === Pawn(color.opposite) &&
+              sPos == SquareCoordinate(end.column, ClassicalValues.pawnStartLine(color.opposite)) &&
+              ePos == sPos + (0, -2 * direction) &&
+              lineDif == direction &&
+              (columnDif == 1 || columnDif == -1) &&
+              end == ePos + (0, direction)
+          }
       case Bishop(_, _) =>
         isEmptyDiagonal(start, end)
       case Knight(_, _) =>
@@ -623,7 +623,7 @@ object ChessBoard {
     }
   }
 
-  /** @return `true` if a column with this identifier does exist, else `false`*/
+  /** @return `true` if a column with this identifier does exist, else `false` */
   def isValidColumn(column: Char): Boolean =
     columnIndex(column) <= 8 && columnIndex(column) >= 1
 

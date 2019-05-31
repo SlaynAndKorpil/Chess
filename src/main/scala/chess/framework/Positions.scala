@@ -46,7 +46,6 @@ class Positions(val positions: Array[Position], val maxRepetition: Int) {
   def toXML: NodeSeq = {
     import scala.xml.NodeSeq.seqToNodeSeq
     seqToNodeSeq(positions.foldLeft(NodeSeq.Empty)((node: Seq[Node], pos: Position) => {
-      //TODO does not work properly yet
       seqToNodeSeq(node.theSeq ++ pos.pos)
     }))
   }

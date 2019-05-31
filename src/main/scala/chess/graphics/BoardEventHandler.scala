@@ -35,9 +35,9 @@ trait BoardEventHandler {
   def saveBoard(file: String): Unit = ChessBoard.save(board, file)
 
   private def move(from: SquareCoordinate, to: SquareCoordinate): Unit =
-    update(board.receive(MoveParams(from, to)))
+    receiveInput(MoveParams(from, to))
 
   private def promote(piece: (AnyColor, Boolean) => AnyPiece): Unit =
-    update(board.receive(Promotion(piece)))
+    receiveInput(Promotion(piece))
 
 }

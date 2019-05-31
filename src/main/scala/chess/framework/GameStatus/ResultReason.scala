@@ -1,6 +1,6 @@
 package chess.framework.GameStatus
 
-trait ResultReason {
+sealed trait ResultReason {
   override def toString: String
 }
 
@@ -12,11 +12,13 @@ object ResultReason {
     case Stalemate.toString => Some(Resignation)
     case DrawAgreement.toString => Some(DrawAgreement)
     case Repetition.toString => Some(Repetition)
+    case Blocked.toString => Some(Blocked)
+    case InsufficientMaterial.toString => Some(InsufficientMaterial)
     case _ => None
   }
 }
 
-trait WinResultReason extends ResultReason
+sealed trait WinResultReason extends ResultReason
 
 object Mate extends WinResultReason {
   override val toString: String = "Mate"
@@ -30,7 +32,7 @@ object Time extends WinResultReason {
   override val toString: String = "Time"
 }
 
-trait DrawResultReason extends ResultReason
+sealed trait DrawResultReason extends ResultReason
 
 object Stalemate extends DrawResultReason {
   override val toString: String = "Stalemate"
@@ -44,7 +46,6 @@ object Repetition extends DrawResultReason {
   override val toString: String = "Repetition"
 }
 
-//TODO add to loading
 object Blocked extends DrawResultReason {
   override val toString: String = "Blocked"
 }

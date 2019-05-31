@@ -40,10 +40,10 @@ trait CMenuBar {
     object colorMode extends CMenuItem("Color mode", KeyEvent.VK_C, _ => ())
 
     object takeback extends CMenuItem("Takeback", KeyEvent.VK_T, _ =>
-      gameFrame.update(gameFrame.board.receive(TakebackProposal)))
+      gameFrame.receiveInput(TakebackProposal))
 
     object resign extends CMenuItem("Resign", KeyEvent.VK_R, _ =>
-      gameFrame.update(gameFrame.board.receive(Resign)))
+      gameFrame.receiveInput(Resign))
 
     object restart extends CMenuItem("Restart", KeyEvent.VK_S, _ => {
       gameFrame.board = chess.framework.ChessBoard.classicalBoard(gameFrame)
@@ -52,7 +52,7 @@ trait CMenuBar {
     })
 
     object draw extends CMenuItem("Draw", KeyEvent.VK_D, _ => {
-      gameFrame.update(gameFrame.board.receive(DrawOffer))
+      gameFrame.receiveInput(DrawOffer)
     })
 
     object save extends CMenuItem("Save", KeyEvent.VK_S, Shortcut.save, _ => {

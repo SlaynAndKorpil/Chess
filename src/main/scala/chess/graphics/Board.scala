@@ -9,7 +9,7 @@ import scala.swing._
 
 class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
   val promoMenu = new PromotionChooser(400, 100)
-  var board: ChessBoard = ChessBoard.classicalBoard(this)
+  private[chess] var board: ChessBoard = ChessBoard.classicalBoard(this)
   listenTo(promoMenu)
 
   implicit lazy private val promotionLoc: Component = contents.head
@@ -50,33 +50,12 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
 
   override def showDrawOffer(): Unit = {
     CDialog.showConfirmation(message = "Do you want a draw?", title = "Draw offer", onSuccess = () => {
-      update(board.receive(DrawAcceptance))
-    }, onRejection = () => update(board.receive(DrawReject)))
+      receiveInput(DrawAcceptance)
+    }, onRejection = () => receiveInput(DrawReject))
   }
 
-  override def removeDrawOffer(): Unit = {}
-
-  override def showPromotion(): Unit = {
-    promoMenu.open()
-  }
-
-  override def removePromotion(): Unit = {
-    promoMenu.close()
-  }
-
-  override def showTakeback(): Unit = {
-    CDialog.showConfirmation(message = "Do you want to allow your opponent a takeback?", title = "Takeback", onSuccess = () => {
-      update(board.receive(TakebackAcceptance))
-    }, onRejection = () => update(board.receive(TakebackReject)))
-  }
-
-  def update(boardOpt: Option[(ChessBoard, () => Unit)]): Unit = {
-    boardOpt match {
-      case Some(b) =>
-        board = b._1
-        b._2()
-      case None =>
-    }
+  override def receiveInput(input: Input[_]): Unit = {
+    super.receiveInput(input)
     repaint()
   }
 
@@ -91,6 +70,22 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
         sq.piece = board(sq.pos)
       case _ =>
     }
+
+  override def removeDrawOffer(): Unit = {}
+
+  override def showPromotion(): Unit = {
+    promoMenu.open()
+  }
+
+  override def removePromotion(): Unit = {
+    promoMenu.close()
+  }
+
+  override def showTakeback(): Unit = {
+    CDialog.showConfirmation(message = "Do you want to allow your opponent a takeback?", title = "Takeback", onSuccess = () => {
+      receiveInput(TakebackAcceptance)
+    }, onRejection = () => receiveInput(TakebackReject))
+  }
 
   override def removeTakeback(): Unit = {}
 

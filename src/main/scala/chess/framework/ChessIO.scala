@@ -18,4 +18,16 @@ trait ChessIO {
   def removeTakeback(): Unit
 
   def showEnded(result: GameStatus.GameResult)
+
+  private[framework] var board: ChessBoard
+
+  def receiveInput (input: Input[_]): Unit = {
+    val res = board.receive(input)
+    res match {
+      case Some(data) =>
+        board = data._1
+        data._2()
+      case None =>
+    }
+  }
 }
