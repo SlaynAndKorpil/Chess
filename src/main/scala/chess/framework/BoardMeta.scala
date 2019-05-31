@@ -13,8 +13,14 @@ trait BoardMeta {
 
   private[framework] def takeback: Option[(ChessBoard, () => Unit)] =
     if (positions.length >= 1) {
+      val data = positions.positions.head.pos
+      Debugger debug s"loading $data"
+      Debugger debug s"res: $SaveLoader.preferredLoader.loadSquaresFromXML(data).toMap"
       //FIXME always loads empty board
-      Some(clone(squares = SaveLoader.preferredLoader.loadSquaresFromXML(<positions>positions.positions.head.pos</positions>).toMap, positions = this.positions.--, gameStatus = StandardReq), () => io.removeTakeback())
+      Some(
+        clone(squares = SaveLoader.preferredLoader.loadSquaresFromXML(data).toMap, positions = this.positions.--, gameStatus = StandardReq, turn = this.turn.opposite),
+        () => io.removeTakeback()
+      )
     }
     else None
 

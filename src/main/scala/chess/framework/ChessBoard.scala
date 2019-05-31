@@ -18,7 +18,7 @@ import scala.xml.{Elem, NodeSeq}
 class ChessBoard(
                   val squares: Map[Char, Column],
                   val history: List[MoveData],
-                  override val positions: Positions,
+                  val positions: Positions,
                   val turn: AnyColor = White,
                   val io: ChessIO,
                   val gameStatus: GameStatus
@@ -37,10 +37,7 @@ class ChessBoard(
     * @param sqr coordinates on the board
     * @return the piece at some specified position
     */
-  def apply(sqr: SquareCoordinate): Piece = getSquare(sqr) match {
-    case Some(piece) => piece
-    case None => NoPiece
-  }
+  def apply(sqr: SquareCoordinate): Piece = getSquare(sqr) getOrElse NoPiece
 
   /**
     * @param sqr coordinates of the wanted piece
@@ -62,9 +59,8 @@ class ChessBoard(
     * @param input some [[Input]]
     * @return an updated [[ChessBoard]] or [[None]] when the input is either unknown
     *         or does not match the current input requirements given by [[gameStatus]].
-    */
-  def receive[T](input: Input[T]): Option[(ChessBoard, () => Unit)] = {
-    Debugger debug s"receiving input $input in status $gameStatus"
+     */
+  def receive[T](input: Input[T]): Option[(ChessBoard, () => Unit)] =
     input match {
       case MoveParams(from, to) if gameStatus == StandardReq =>
         move(from, to)
@@ -106,7 +102,6 @@ class ChessBoard(
 
       case _ => None
     }
-  }
 
   /**
     * Generates a new [[ChessBoard]] which shares all attributes with this one
@@ -628,7 +623,7 @@ object ChessBoard {
     }
   }
 
-  /** @return `true` if a column with this identifier does exist, else `false` */
+  /** @return `true` if a column with this identifier does exist, else `false`*/
   def isValidColumn(column: Char): Boolean =
     columnIndex(column) <= 8 && columnIndex(column) >= 1
 

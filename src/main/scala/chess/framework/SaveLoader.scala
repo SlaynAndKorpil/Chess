@@ -103,10 +103,7 @@ object SaveLoader {
 
     override def loadSquaresFromXML(xml: Node): Seq[(Char, Column)] = {
       for (x <- 1 to 8; col = columnLetter(x))
-        yield {
-          val colXML = xml \ ("l" + col.toString.toUpperCase)
-          col -> Column.loadFromXML(colXML)
-        }
+        yield col -> Column.loadFromXML(xml \ col.toString.toUpperCase)
     }
   }
 

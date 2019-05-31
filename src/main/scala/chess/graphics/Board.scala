@@ -50,7 +50,6 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
 
   override def showDrawOffer(): Unit = {
     CDialog.showConfirmation(message = "Do you want a draw?", title = "Draw offer", onSuccess = () => {
-      Debugger debug s"onSuccess draw evaluated"
       update(board.receive(DrawAcceptance))
     }, onRejection = () => update(board.receive(DrawReject)))
   }
@@ -58,24 +57,20 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
   override def removeDrawOffer(): Unit = {}
 
   override def showPromotion(): Unit = {
-    promoMenu.open
-    Debugger debug s"promote?"
+    promoMenu.open()
   }
 
   override def removePromotion(): Unit = {
-    promoMenu.close
-    Debugger debug s"promoted!"
+    promoMenu.close()
   }
 
   override def showTakeback(): Unit = {
     CDialog.showConfirmation(message = "Do you want to allow your opponent a takeback?", title = "Takeback", onSuccess = () => {
-      Debugger debug s"onSuccess takeback evaluated"
       update(board.receive(TakebackAcceptance))
     }, onRejection = () => update(board.receive(TakebackReject)))
   }
 
   def update(boardOpt: Option[(ChessBoard, () => Unit)]): Unit = {
-    Debugger debug s"update called"
     boardOpt match {
       case Some(b) =>
         board = b._1
@@ -97,9 +92,7 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
       case _ =>
     }
 
-  override def removeTakeback(): Unit = {
-    Debugger debug s"takeback!"
-  }
+  override def removeTakeback(): Unit = {}
 
   override def showEnded(result: GameResult): Unit = {
     val resultMessage: String = {
