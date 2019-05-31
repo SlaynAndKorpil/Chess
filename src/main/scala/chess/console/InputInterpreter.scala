@@ -76,4 +76,6 @@ class InputInterpreter (plainBoard: ChessIO => ChessBoard) extends ChessIO {
   override def removeTakeback(): Unit = ()
 
   override def showEnded(result: GameResult): Unit = Debugger debug s"ended with $result"
+
+  override def update(): Unit = println(board)
 }

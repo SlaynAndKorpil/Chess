@@ -387,32 +387,24 @@ class ChessBoard(
 
     def partApply(inc: (Int, Int)) = apply(NumericSquareCoordinate(colI, row) + inc)
 
+    val attackedByKnight: Boolean =
+      Array(partApply(1, 2), partApply(2, 1), partApply(2, -1), partApply(1, -2), partApply(-1, 2), partApply(-2, 1), partApply(-2, -1), partApply(-1, -2)) exists (Knight(opponent) === _)
 
-    val knight: Array[Knight] = Array(Knight(opponent))
-    val king: Array[King] = Array(King(opponent))
-    val queen: Array[Queen] = Array(Queen(opponent))
-    val bishop: Array[Bishop] = Array(Bishop(opponent))
-    val rook: Array[Rook] = Array(Rook(opponent))
-    val pawn: Array[Pawn] = Array(Pawn(opponent))
+    val attackedByKing: Boolean =
+      Array.apply(partApply(1, 1), partApply(-1, 1), partApply(1, -1), partApply(-1, -1), partApply(0, 0), partApply(-1, 0), partApply(1, 0), partApply(0, -1), partApply(0, 1)) exists (King(opponent) === _)
 
-    def attackedByKnight: Boolean =
-      knight ^ Array(partApply(1, 2), partApply(2, 1), partApply(2, -1), partApply(1, -2), partApply(-1, 2), partApply(-2, 1), partApply(-2, -1), partApply(-1, -2))
+    val attackedDiagonally: Boolean =
+      Array(Queen(opponent), Rook(opponent)) ^ Array(partNxtPiece(1, 1), partNxtPiece(-1, -1), partNxtPiece(1, -1), partNxtPiece(-1, 1))
 
-    def attackedByKing: Boolean =
-      king ^ Array.apply(partApply(1, 1), partApply(-1, 1), partApply(1, -1), partApply(-1, -1), partApply(0, 0), partApply(-1, 0), partApply(1, 0), partApply(0, -1), partApply(0, 1))
+    val attackedOrthogonally: Boolean =
+      Array(Queen(opponent), Rook(opponent)) ^ Array(partNxtPiece(1, 0), partNxtPiece(-1, 0), partNxtPiece(0, -1), partNxtPiece(0, 1))
 
-    def attackedDiagonally: Boolean =
-      queen ++ bishop ^ Array(partNxtPiece(1, 1), partNxtPiece(-1, -1), partNxtPiece(1, -1), partNxtPiece(-1, 1))
-
-    def attackedOrthogonally: Boolean =
-      queen ++ rook ^ Array(partNxtPiece(1, 0), partNxtPiece(-1, 0), partNxtPiece(0, -1), partNxtPiece(0, 1))
-
-    def attackedByPawn: Boolean = {
+    val attackedByPawn: Boolean = {
       val dir = ClassicalValues.pawnDir(opponent.opposite)
 
       def pieceAtOffset(colD: Int, rowD: Int): Piece = apply(NumericSquareCoordinate(colI, row) + (colD, rowD))
 
-      pawn ^ Array(pieceAtOffset(1, dir), pieceAtOffset(-1, dir))
+      Array(pieceAtOffset(1, dir), pieceAtOffset(-1, dir)) exists (_ === Pawn(opponent))
     }
 
     attackedByKnight || attackedByPawn || attackedByKing || attackedDiagonally || attackedOrthogonally
@@ -460,12 +452,15 @@ class ChessBoard(
   private def isEmptyOrthogonal(from: SquareCoordinate, to: SquareCoordinate): Boolean = {
     val incremented: SquareCoordinate =
       NumericSquareCoordinate((to.colIndx - from.colIndx).signum, (to._2 - from._2).signum) + from
-    incremented == to ||
-      (apply(incremented) match {
-        case NoPiece =>
-          isEmptyOrthogonal(incremented, to)
-        case _ => false
-      }) && (from._1 == to._1 || from._2 == to._2)
+    val orthogonal = from._1 == to._1 || from._2 == to._2
+    val isOnTarget = incremented == to
+    val incPiece = apply(incremented)
+
+    orthogonal && (isOnTarget || (incPiece match {
+      case NoPiece =>
+        isEmptyOrthogonal(incremented, to)
+      case _ => false
+    }))
   }
 
   /**

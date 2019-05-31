@@ -101,4 +101,6 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
 
     CDialog.showMessage(resultMessage, "")
   }
+
+  override def update(): Unit = repaint()
 }
