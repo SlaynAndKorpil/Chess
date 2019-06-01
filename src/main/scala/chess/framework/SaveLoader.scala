@@ -57,7 +57,7 @@ object SaveLoader {
     * Chosen when no other loader is defined for this version
     */
   object NoLoaderDefined extends Loader {
-    /** @return always returns [[scala.collection.immutable.Seq#empty]] */
+    /** @return always returns [[scala.collection.immutable.Seq#empty]]*/
     override def loadSquaresFromXML(xml: Node): Seq[(Char, Column)] = Seq.empty
 
     /** @return always returns [[scala.None]] because there is no loading operation known for this version */
@@ -82,9 +82,12 @@ object SaveLoader {
             )) toList
 
           val positions: Positions = {
-            val pos = xml \ "positions" \ "pos"
+            val pos = (xml \ "positions" \ "pos") map (data => loadSquaresFromXML(data))
             if (pos.isEmpty) Positions.empty
-            else (pos foldRight Positions.empty) ((x: NodeSeq, y: Positions) => y + Position(x.head))
+            else {
+              val positions = pos map (_.toMap) map (p => Position(p))
+              Positions(positions.toArray)
+            }
           }
 
           val color = col
@@ -101,7 +104,7 @@ object SaveLoader {
       }
     }
 
-    override def loadSquaresFromXML(xml: Node): Seq[(Char, Column)] = {
+    override def loadSquaresFromXML(xml: Node): IndexedSeq[(Char, Column)] = {
       for (x <- 1 to 8; col = columnLetter(x))
         yield col -> Column.loadFromXML(xml \ col.toString.toUpperCase)
     }

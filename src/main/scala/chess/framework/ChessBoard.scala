@@ -237,7 +237,7 @@ class ChessBoard(
       result.updated(to, resPiece).emptySquare(from)
     }
 
-    val movedBoard = doMove.clone(positions = positions + Position(saveSquares))
+    val movedBoard = doMove.clone(positions = positions + Position(squares))
 
     def isValid: Boolean =
       from.isValid &&

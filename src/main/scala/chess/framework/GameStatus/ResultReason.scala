@@ -47,7 +47,7 @@ object Repetition extends DrawResultReason {
 }
 
 object Blocked extends DrawResultReason {
-  override val toString: String = "Blocked"
+  override val toString: String = "BlockedPosition"
 }
 
 object InsufficientMaterial extends DrawResultReason {

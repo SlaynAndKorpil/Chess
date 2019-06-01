@@ -36,6 +36,10 @@ class Positions(val positions: Array[Position], val maxRepetition: Int) {
   /** @return the number of stored positions */
   def length: Int = positions.length
 
+  def head: Position = positions.head
+
+  def tail: Positions = Positions(positions.tail)
+
   /**
     * Converts this object to xml.
     *
@@ -44,10 +48,10 @@ class Positions(val positions: Array[Position], val maxRepetition: Int) {
     * @return an xml object
     */
   def toXML: NodeSeq = {
-    import scala.xml.NodeSeq.seqToNodeSeq
-    seqToNodeSeq(positions.foldLeft(NodeSeq.Empty)((node: Seq[Node], pos: Position) => {
-      seqToNodeSeq(node.theSeq ++ pos.pos)
-    }))
+    //    seqToNodeSeq(positions.foldLeft(NodeSeq.Empty)((node: Seq[Node], pos: Position) => {
+    //      seqToNodeSeq(node.theSeq ++ pos.pos)
+    //    }))
+      <placeholder for="positions.toXML"/>
   }
 }
 
@@ -85,7 +89,7 @@ object NoPositions extends Positions(Array(), 0) {
 }
 
 /** Stores a position in XML format. */
-case class Position(pos: Node) extends AnyVal {
+case class Position(pos: Map[Char, Column]) extends AnyVal {
   /**
     * Compares this position with another.
     *
@@ -95,38 +99,22 @@ case class Position(pos: Node) extends AnyVal {
     */
   def ==(other: Position): Boolean = {
     val compared: Seq[Seq[Boolean]] =
-      for (x <- 1 to 8; col = columnLetter(x).toString.toUpperCase) yield {
-        val otherPos = other.pos \ col
-        val thisPos = this.pos \ col
-        for (y <- 1 to 8; row = "l" + y) yield {
-          {
-            otherPos.theSeq.exists(_.label == row) == thisPos.theSeq.exists(_.label == row)
-          } && {
-            val otherPiece = Piece.fromXML(otherPos \ row)
-            val piece = Piece.fromXML(thisPos \ row)
-            piece match {
-              case Pawn(_, _) => piece == otherPiece //TODO moved is not the only relevance for en passant
-              case King(_, _) => piece == otherPiece
-              case Rook(_, _) => piece == otherPiece
-              case _ =>
-                piece === otherPiece
-            }
+      for (x <- 1 to 8; col = columnLetter(x)) yield {
+        val otherPos = other.pos(col)
+        val thisPos = this.pos(col)
+        for (y <- 1 to 8) yield {
+          val otherPiece = otherPos(y)
+          val piece = thisPos(y)
+          piece match {
+            case Pawn(_, _) => piece == otherPiece //TODO moved is not the only relevance for en passant
+            case King(_, _) => piece == otherPiece
+            case Rook(_, _) => piece == otherPiece
+            case _ =>
+              piece === otherPiece
           }
         }
       }
     val neg = compared.flatten contains false
     !neg
   }
-}
-
-object Position {
-  /**
-    * Builds a [[chess.framework.Position]] from a sequence of nodes.
-    *
-    * @usecase This is used to build positions from the sequence returned by [[chess.framework.ChessBoard#saveSquares]]
-    * @param pos a sequence of columns in xml format
-    */
-  def apply(pos: NodeSeq): Position = Position(<pos>
-    {pos}
-  </pos>)
 }

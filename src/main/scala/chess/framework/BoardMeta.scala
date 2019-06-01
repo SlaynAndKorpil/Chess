@@ -13,9 +13,8 @@ trait BoardMeta {
 
   private[framework] def takeback: Option[(ChessBoard, () => Unit)] =
     if (positions.length >= 1) {
-      val data = positions.positions.head.pos
       Some(
-        clone(squares = SaveLoader.preferredLoader.loadSquaresFromXML(data).toMap, positions = this.positions.--, gameStatus = StandardReq, turn = this.turn.opposite),
+        clone(squares = positions.head.pos, positions = this.positions.--, gameStatus = StandardReq, turn = this.turn.opposite),
         () => io.removeTakeback()
       )
     }
