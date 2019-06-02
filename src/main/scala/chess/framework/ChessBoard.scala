@@ -394,7 +394,7 @@ class ChessBoard(
       Array.apply(partApply(1, 1), partApply(-1, 1), partApply(1, -1), partApply(-1, -1), partApply(0, 0), partApply(-1, 0), partApply(1, 0), partApply(0, -1), partApply(0, 1)) exists (King(opponent) === _)
 
     val attackedDiagonally: Boolean =
-      Array(Queen(opponent), Rook(opponent)) ^ Array(partNxtPiece(1, 1), partNxtPiece(-1, -1), partNxtPiece(1, -1), partNxtPiece(-1, 1))
+      Array(Queen(opponent), Bishop(opponent)) ^ Array(partNxtPiece(1, 1), partNxtPiece(-1, -1), partNxtPiece(1, -1), partNxtPiece(-1, 1))
 
     val attackedOrthogonally: Boolean =
       Array(Queen(opponent), Rook(opponent)) ^ Array(partNxtPiece(1, 0), partNxtPiece(-1, 0), partNxtPiece(0, -1), partNxtPiece(0, 1))
@@ -420,10 +420,36 @@ class ChessBoard(
   private def isStalemate: Boolean = false
 
   //TODO implement
-  private def isInsufficientMaterial: Boolean = false
+  private def isInsufficientMaterial: Boolean = {
+    val pieces = allPieces map (tup => (if (tup._1.colIndx % 2 == tup._1.row % 2) Black else White, tup._2))
+    val black = pieces filter (_._2.color == Black)
+    val white = pieces filter (_._2.color == White)
+    val blackPieces = black map (_._2)
+    val whitePieces = white map (_._2)
+
+    val blackValue: Int = (blackPieces map (_.value)).sum - King(Black).value
+    val whiteValue: Int = (whitePieces map (_.value)).sum - King(White).value
+
+    //FIXME only tests for queens and rooks
+    (blackValue == 0 && whiteValue == 0) ||
+      (if (blackPieces.exists(_ === Queen(Black) || whitePieces.exists(_ === Queen(White) || blackPieces.exists(_ === Rook(Black)) || whitePieces.exists(_ === Rook(White))))) false
+      else true)
+  }
 
   private def isFivefoldRepetition: Boolean =
     positions.maxRepetition >= 5
+
+  private def allPieces: Array[(SquareCoordinate, AnyPiece)] = {
+    val allSquares = for {
+      x <- 1 to 8
+      col = columnLetter(x)
+      row <- 1 to 8
+      piece: Piece = squares(col)(row)
+      if piece.nonEmpty
+    } yield (SquareCoordinate(col, row), piece)
+    val typed = allSquares.toArray.asInstanceOf[Array[(SquareCoordinate, AnyPiece)]]
+    typed filter (x => x._2.nonEmpty)
+  }
 
   /**
     * Searches for the next piece.
@@ -450,17 +476,8 @@ class ChessBoard(
     * @see isEmptyDiagonal
     */
   private def isEmptyOrthogonal(from: SquareCoordinate, to: SquareCoordinate): Boolean = {
-    val incremented: SquareCoordinate =
-      NumericSquareCoordinate((to.colIndx - from.colIndx).signum, (to._2 - from._2).signum) + from
     val orthogonal = from._1 == to._1 || from._2 == to._2
-    val isOnTarget = incremented == to
-    val incPiece = apply(incremented)
-
-    orthogonal && (isOnTarget || (incPiece match {
-      case NoPiece =>
-        isEmptyOrthogonal(incremented, to)
-      case _ => false
-    }))
+    orthogonal && isEmptyConnection(from, to)
   }
 
   /**
@@ -471,12 +488,16 @@ class ChessBoard(
   private def isEmptyDiagonal(from: SquareCoordinate, to: SquareCoordinate): Boolean = {
     val startColIndex = from.colIndx
     val endColIndex = to.colIndx
-    val incremented: NumericSquareCoordinate = NumericSquareCoordinate((endColIndex - startColIndex).signum, (to._2 - from._2).signum) + from
-    incremented == NumericSquareCoordinate(0, 0) || AbstractSqrCoordinate.indxSqr2sqr(incremented) == to ||
-      ((apply(incremented) match {
-        case NoPiece => isEmptyDiagonal(incremented, to)
-        case _ => false
-      }) && (startColIndex - endColIndex == from._2 - to._2 || startColIndex - to._2 == endColIndex - from._2))
+    val diagonal = startColIndex - endColIndex == from._2 - to._2 || startColIndex - to._2 == endColIndex - from._2
+    diagonal && isEmptyConnection(from, to)
+  }
+
+  private def isEmptyConnection(from: SquareCoordinate, to: SquareCoordinate): Boolean = {
+    val startColIndex = from.colIndx
+    val endColIndex = to.colIndx
+    val incremented: SquareCoordinate = NumericSquareCoordinate((endColIndex - startColIndex).signum, (to._2 - from._2).signum) + from
+    val isOnTarget = incremented == to
+    isOnTarget || (if (apply(incremented).isEmpty) isEmptyConnection(incremented, to) else false)
   }
 
   /**
@@ -618,7 +639,7 @@ object ChessBoard {
     }
   }
 
-  /** @return `true` if a column with this identifier does exist, else `false` */
+  /** @return `true` if a column with this identifier does exist, else `false`*/
   def isValidColumn(column: Char): Boolean =
     columnIndex(column) <= 8 && columnIndex(column) >= 1
 
