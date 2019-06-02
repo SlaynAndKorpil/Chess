@@ -1,5 +1,7 @@
 package chess.framework
 
+import chess.framework.Input.{Input, Promotion}
+
 /**
   * An interface to an [[chess.framework.ChessBoard]] for any I/O implementation.
   * This interface contains some convenience methods for easier interaction with
@@ -23,7 +25,7 @@ trait ChessIO {
   /** This is called when the draw offer should be closed. */
   def removeDrawOffer(): Unit
 
-  /** This is called when the board expects a [[chess.framework.Promotion]] as input. */
+  /** This is called when the board expects a [[chess.framework.Input.Promotion]] as input. */
   def showPromotion(): Unit
 
   /** This is called when the promotion option should disappear. */
@@ -55,7 +57,7 @@ trait ChessIO {
     *
     * @usecase This method is mostly for convenience so that implementations of
     *          this trait do not have to process the result themselves.
-    * @param input any form of [[chess.framework.Input]]
+    * @param input any form of [[Input]]
     */
   def receiveInput(input: Input[_]): Unit = {
     val res = board.receive(input)

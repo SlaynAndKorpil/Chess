@@ -3,6 +3,7 @@ package chess.console
 import chess.framework._
 import ChessBoard._
 import chess.framework.GameStatus.GameResult
+import chess.framework.Input._
 
 import scala.language.postfixOps
 

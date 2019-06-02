@@ -1,5 +1,6 @@
 package chess.graphics
 
+import chess.framework.Input._
 import chess.framework._
 
 trait BoardEventHandler {

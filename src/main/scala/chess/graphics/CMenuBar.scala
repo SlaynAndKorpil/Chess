@@ -2,6 +2,7 @@ package chess.graphics
 
 import java.awt.event.KeyEvent
 
+import chess.framework.Input.{DrawOffer, Resign, TakebackProposal}
 import chess.framework._
 
 import scala.swing._

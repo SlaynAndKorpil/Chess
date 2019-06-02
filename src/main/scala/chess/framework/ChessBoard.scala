@@ -1,6 +1,7 @@
 package chess.framework
 
 import chess.framework.GameStatus._
+import chess.framework.Input._
 
 import scala.annotation.tailrec
 import scala.language.{implicitConversions, postfixOps}
@@ -130,7 +131,7 @@ class ChessBoard(
   def save: Elem =
     <chessboard version={Version.toString}>
       <board>
-        {saveSquares}
+        {saveSquares(squares)}
       </board>
       <moves>
         {history map (m =>
@@ -159,12 +160,6 @@ class ChessBoard(
         {gameStatus}
       </boardStatus>
     </chessboard>
-
-  private def saveSquares: NodeSeq =
-    for (x <- 1 to 8; col = columnLetter(x)) yield
-      <col>
-        {squares(col).saveData}
-      </col> copy (label = col.toUpper toString)
 
   /**
     * Formats the board as a [[String]]
@@ -511,12 +506,14 @@ class ChessBoard(
     diagonal && isEmptyConnection(from, to)
   }
 
+  @tailrec
   private def isEmptyConnection(from: SquareCoordinate, to: SquareCoordinate): Boolean = {
     val startColIndex = from.colIndx
     val endColIndex = to.colIndx
     val incremented: SquareCoordinate = NumericSquareCoordinate((endColIndex - startColIndex).signum, (to._2 - from._2).signum) + from
-    val isOnTarget = incremented == to
-    isOnTarget || (if (apply(incremented).isEmpty) isEmptyConnection(incremented, to) else false)
+    if (incremented == to) true
+    else if (apply(incremented).isEmpty) isEmptyConnection(incremented, to)
+    else false
   }
 
   /**
@@ -657,6 +654,12 @@ object ChessBoard {
         None
     }
   }
+
+  def saveSquares(squares: Map[Char, Column]): NodeSeq =
+    for (x <- 1 to 8; col = columnLetter(x)) yield
+      <col>
+        {squares(col).saveData}
+      </col> copy (label = col.toUpper toString)
 
   /** @return `true` if a column with this identifier does exist, else `false` */
   def isValidColumn(column: Char): Boolean =

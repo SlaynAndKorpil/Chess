@@ -1,4 +1,6 @@
-package chess.framework
+package chess.framework.Input
+
+import chess.framework.{AnyColor, AnyPiece, SquareCoordinate}
 
 /**
   * Possible inputs for ChessBoard

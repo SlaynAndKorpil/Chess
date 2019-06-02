@@ -34,6 +34,8 @@ class Positions(val positions: Array[Position], val maxRepetition: Int) {
     */
   def -- : Positions = Positions(positions.tail)
 
+  def apply(index: Int): Position = positions(index)
+
   /** @return the number of stored positions */
   def length: Int = positions.length
 
@@ -51,11 +53,7 @@ class Positions(val positions: Array[Position], val maxRepetition: Int) {
   def toXML: NodeSeq = {
     val data = positions map { p =>
       <pos>
-        {for {x <- 1 to 8
-              col = columnLetter(x)} yield
-        <col>
-          {p.pos(col).saveData}
-        </col> copy (label = col.toUpper toString)}
+        {ChessBoard.saveSquares(p.pos)}
       </pos>
     }
     NodeSeq.fromSeq(data)
