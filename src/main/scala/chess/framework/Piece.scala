@@ -42,6 +42,8 @@ object NoPiece extends Piece {
   /** @note only for internal use; simply returns this object */
   private[chess] def apply(c: Color, b: Boolean): NoPiece.type = this
 
+  override def ===[T <: Piece](other: T): Boolean = other == NoPiece
+
   val color: Color = NoColor
 
   val identifier = ' '

@@ -281,14 +281,14 @@ class ChessBoard(
     * @return `true` if the player is checked, otherwise `false`
     */
   private def isCheck(color: AnyColor = turn): Boolean = {
-    val attackedKings = for (c <- 1 to 8; row <- 1 to 8;
-                             sqr = SquareCoordinate(columnLetter(c), row)) yield {
-      val piece = apply(sqr)
-      if (piece == King(color) || piece == King(color, moved = true)) isAttacked(sqr)
-      else false
-    }
-    attackedKings contains true
-  }
+    for {
+      c <- 1 to 8
+      row <- 1 to 8
+      sqr = SquareCoordinate(columnLetter(c), row)
+      piece = apply(sqr)
+      if piece === King(color)
+    } yield isAttacked(sqr)
+  } contains true
 
   /**
     * Tests if this is a correct move under consideration of the moved piece's type.
@@ -375,8 +375,12 @@ class ChessBoard(
     * @return `true` if the square is attacked, otherwise `false`
     */
   private def isAttacked(sqr: SquareCoordinate, attacked: AnyColor): Boolean = {
+    attackingPieces(sqr, attacked) > 0
+  }
+
+  private def attackingPieces(sqr: SquareCoordinate, attacked: AnyColor): Int = {
     implicit class Intersectable[P <: Piece](val content: Array[P]) {
-      def ^[OtherP <: Piece](other: Array[OtherP]): Boolean = (for (i <- content; j <- other) yield j === i) contains true
+      def ^[OtherP <: Piece](other: Array[OtherP]): Int = (for (i <- content; j <- other) yield if (j === i) 1 else 0) sum
     }
 
     val opponent = attacked.opposite
@@ -387,27 +391,27 @@ class ChessBoard(
 
     def partApply(inc: (Int, Int)) = apply(NumericSquareCoordinate(colI, row) + inc)
 
-    val attackedByKnight: Boolean =
-      Array(partApply(1, 2), partApply(2, 1), partApply(2, -1), partApply(1, -2), partApply(-1, 2), partApply(-2, 1), partApply(-2, -1), partApply(-1, -2)) exists (Knight(opponent) === _)
+    val attackedByKnight: Int =
+      Array(partApply(1, 2), partApply(2, 1), partApply(2, -1), partApply(1, -2), partApply(-1, 2), partApply(-2, 1), partApply(-2, -1), partApply(-1, -2)) count (Knight(opponent) === _)
 
-    val attackedByKing: Boolean =
-      Array.apply(partApply(1, 1), partApply(-1, 1), partApply(1, -1), partApply(-1, -1), partApply(0, 0), partApply(-1, 0), partApply(1, 0), partApply(0, -1), partApply(0, 1)) exists (King(opponent) === _)
+    val attackedByKing: Int =
+      Array.apply(partApply(1, 1), partApply(-1, 1), partApply(1, -1), partApply(-1, -1), partApply(0, 0), partApply(-1, 0), partApply(1, 0), partApply(0, -1), partApply(0, 1)) count (King(opponent) === _)
 
-    val attackedDiagonally: Boolean =
+    val attackedDiagonally: Int =
       Array(Queen(opponent), Bishop(opponent)) ^ Array(partNxtPiece(1, 1), partNxtPiece(-1, -1), partNxtPiece(1, -1), partNxtPiece(-1, 1))
 
-    val attackedOrthogonally: Boolean =
+    val attackedOrthogonally: Int =
       Array(Queen(opponent), Rook(opponent)) ^ Array(partNxtPiece(1, 0), partNxtPiece(-1, 0), partNxtPiece(0, -1), partNxtPiece(0, 1))
 
-    val attackedByPawn: Boolean = {
+    val attackedByPawn: Int = {
       val dir = ClassicalValues.pawnDir(opponent.opposite)
 
       def pieceAtOffset(colD: Int, rowD: Int): Piece = apply(NumericSquareCoordinate(colI, row) + (colD, rowD))
 
-      Array(pieceAtOffset(1, dir), pieceAtOffset(-1, dir)) exists (_ === Pawn(opponent))
+      Array(pieceAtOffset(1, dir), pieceAtOffset(-1, dir)) count (_ === Pawn(opponent))
     }
 
-    attackedByKnight || attackedByPawn || attackedByKing || attackedDiagonally || attackedOrthogonally
+    attackedByKnight + attackedByKing + attackedDiagonally + attackedOrthogonally + attackedByPawn
   }
 
   //TODO implement
@@ -419,21 +423,36 @@ class ChessBoard(
   //TODO implement
   private def isStalemate: Boolean = false
 
-  //TODO implement
-  private def isInsufficientMaterial: Boolean = {
-    val pieces = allPieces map (tup => (if (tup._1.colIndx % 2 == tup._1.row % 2) Black else White, tup._2))
-    val black = pieces filter (_._2.color == Black)
-    val white = pieces filter (_._2.color == White)
-    val blackPieces = black map (_._2)
-    val whitePieces = white map (_._2)
+  private def isInsufficientMaterial: Boolean = isInsufficientMaterial(Black) && isInsufficientMaterial(White)
 
-    val blackValue: Int = (blackPieces map (_.value)).sum - King(Black).value
-    val whiteValue: Int = (whitePieces map (_.value)).sum - King(White).value
+  /**
+    * Tests if a specific color has not enough material to mate its opponent.
+    * This occurs when one of the following cases is true:
+    *
+    *   1. no pieces
+    *   2. only bishops of the same color
+    *   3. only one knight
+    *
+    * @return `true` if there is not enough material, otherwise `false`
+    */
+  private def isInsufficientMaterial(color: AnyColor): Boolean = {
+    val piecesOnColor = allPieces map (tup => (if (tup._1.colIndx % 2 == tup._1.row % 2) Black else White, tup._2)) filter (_._2.color == color) filterNot (_._2 === King(color))
+    val pieces = piecesOnColor map (_._2)
 
-    //FIXME only tests for queens and rooks
-    (blackValue == 0 && whiteValue == 0) ||
-      (if (blackPieces.exists(_ === Queen(Black) || whitePieces.exists(_ === Queen(White) || blackPieces.exists(_ === Rook(Black)) || whitePieces.exists(_ === Rook(White))))) false
-      else true)
+    val value: Int = (pieces map (_.value)).sum
+
+    def existsPawn = pieces.exists(_ === Pawn(color))
+
+    (value <= 0) || {
+      !existsPawn && {
+        val bishops = piecesOnColor filter (_._2 === Bishop(color))
+        val knights = pieces filter (_ === Knight(color))
+
+        def bishopsOfSameColor = bishops.exists(_._1 == White) != bishops.exists(_._1 == Black)
+
+        (knights.isEmpty && (bishops.isEmpty || bishopsOfSameColor)) || (bishops.isEmpty && knights.length < 2)
+      }
+    }
   }
 
   private def isFivefoldRepetition: Boolean =
@@ -639,7 +658,7 @@ object ChessBoard {
     }
   }
 
-  /** @return `true` if a column with this identifier does exist, else `false`*/
+  /** @return `true` if a column with this identifier does exist, else `false` */
   def isValidColumn(column: Char): Boolean =
     columnIndex(column) <= 8 && columnIndex(column) >= 1
 

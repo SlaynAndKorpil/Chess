@@ -62,8 +62,8 @@ trait ChessIO {
     res match {
       case Some(data) =>
         board = data._1
-        data._2()
         update()
+        data._2()
       case None =>
     }
   }
