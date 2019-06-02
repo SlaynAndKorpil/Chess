@@ -1,7 +1,8 @@
 package chess.framework
 
+import chess.framework.BoardStatus.GameStatus.{GameStatus, StandardReq}
 import chess.framework.ChessBoard.columnLetter
-import chess.framework.GameStatus._
+import chess.framework.BoardStatus._
 
 import scala.language.postfixOps
 import scala.xml._
@@ -19,7 +20,7 @@ class SaveLoader {
     * @param xml input xml data
     * @return a [[ChessBoard]] or [[None]] as a failure
     */
-  def load(xml: Elem): Option[ChessIO => ChessBoard] = {
+  def load(xml: Elem)(implicit io: ChessIO): Option[ChessBoard] = {
     val version = (xml \@ "version").toLong
     val loader = loaderForVersion(version)
     loader.load(xml)
@@ -50,7 +51,7 @@ object SaveLoader {
     def loadSquaresFromXML(xml: Node): Seq[(Char, Column)]
 
     /** Loads a board from xml */
-    def load(xml: Elem): Option[ChessIO => ChessBoard]
+    def load(xml: Elem)(implicit io: ChessIO): Option[ChessBoard]
   }
 
   /**
@@ -61,11 +62,11 @@ object SaveLoader {
     override def loadSquaresFromXML(xml: Node): Seq[(Char, Column)] = Seq.empty
 
     /** @return always returns [[scala.None]] because there is no loading operation known for this version */
-    override def load(xml: Elem): Option[ChessIO => ChessBoard] = None
+    override def load(xml: Elem)(implicit io: ChessIO): Option[ChessBoard] = None
   }
 
   object Loader1 extends Loader {
-    override def load(xml: Elem): Option[ChessIO => ChessBoard] = {
+    override def load(xml: Elem)(implicit io: ChessIO): Option[ChessBoard] = {
       val boardData = xml \ "board"
       val moves = xml \ "moves" \ "move"
       val color = Color(extractWithFilter(xml, "turn"))
@@ -92,14 +93,13 @@ object SaveLoader {
 
           val color = col
 
-          val gameStatus = GameStatus.GameStatus(extractWithFilter(xml, "boardStatus")) match {
+          val gameStatus = GameStatus(extractWithFilter(xml, "boardStatus")) match {
             case Left(status) => status
             case Right(message) =>
               Error error s"$message"
               StandardReq
           }
-
-          Some(io => new ChessBoard(squares, history, positions, color, io, gameStatus))
+          Some(new ChessBoard(squares = squares, history =  history, positions =  positions, turn =  color, gameStatus = gameStatus))
         case _ => None
       }
     }

@@ -1,4 +1,4 @@
-package chess.framework.GameStatus
+package chess.framework.BoardStatus.ResultReason
 
 sealed trait ResultReason {
   override def toString: String

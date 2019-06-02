@@ -2,7 +2,7 @@ package chess.console
 
 import chess.framework._
 import ChessBoard._
-import chess.framework.GameStatus.GameResult
+import chess.framework.BoardStatus.GameResult.GameResult
 import chess.framework.Input._
 
 import scala.language.postfixOps
@@ -46,7 +46,7 @@ class InputInterpreter (plainBoard: ChessIO => ChessBoard) extends ChessIO {
               save(board, in2)
             case "load" => load(in2) match {
               case Some(loadedBoard) =>
-                board = loadedBoard(this)
+                board = loadedBoard
                 println(board)
               case None => Error error "This save file is either from an older version or not existing."
             }

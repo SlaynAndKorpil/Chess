@@ -1,5 +1,6 @@
-package chess.framework.GameStatus
+package chess.framework.BoardStatus.GameResult
 
+import chess.framework.BoardStatus.ResultReason._
 import chess.framework._
 
 sealed trait GameResult {

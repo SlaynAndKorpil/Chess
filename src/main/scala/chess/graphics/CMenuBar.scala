@@ -73,12 +73,12 @@ trait CMenuBar {
       val result = fileChooser.show(reference)
       result match {
         case f: FileChooser.Result.Value if f == FileChooser.Result.Approve =>
+          import gameFrame.{io, board}
           val path = fileChooser.filePath
           val loaded = ChessBoard.load(path)
           loaded match {
             case Some(x) =>
-              import gameFrame._
-              board = x(gameFrame)
+              board = x
               gameFrame.repaint()
             case None =>
           }

@@ -1,6 +1,7 @@
 package chess.framework
 
-import chess.framework.Input.{Input, Promotion}
+import chess.framework.BoardStatus.GameResult._
+import chess.framework.Input._
 
 /**
   * An interface to an [[chess.framework.ChessBoard]] for any I/O implementation.
@@ -11,6 +12,12 @@ import chess.framework.Input.{Input, Promotion}
   * @author Felix Lehner
   */
 trait ChessIO {
+  /**
+    * An implicit self-reference used by all constructors and
+    * generators of [[chess.framework.ChessBoard]] to ease their use.
+    */
+  implicit val io: this.type = this
+
   /**
     * The board that is used as an internal representation of the data structure.
     *
@@ -42,7 +49,7 @@ trait ChessIO {
     *
     * @param result the result that can/ should be displayed to the user.
     */
-  def showEnded(result: GameStatus.GameResult)
+  def showEnded(result: GameResult)
 
   /**
     * This method should update the output (e.g a GUI) and reload the data

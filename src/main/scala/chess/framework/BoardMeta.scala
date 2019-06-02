@@ -1,6 +1,9 @@
 package chess.framework
 
-import chess.framework.GameStatus._
+import chess.framework.BoardStatus.GameResult.Win
+import chess.framework.BoardStatus.GameStatus.{Ended, GameStatus, PromoReq, StandardReq}
+import chess.framework.BoardStatus.ResultReason.Resignation
+import chess.framework.BoardStatus._
 
 trait BoardMeta {
   self: ChessBoard =>

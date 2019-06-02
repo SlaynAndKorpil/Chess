@@ -1,6 +1,7 @@
 package chess.graphics
 
-import chess.framework.GameStatus._
+import chess.framework.BoardStatus.GameResult.{BlackWins, Draw, GameResult, WhiteWins}
+import chess.framework.BoardStatus._
 import chess.framework.Input.{DrawAcceptance, DrawReject, Input, TakebackAcceptance, TakebackReject}
 import chess.framework.{Black => _, White => _, _}
 import chess.graphics.BoardColors.BoardColor

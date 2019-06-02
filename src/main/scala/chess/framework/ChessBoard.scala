@@ -1,6 +1,9 @@
 package chess.framework
 
-import chess.framework.GameStatus._
+import chess.framework.BoardStatus.GameResult.{BlackWins, Draw, WhiteWins}
+import chess.framework.BoardStatus.GameStatus.{DrawAcceptanceReq, Ended, GameStatus, PromoReq, StandardReq, TakebackAcceptanceReq}
+import chess.framework.BoardStatus.ResultReason.{Blocked, DrawAgreement, InsufficientMaterial, Mate, Repetition, Stalemate}
+import chess.framework.BoardStatus.{GameResult, _}
 import chess.framework.Input._
 
 import scala.annotation.tailrec
@@ -21,9 +24,8 @@ class ChessBoard(
                   val history: List[MoveData],
                   val positions: Positions,
                   val turn: AnyColor = White,
-                  val io: ChessIO,
                   val gameStatus: GameStatus
-                ) extends BoardMeta {
+                ) (implicit val io: ChessIO) extends BoardMeta {
 
   import ChessBoard._
 
@@ -83,7 +85,7 @@ class ChessBoard(
 
       case DrawAcceptance if gameStatus == DrawAcceptanceReq =>
         io.removeDrawOffer()
-        val res = Draw(DrawAgreement)
+        val res = GameResult.Draw(DrawAgreement)
         Some(clone(gameStatus = Ended(res)), () => io.showEnded(res))
 
       case TakebackProposal if gameStatus == StandardReq =>
@@ -117,7 +119,7 @@ class ChessBoard(
              turn: AnyColor = this.turn,
              io: ChessIO = this.io,
              gameStatus: GameStatus = this.gameStatus) =
-    new ChessBoard(squares, history, positions, turn, io, gameStatus)
+    new ChessBoard(squares, history, positions, turn, gameStatus)(io)
 
   /**
     * Stores the board in the xml format.
@@ -244,14 +246,14 @@ class ChessBoard(
         !movedBoard.isCheck(turn)
 
     val updatedStatus: GameStatus =
-      if (movedBoard.isBlocked) Ended(Draw(Blocked))
-      else if (movedBoard.isFivefoldRepetition) Ended(Draw(Repetition))
-      else if (movedBoard.isStalemate) Ended(Draw(Stalemate))
+      if (movedBoard.isBlocked) Ended(GameResult.Draw(Blocked))
+      else if (movedBoard.isFivefoldRepetition) Ended(GameResult.Draw(Repetition))
+      else if (movedBoard.isStalemate) Ended(GameResult.Draw(Stalemate))
       else if (movedBoard.isMate) Ended(turn match {
         case White => WhiteWins by Mate
         case Black => BlackWins by Mate
       })
-      else if (movedBoard.isInsufficientMaterial) Ended(Draw(InsufficientMaterial))
+      else if (movedBoard.isInsufficientMaterial) Ended(GameResult.Draw(InsufficientMaterial))
       else movedBoard.gameStatus
 
 
@@ -542,21 +544,21 @@ object ChessBoard {
   /**
     * @return An empty chess board
     */
-  def empty(io: ChessIO): ChessBoard = fill(NoPiece, io)
+  def empty(implicit io: ChessIO): ChessBoard = fill(NoPiece)
 
   /**
     * Fills a 8 * 8 board with a specific piece.
     *
     * @return a fully filled [[chess.framework.ChessBoard]]
     */
-  def fill(piece: Piece, io: ChessIO): ChessBoard = this (Array.fill(8)(Column(piece)), Nil, Positions.empty, White, io).get
+  def fill(piece: Piece) (implicit io: ChessIO): ChessBoard = this (Array.fill(8)(Column(piece)), Nil, Positions.empty, White).get
 
   /**
     * Defines the classical chess standard board
     *
     * @return a chess board with the standard start position
     */
-  def classicalBoard(io: ChessIO): ChessBoard = new ChessBoard(
+  def classicalBoard(implicit io: ChessIO): ChessBoard = new ChessBoard(
     Map(
       'a' -> new Column(Map(
         1 -> Rook(White),
@@ -606,10 +608,15 @@ object ChessBoard {
         7 -> Pawn(Black),
         8 -> Rook(Black)
       ))
-    ), Nil, Positions.empty, White, io, StandardReq
+    ), Nil, Positions.empty, White, StandardReq
   )
 
-  def apply(columns: Array[Column], history: List[MoveData] = Nil, positions: Positions = Positions.empty, turn: AnyColor = White, io: ChessIO): Option[ChessBoard] =
+  def apply(squares: Map[Char, Column], history: List[MoveData], positions: Positions, turn: AnyColor, gameStatus: GameStatus) (implicit io: ChessIO): Option[ChessBoard] =
+    if (squares.size >= 8)
+      Some(new ChessBoard(squares, history, positions, turn, gameStatus))
+    else None
+
+  def apply(columns: Array[Column], history: List[MoveData] = Nil, positions: Positions = Positions.empty, turn: AnyColor = White) (implicit io: ChessIO): Option[ChessBoard] =
     if (columns.length >= 8)
       Some(new ChessBoard(
         Map(
@@ -621,7 +628,7 @@ object ChessBoard {
           'f' -> columns(5),
           'g' -> columns(6),
           'h' -> columns(7)
-        ), history, positions, turn, io, StandardReq
+        ), history, positions, turn, StandardReq
       ))
     else None
 
@@ -645,7 +652,7 @@ object ChessBoard {
     * @param path the file
     * @return a board or [[scala.None]] when the board was saved in a different version.
     */
-  def load(path: String): Option[ChessIO => ChessBoard] = {
+  def load(path: String)(implicit io: ChessIO): Option[ChessBoard] = {
     val fullPath = path + (if (path contains ".") "" else ".save")
     try new SaveLoader().load(xml.XML.load(fullPath))
     catch {

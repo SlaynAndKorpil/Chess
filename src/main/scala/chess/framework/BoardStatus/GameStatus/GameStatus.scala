@@ -1,5 +1,6 @@
-package chess.framework.GameStatus
+package chess.framework.BoardStatus.GameStatus
 
+import chess.framework.BoardStatus.GameResult.GameResult
 import chess.framework._
 
 sealed trait GameStatus {
@@ -8,7 +9,7 @@ sealed trait GameStatus {
 
 object GameStatus {
   def apply(state: String): Either[GameStatus, String] = {
-    import GameResult.contains
+    import chess.framework.BoardStatus.GameResult.GameResult.contains
 
     val last = state.length - 1
     val failMessage = Right("Failed to load gameStatus.")
