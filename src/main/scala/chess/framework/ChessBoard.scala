@@ -1,9 +1,8 @@
 package chess.framework
 
-import chess.framework.BoardStatus.GameResult.{BlackWins, Draw, WhiteWins}
-import chess.framework.BoardStatus.GameStatus.{DrawAcceptanceReq, Ended, GameStatus, PromoReq, StandardReq, TakebackAcceptanceReq}
-import chess.framework.BoardStatus.ResultReason.{Blocked, DrawAgreement, InsufficientMaterial, Mate, Repetition, Stalemate}
-import chess.framework.BoardStatus.{GameResult, _}
+import chess.framework.BoardStatus.GameResult._
+import chess.framework.BoardStatus.GameStatus._
+import chess.framework.BoardStatus.ResultReason._
 import chess.framework.Input._
 
 import scala.annotation.tailrec
@@ -85,7 +84,7 @@ class ChessBoard(
 
       case DrawAcceptance if gameStatus == DrawAcceptanceReq =>
         io.removeDrawOffer()
-        val res = GameResult.Draw(DrawAgreement)
+        val res = Draw(DrawAgreement)
         Some(clone(gameStatus = Ended(res)), () => io.showEnded(res))
 
       case TakebackProposal if gameStatus == StandardReq =>
@@ -246,14 +245,14 @@ class ChessBoard(
         !movedBoard.isCheck(turn)
 
     val updatedStatus: GameStatus =
-      if (movedBoard.isBlocked) Ended(GameResult.Draw(Blocked))
-      else if (movedBoard.isFivefoldRepetition) Ended(GameResult.Draw(Repetition))
-      else if (movedBoard.isStalemate) Ended(GameResult.Draw(Stalemate))
+      if (movedBoard.isBlocked) Ended(Draw by Blocked)
+      else if (movedBoard.isFivefoldRepetition) Ended(Draw by Repetition)
+      else if (movedBoard.isStalemate) Ended(Draw by Stalemate)
       else if (movedBoard.isMate) Ended(turn match {
         case White => WhiteWins by Mate
         case Black => BlackWins by Mate
       })
-      else if (movedBoard.isInsufficientMaterial) Ended(GameResult.Draw(InsufficientMaterial))
+      else if (movedBoard.isInsufficientMaterial) Ended(Draw by InsufficientMaterial)
       else movedBoard.gameStatus
 
 

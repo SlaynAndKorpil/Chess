@@ -41,7 +41,7 @@ case class Ended(result: GameResult) extends GameStatus {
   def isActive: Boolean = false
 }
 
-trait Active extends GameStatus {
+sealed trait Active extends GameStatus {
   def isActive: Boolean = true
 }
 

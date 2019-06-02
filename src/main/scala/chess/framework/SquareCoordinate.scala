@@ -17,18 +17,19 @@ sealed abstract class AbstractSqrCoordinate[ColumnType] {
   def to(square: AbstractSqrCoordinate[_]): List[AbstractSqrCoordinate[_]] = {
     val inc = (square.colIndx - colIndx).signum -> (square.row - row).signum
     val incremented = this + inc
-    if (inc == (0, 0)) this :: Nil
-    else this :: incremented.to(square)
+    this :: {
+      if (incremented == this) Nil
+      else incremented.to(square)
+    }
   }
 
   def until[T](square: AbstractSqrCoordinate[_]): List[AbstractSqrCoordinate[_]] = {
-    //FIXME probably malfunctioning
-    if (square.colIndx - colIndx > 1 || square.row - row > 1 || square.colIndx - colIndx < -1 || square.row - row < -1) {
-      val inc = ((square.colIndx - colIndx).signum, (square.row - row).signum)
-      if (inc._1 == 0 && inc._2 == 0) Nil
-      else this :: (this + inc).to(square)
+    val inc = (square.colIndx - colIndx).signum -> (square.row - row).signum
+    val incremented = this + inc
+    this :: {
+      if (incremented == square) Nil
+      else incremented until square
     }
-    else Nil
   }
 
   def +(sq: AbstractSqrCoordinate[_]): AbstractSqrCoordinate[_]

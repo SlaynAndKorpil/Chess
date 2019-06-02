@@ -2,7 +2,6 @@ package chess.framework
 
 import chess.framework.BoardStatus.GameStatus.{GameStatus, StandardReq}
 import chess.framework.ChessBoard.columnLetter
-import chess.framework.BoardStatus._
 
 import scala.language.postfixOps
 import scala.xml._
