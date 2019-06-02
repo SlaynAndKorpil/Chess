@@ -57,7 +57,7 @@ object SaveLoader {
     * Chosen when no other loader is defined for this version
     */
   object NoLoaderDefined extends Loader {
-    /** @return always returns [[scala.collection.immutable.Seq#empty]]*/
+    /** @return always returns [[scala.collection.immutable.Seq#empty]] */
     override def loadSquaresFromXML(xml: Node): Seq[(Char, Column)] = Seq.empty
 
     /** @return always returns [[scala.None]] because there is no loading operation known for this version */
@@ -75,9 +75,9 @@ object SaveLoader {
 
           val history = moves map (move =>
             MoveData(
-              SquareCoordinate(extractWithFilter(move, "start").head, extractWithFilter(move, "start").last.toInt),
+              SquareCoordinate(extractWithFilter(move, "start").head, extractWithFilter(move, "start").last.asDigit),
               Piece(extractWithFilter(move, "movedPiece").head, Color(extractWithFilter(move, "movedPiece").last), moved = true),
-              SquareCoordinate(extractWithFilter(move, "end").head, extractWithFilter(move, "end").last.toInt),
+              SquareCoordinate(extractWithFilter(move, "end").head, extractWithFilter(move, "end").last.asDigit),
               extractWithFilter(move, "capture").toBoolean
             )) toList
 

@@ -2,6 +2,7 @@ package chess.framework
 
 import chess.framework.ChessBoard.columnLetter
 
+import scala.language.postfixOps
 import scala.xml._
 
 /**
@@ -48,10 +49,16 @@ class Positions(val positions: Array[Position], val maxRepetition: Int) {
     * @return an xml object
     */
   def toXML: NodeSeq = {
-    //    seqToNodeSeq(positions.foldLeft(NodeSeq.Empty)((node: Seq[Node], pos: Position) => {
-    //      seqToNodeSeq(node.theSeq ++ pos.pos)
-    //    }))
-      <placeholder for="positions.toXML"/>
+    val data = positions map { p =>
+      <pos>
+        {for {x <- 1 to 8
+              col = columnLetter(x)} yield
+        <col>
+          {p.pos(col).saveData}
+        </col> copy (label = col.toUpper toString)}
+      </pos>
+    }
+    NodeSeq.fromSeq(data)
   }
 }
 
