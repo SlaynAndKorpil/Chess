@@ -3,7 +3,7 @@ package chess.framework
 import chess.framework.BoardStatus.GameResult.Win
 import chess.framework.BoardStatus.GameStatus.{Ended, GameStatus, PromoReq, StandardReq}
 import chess.framework.BoardStatus.ResultReason.Resignation
-import chess.framework.BoardStatus._
+import chess.framework.IOEvents.{IOEvent, RemoveTakeback, RemovePromotion}
 
 trait BoardMeta {
   self: ChessBoard =>
@@ -14,7 +14,7 @@ trait BoardMeta {
 
   val gameStatus: GameStatus
 
-  private[framework] def takeback: Option[(ChessBoard, () => Unit)] =
+  private[framework] def takeback: Option[(ChessBoard, IOEvent)] =
     if (positions.length >= 1) {
       Some(
         clone(
@@ -23,7 +23,7 @@ trait BoardMeta {
           history = history.tail,
           gameStatus = StandardReq,
           turn = turn.opposite),
-        () => io.removeTakeback()
+        RemoveTakeback
       )
     }
     else None
@@ -35,7 +35,7 @@ trait BoardMeta {
     * @param piece the piece's apply method
     * @return an updated [[ChessBoard]] of [[None]] when the piece type is incorrect
     */
-  private[framework] def promote(piece: (AnyColor, Boolean) => AnyPiece): Option[(ChessBoard, () => Unit)] = {
+  private[framework] def promote(piece: (AnyColor, Boolean) => AnyPiece): Option[(ChessBoard, IOEvent)] = {
     val promoColor = turn.opposite
     val promoPiece = piece match {
       case Queen =>
@@ -53,7 +53,7 @@ trait BoardMeta {
       gameStatus match {
         case PromoReq(sqr: SquareCoordinate) =>
           val result = updated(sqr, promoPiece).clone(gameStatus = StandardReq)
-          Some(result, () => io.removePromotion())
+          Some(result, RemovePromotion)
         case _ => None
       }
     }

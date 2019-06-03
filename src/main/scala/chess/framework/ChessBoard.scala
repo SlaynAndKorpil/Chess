@@ -4,6 +4,7 @@ import chess.framework.BoardStatus.GameResult._
 import chess.framework.BoardStatus.GameStatus._
 import chess.framework.BoardStatus.ResultReason._
 import chess.framework.Input._
+import chess.framework.IOEvents._
 
 import scala.annotation.tailrec
 import scala.language.{implicitConversions, postfixOps}
@@ -61,7 +62,7 @@ class ChessBoard(
     * @return an updated [[ChessBoard]] or [[None]] when the input is either unknown
     *         or does not match the current input requirements given by [[gameStatus]].
     */
-  def receive[T](input: Input[T]): Option[(ChessBoard, () => Unit)] =
+  def receive[T](input: Input[T]): Option[(ChessBoard, IOEvent)] =
     input match {
       case MoveParams(from, to) if gameStatus == StandardReq =>
         move(from, to)
@@ -72,34 +73,31 @@ class ChessBoard(
       case DrawOffer if gameStatus == StandardReq =>
         if (positions.maxRepetition >= 3) {
           val res = Draw(Repetition)
-          Some(clone(gameStatus = Ended(res)), () => io.showEnded(res))
+          Some(clone(gameStatus = Ended(res)), ShowEnded(res))
         }
         else {
-          Some(clone(gameStatus = DrawAcceptanceReq), () => io.showDrawOffer())
+          Some(clone(gameStatus = DrawAcceptanceReq), ShowDrawOffer)
         }
 
       case DrawReject if gameStatus == DrawAcceptanceReq =>
-        io.removeDrawOffer()
-        Some(clone(gameStatus = StandardReq), () => ())
+        Some(clone(gameStatus = StandardReq), NoEvent)
 
       case DrawAcceptance if gameStatus == DrawAcceptanceReq =>
-        io.removeDrawOffer()
         val res = Draw(DrawAgreement)
-        Some(clone(gameStatus = Ended(res)), () => io.showEnded(res))
+        Some(clone(gameStatus = Ended(res)), ShowEnded(res))
 
       case TakebackProposal if gameStatus == StandardReq =>
-        Some(clone(gameStatus = TakebackAcceptanceReq), () => io.showTakeback())
+        Some(clone(gameStatus = TakebackAcceptanceReq), ShowTakeback)
 
       case TakebackAcceptance if gameStatus == TakebackAcceptanceReq =>
-        io.removeTakeback()
         takeback
 
       case TakebackReject if gameStatus == TakebackAcceptanceReq =>
-        Some(clone(gameStatus = StandardReq), () => io.removeTakeback())
+        Some(clone(gameStatus = StandardReq), RemoveTakeback)
 
       case Resign if gameStatus == StandardReq =>
         val res = resign
-        Some(clone(gameStatus = res), () => io.showEnded(res.result))
+        Some(clone(gameStatus = res), ShowEnded(res.result))
 
       case _ => None
     }
@@ -195,7 +193,7 @@ class ChessBoard(
     * @param to   the end-coordinates
     * @return the updated board
     */
-  private def move(from: SquareCoordinate, to: SquareCoordinate): Option[(ChessBoard, () => Unit)] = {
+  private def move(from: SquareCoordinate, to: SquareCoordinate): Option[(ChessBoard, IOEvent)] = {
     val movingPiece = apply(from)
     val endPiece = apply(to)
     val startColor = movingPiece.color
@@ -256,20 +254,20 @@ class ChessBoard(
       else movedBoard.gameStatus
 
 
-    val action: () => Unit = () => {
+    val action: IOEvent =
         updatedStatus match {
           case res: Ended =>
-            io.showEnded(res.result)
+            ShowEnded(res.result)
           case _ => movingPiece match {
             case Pawn(color, _) if to.row == ClassicalValues.piecesStartLine(color.opposite) =>
-              io.showPromotion()
+              ShowPromotion
             case _ if movedBoard.isCheck() =>
-              io.showCheck(movedBoard.checkedSquare().get)
+              ShowCheck(movedBoard.checkedSquare().get)
             case _ =>
-              Unit
+              NoEvent
           }
         }
-      }
+
 
     if (isValid) Some(movedBoard.clone(gameStatus = updatedStatus), action)
     else None

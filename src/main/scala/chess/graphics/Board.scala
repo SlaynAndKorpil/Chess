@@ -1,7 +1,8 @@
 package chess.graphics
 
-import chess.framework.BoardStatus.GameResult.{BlackWins, Draw, GameResult, WhiteWins}
-import chess.framework.BoardStatus.ResultReason.InsufficientMaterial
+import chess.framework.BoardStatus.GameResult._
+import chess.framework.BoardStatus.ResultReason._
+import chess.framework.IOEvents._
 import chess.framework.Input._
 import chess.framework._
 import chess.graphics.BoardColors._
@@ -47,10 +48,42 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
       case _ =>
     }
 
-  override def showDrawOffer(): Unit = {
-    CDialog.showConfirmation(message = "Do you want a draw?", title = "Draw offer", onSuccess = () => {
-      receiveInput(DrawAcceptance)
-    }, onRejection = () => receiveInput(DrawReject))
+  override def update(): Unit = repaint()
+
+  override def react(event: IOEvent): Unit = event match {
+    case ShowCheck(on) => println(s"Checked king on $on")
+
+    case ShowEnded(result) =>
+      val resultMessage: String = {
+        val res = result match {
+          case BlackWins(_) => "win for black"
+          case WhiteWins(_) => "win for white"
+          case Draw(_) => "draw"
+        }
+        val reason = result.reason match {
+          case InsufficientMaterial => "insufficient material"
+          case x => x.toString
+        }
+        s"The game ended with a $res due to $reason."
+      }
+
+      CDialog.showMessage(resultMessage, "")
+
+    case ShowTakeback =>
+      CDialog.showConfirmation(message = "Do you want to allow your opponent a takeback?", title = "Takeback", onSuccess = () => {
+        receiveInput(TakebackAcceptance)
+      }, onRejection = () => receiveInput(TakebackReject))
+
+    case RemovePromotion => promoMenu.close()
+
+    case ShowPromotion => promoMenu.open()
+
+    case ShowDrawOffer =>
+      CDialog.showConfirmation(message = "Do you want a draw?", title = "Draw offer", onSuccess = () => {
+        receiveInput(DrawAcceptance)
+      }, onRejection = () => receiveInput(DrawReject))
+
+    case _ =>
   }
 
   override def receiveInput(input: Input[_]): Unit = {
@@ -69,43 +102,4 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
         sq.piece = board(sq.pos)
       case _ =>
     }
-
-  override def removeDrawOffer(): Unit = {}
-
-  override def showPromotion(): Unit = {
-    promoMenu.open()
-  }
-
-  override def removePromotion(): Unit = {
-    promoMenu.close()
-  }
-
-  override def showTakeback(): Unit = {
-    CDialog.showConfirmation(message = "Do you want to allow your opponent a takeback?", title = "Takeback", onSuccess = () => {
-      receiveInput(TakebackAcceptance)
-    }, onRejection = () => receiveInput(TakebackReject))
-  }
-
-  override def removeTakeback(): Unit = {}
-
-  override def showEnded(result: GameResult): Unit = {
-    val resultMessage: String = {
-      val res = result match {
-        case BlackWins(_) => "win for black"
-        case WhiteWins(_) => "win for white"
-        case Draw(_) => "draw"
-      }
-      val reason = result.reason match {
-        case InsufficientMaterial => "insufficient material"
-        case x => x.toString
-      }
-      s"The game ended with a $res due to $reason."
-    }
-
-    CDialog.showMessage(resultMessage, "")
-  }
-
-  override def update(): Unit = repaint()
-
-  override def showCheck(on: SquareCoordinate): Unit = println(s"Checked king on $on")
 }

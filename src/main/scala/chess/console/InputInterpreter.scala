@@ -1,8 +1,8 @@
 package chess.console
 
 import chess.framework._
-import ChessBoard._
-import chess.framework.BoardStatus.GameResult.GameResult
+import ChessBoard.{save, load}
+import chess.framework.IOEvents._
 import chess.framework.Input._
 
 import scala.language.postfixOps
@@ -64,21 +64,10 @@ class InputInterpreter (plainBoard: ChessIO => ChessBoard) extends ChessIO {
 
   def move (from: SquareCoordinate, to: SquareCoordinate): Unit = receiveInput(MoveParams(from, to))
 
-  override def showDrawOffer(): Unit = {}
-
-  override def removeDrawOffer(): Unit = {}
-
-  override def showPromotion(): Unit = ()
-
-  override def removePromotion(): Unit = ()
-
-  override def showTakeback(): Unit = ()
-
-  override def removeTakeback(): Unit = ()
-
-  override def showEnded(result: GameResult): Unit = Debugger debug s"ended with $result"
-
   override def update(): Unit = println(board)
 
-  override def showCheck(on: SquareCoordinate): Unit = ()
+  override def react(event: IOEvent): Unit = event match {
+    case ShowEnded(result) => Debugger debug s"ended with $result"
+    case _ =>
+  }
 }

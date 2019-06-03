@@ -1,6 +1,6 @@
 package chess.framework
 
-import chess.framework.BoardStatus.GameResult._
+import chess.framework.IOEvents._
 import chess.framework.Input._
 
 /**
@@ -26,32 +26,8 @@ trait ChessIO {
     */
   private[framework] var board: ChessBoard
 
-  /** This is called when the player should decide if he agrees to a draw. */
-  def showDrawOffer(): Unit
-
-  /** This is called when the draw offer should be closed. */
-  def removeDrawOffer(): Unit
-
-  /** This is called when the board expects a [[chess.framework.Input.Promotion]] as input. */
-  def showPromotion(): Unit
-
-  /** This is called when the promotion option should disappear. */
-  def removePromotion(): Unit
-
-  /** This is called when a takeback is proposed. */
-  def showTakeback(): Unit
-
-  /** This is called when the takeback option should disappear. */
-  def removeTakeback(): Unit
-
-  /**
-    * This method gets called when the current game ended to display the result.
-    *
-    * @param result the result that can/ should be displayed to the user.
-    */
-  def showEnded(result: GameResult)
-
-  def showCheck(on: SquareCoordinate): Unit
+  //TODO this is only a temporary placeholder and should be replaced
+  def react(event: IOEvent): Unit
 
   /**
     * This method should update the output (e.g a GUI) and reload the data
@@ -74,7 +50,7 @@ trait ChessIO {
       case Some(data) =>
         board = data._1
         update()
-        data._2()
+        react(data._2)
       case None =>
     }
   }
