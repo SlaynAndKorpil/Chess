@@ -51,6 +51,8 @@ trait ChessIO {
     */
   def showEnded(result: GameResult)
 
+  def showCheck(on: SquareCoordinate): Unit
+
   /**
     * This method should update the output (e.g a GUI) and reload the data
     * from the [[chess.framework.ChessIO#board]] into the data structure you are using.

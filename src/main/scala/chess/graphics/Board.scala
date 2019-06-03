@@ -1,11 +1,10 @@
 package chess.graphics
 
 import chess.framework.BoardStatus.GameResult.{BlackWins, Draw, GameResult, WhiteWins}
-import chess.framework.BoardStatus._
-import chess.framework.Input.{DrawAcceptance, DrawReject, Input, TakebackAcceptance, TakebackReject}
-import chess.framework.{Black => _, White => _, _}
-import chess.graphics.BoardColors.BoardColor
-import chess.graphics.BoardColors.Brown._
+import chess.framework.BoardStatus.ResultReason.InsufficientMaterial
+import chess.framework.Input._
+import chess.framework._
+import chess.graphics.BoardColors._
 
 import scala.swing._
 
@@ -13,8 +12,6 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
   val promoMenu = new PromotionChooser(400, 100)
   private[chess] var board: ChessBoard = ChessBoard.classicalBoard(this)
   listenTo(promoMenu)
-
-  implicit lazy private val promotionLoc: Component = contents.head
 
   setup()
 
@@ -26,7 +23,7 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
         else if (i == 9) new CTextField(col.toString)
         else if (j == 0) new CTextField(row.toString)
         else {
-          val color: BoardColor = if (i % 2 == j % 2) Black else White
+          val color: BoardColor = if (i % 2 == j % 2) Brown.White else Brown.Black
           val pos = SquareCoordinate(col, row)
           new Square(color, pos, board(pos))
         }
@@ -94,15 +91,21 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
   override def showEnded(result: GameResult): Unit = {
     val resultMessage: String = {
       val res = result match {
-        case BlackWins(reason) => "win for black due to " + reason.toString
-        case WhiteWins(reason) => "win for white due to " + reason.toString
-        case Draw(reason) => "draw due to " + reason.toString
+        case BlackWins(_) => "win for black"
+        case WhiteWins(_) => "win for white"
+        case Draw(_) => "draw"
       }
-      s"The game ended with a $res."
+      val reason = result.reason match {
+        case InsufficientMaterial => "insufficient material"
+        case x => x.toString
+      }
+      s"The game ended with a $res due to $reason."
     }
 
     CDialog.showMessage(resultMessage, "")
   }
 
   override def update(): Unit = repaint()
+
+  override def showCheck(on: SquareCoordinate): Unit = println(s"Checked king on $on")
 }

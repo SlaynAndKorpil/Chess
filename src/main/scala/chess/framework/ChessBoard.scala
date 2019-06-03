@@ -24,7 +24,7 @@ class ChessBoard(
                   val positions: Positions,
                   val turn: AnyColor = White,
                   val gameStatus: GameStatus
-                ) (implicit val io: ChessIO) extends BoardMeta {
+                )(implicit val io: ChessIO) extends BoardMeta {
 
   import ChessBoard._
 
@@ -256,19 +256,26 @@ class ChessBoard(
       else movedBoard.gameStatus
 
 
-    val action: () => Unit = updatedStatus match {
-      case res: Ended =>
-        () => io.showEnded(res.result)
-      case _ => movingPiece match {
-        case Pawn(color, _) if to.row == ClassicalValues.piecesStartLine(color.opposite) =>
-          () => io.showPromotion()
-        case _ => () => Unit
+    val action: () => Unit = () => {
+        updatedStatus match {
+          case res: Ended =>
+            io.showEnded(res.result)
+          case _ => movingPiece match {
+            case Pawn(color, _) if to.row == ClassicalValues.piecesStartLine(color.opposite) =>
+              io.showPromotion()
+            case _ if movedBoard.isCheck() =>
+              io.showCheck(movedBoard.checkedSquare().get)
+            case _ =>
+              Unit
+          }
+        }
       }
-    }
 
     if (isValid) Some(movedBoard.clone(gameStatus = updatedStatus), action)
     else None
   }
+
+  private def isCheck(color: AnyColor = turn): Boolean = checkedSquare(color).isDefined
 
   /**
     * Tests if at least one of the kings is checked by finding their squares and testing these for being attacked.
@@ -276,15 +283,15 @@ class ChessBoard(
     * @param color kings of this color are tested
     * @return `true` if the player is checked, otherwise `false`
     */
-  private def isCheck(color: AnyColor = turn): Boolean = {
+  private def checkedSquare(color: AnyColor = turn): Option[SquareCoordinate] = {
     for {
       c <- 1 to 8
       row <- 1 to 8
       sqr = SquareCoordinate(columnLetter(c), row)
       piece = apply(sqr)
-      if piece === King(color)
-    } yield isAttacked(sqr)
-  } contains true
+      if piece === King(color) && isAttacked(sqr)
+    } yield sqr
+  } headOption
 
   /**
     * Tests if this is a correct move under consideration of the moved piece's type.
@@ -550,7 +557,7 @@ object ChessBoard {
     *
     * @return a fully filled [[chess.framework.ChessBoard]]
     */
-  def fill(piece: Piece) (implicit io: ChessIO): ChessBoard = this (Array.fill(8)(Column(piece)), Nil, Positions.empty, White).get
+  def fill(piece: Piece)(implicit io: ChessIO): ChessBoard = this (Array.fill(8)(Column(piece)), Nil, Positions.empty, White).get
 
   /**
     * Defines the classical chess standard board
@@ -610,12 +617,12 @@ object ChessBoard {
     ), Nil, Positions.empty, White, StandardReq
   )
 
-  def apply(squares: Map[Char, Column], history: List[MoveData], positions: Positions, turn: AnyColor, gameStatus: GameStatus) (implicit io: ChessIO): Option[ChessBoard] =
+  def apply(squares: Map[Char, Column], history: List[MoveData], positions: Positions, turn: AnyColor, gameStatus: GameStatus)(implicit io: ChessIO): Option[ChessBoard] =
     if (squares.size >= 8)
       Some(new ChessBoard(squares, history, positions, turn, gameStatus))
     else None
 
-  def apply(columns: Array[Column], history: List[MoveData] = Nil, positions: Positions = Positions.empty, turn: AnyColor = White) (implicit io: ChessIO): Option[ChessBoard] =
+  def apply(columns: Array[Column], history: List[MoveData] = Nil, positions: Positions = Positions.empty, turn: AnyColor = White)(implicit io: ChessIO): Option[ChessBoard] =
     if (columns.length >= 8)
       Some(new ChessBoard(
         Map(
