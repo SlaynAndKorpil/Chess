@@ -13,7 +13,11 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
   val promoMenu = new PromotionChooser(400, 100)
   listenTo(promoMenu)
 
-  private[chess] override var board: ChessBoard = ChessBoard.classicalBoard(this)
+  def chessBoard_=(board: ChessBoard): Unit = this.board = board
+
+  def chessBoard: ChessBoard = board
+
+  board = ChessBoard.classicalBoard(this)
 
   setup()
 
@@ -26,20 +30,20 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
         else if (j == 0) new CTextField(row.toString)
         else {
           val color: BoardColor = if (i % 2 == j % 2) Brown.White else Brown.Black
-          val pos = SquareCoordinate(col, row)
+          val pos = Square(col, row)
           new SquareButton(color, pos, board(pos))
         }
     }
     contents foreach (comp => listenTo(comp))
   }
 
-  def unselect(square: SquareCoordinate): Unit =
+  def unselect(square: Square): Unit =
     getSquareOnCoordinate(square) match {
       case Some(s) => s.unselect()
       case _ =>
     }
 
-  private def getSquareOnCoordinate(square: SquareCoordinate): Option[SquareButton] =
+  private def getSquareOnCoordinate(square: Square): Option[SquareButton] =
     if (square.isValid) {
       val row = 9 - square.row
       val col = square.colIndx + 1
@@ -99,13 +103,26 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
       }, onRejection = () => receiveInput(DrawReject))
 
     case ShowCheck(pos) =>
-      getSquareOnCoordinate(pos) match {
-        case Some(square) =>
-          square.checked = true
-          square.repaint()
-        case None =>
-      }
+      displayCheck(pos)
+
+    case RemoveTakeback =>
+      displayCheck()
   }
+
+  def displayCheck(): Unit =
+    board.checkedSquare() match {
+      case Some(pos) =>
+        displayCheck(pos)
+      case None =>
+    }
+
+  def displayCheck(on: Square): Unit =
+    getSquareOnCoordinate(on) match {
+      case Some(square) =>
+        square.checked = true
+        square.repaint()
+      case None =>
+    }
 
   override def repaint(): Unit = {
     reload()

@@ -24,9 +24,9 @@ trait ChessIO {
     * @note You can also rewrite the getter- and setter- method of this to redirect to something else.
     * @see [[chess.framework.ChessBoard#classicalBoard]]
     */
-  private[framework] var board: ChessBoard
+  protected var board: ChessBoard = _
 
-  val chessReactions: BoardReactions = new BoardReactions()
+  protected val chessReactions: BoardReactions = new BoardReactions()
 
   /**
     * This method should update the output (e.g a GUI) and reload the data

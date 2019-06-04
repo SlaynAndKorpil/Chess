@@ -11,7 +11,7 @@ import scala.language.postfixOps
   * An interface between the console and the board
   */
 class InputInterpreter extends ChessIO {
-  private[chess] override var board: ChessBoard = ChessBoard.classicalBoard
+  board = ChessBoard.classicalBoard
 
   /**
     * runs an interpretation of the console and plays the interpreted moves on the [[board]]
@@ -26,7 +26,7 @@ class InputInterpreter extends ChessIO {
 
       if (input.length >= 4) {
         if (isValidNotation(input)) {
-          move(SquareCoordinate(input(0), input(1) asDigit), SquareCoordinate(input(2), input(3) asDigit))
+          move(Square(input(0), input(1) asDigit), Square(input(2), input(3) asDigit))
           println(board)
         }
         else {
@@ -57,10 +57,10 @@ class InputInterpreter extends ChessIO {
     }
 
     def isValidNotation (s: String): Boolean =
-      s(0).isLetter && s(1).isValidInt && s(2).isLetter && s(3).isValidInt && SquareCoordinate(s(0), s(1).asDigit).isValid && SquareCoordinate(s(2), s(3).asDigit).isValid
+      s(0).isLetter && s(1).isValidInt && s(2).isLetter && s(3).isValidInt && Square(s(0), s(1).asDigit).isValid && Square(s(2), s(3).asDigit).isValid
   }
 
-  def move (from: SquareCoordinate, to: SquareCoordinate): Unit = receiveInput(MoveParams(from, to))
+  def move (from: Square, to: Square): Unit = receiveInput(MoveParams(from, to))
 
   override def update(): Unit = println(board)
 

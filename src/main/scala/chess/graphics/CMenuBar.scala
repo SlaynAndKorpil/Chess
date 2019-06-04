@@ -47,7 +47,7 @@ trait CMenuBar {
       gameFrame.receiveInput(Resign))
 
     object restart extends CMenuItem("Restart", KeyEvent.VK_S, _ => {
-      gameFrame.board = chess.framework.ChessBoard.classicalBoard(gameFrame)
+      gameFrame.chessBoard = chess.framework.ChessBoard.classicalBoard(gameFrame)
       gameFrame.repaint()
       gameFrame.unselectAll()
     })
@@ -63,7 +63,7 @@ trait CMenuBar {
         case f: FileChooser.Result.Value if f == FileChooser.Result.Approve =>
           import gameFrame._
           val path = fileChooser.filePath
-          ChessBoard.save(board, path)
+          ChessBoard.save(chessBoard, path)
         case _ =>
       }
     })
@@ -73,13 +73,14 @@ trait CMenuBar {
       val result = fileChooser.show(reference)
       result match {
         case f: FileChooser.Result.Value if f == FileChooser.Result.Approve =>
-          import gameFrame.{io, board}
+          import gameFrame.{io, chessBoard}
           val path = fileChooser.filePath
           val loaded = ChessBoard.load(path)
           loaded match {
             case Some(x) =>
-              board = x
+              chessBoard = x
               gameFrame.repaint()
+              gameFrame.displayCheck()
             case None =>
           }
         case _ =>

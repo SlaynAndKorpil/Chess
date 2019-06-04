@@ -75,9 +75,9 @@ object SaveLoader {
 
           val history = moves map (move =>
             MoveData(
-              SquareCoordinate(extractWithFilter(move, "start").head, extractWithFilter(move, "start").last.asDigit),
+              Square(extractWithFilter(move, "start").head, extractWithFilter(move, "start").last.asDigit),
               Piece(extractWithFilter(move, "movedPiece").head, Color(extractWithFilter(move, "movedPiece").last), moved = true),
-              SquareCoordinate(extractWithFilter(move, "end").head, extractWithFilter(move, "end").last.asDigit),
+              Square(extractWithFilter(move, "end").head, extractWithFilter(move, "end").last.asDigit),
               extractWithFilter(move, "capture").toBoolean
             )) toList
 

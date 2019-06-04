@@ -39,13 +39,13 @@ class ChessBoard(
     * @param sqr coordinates on the board
     * @return the piece at some specified position
     */
-  def apply(sqr: SquareCoordinate): Piece = getSquare(sqr) getOrElse NoPiece
+  def apply(sqr: Square): Piece = getSquare(sqr) getOrElse NoPiece
 
   /**
     * @param sqr coordinates of the wanted piece
     * @return the chess square at a specific position on the board, [[None]] if the sqr does not exist
     */
-  def getSquare(sqr: SquareCoordinate): Option[Piece] =
+  def getSquare(sqr: Square): Option[Piece] =
     if (sqr.isValid) Some(squares(sqr._1)(sqr._2)) else None
 
   /**
@@ -178,7 +178,7 @@ class ChessBoard(
     *
     * @param sqr the square to be emptied
     */
-  private def emptySquare(sqr: SquareCoordinate): ChessBoard =
+  def emptySquare(sqr: Square): ChessBoard =
     if (sqr.isValid) updated(sqr, NoPiece)
     else this
 
@@ -193,7 +193,7 @@ class ChessBoard(
     * @param to   the end-coordinates
     * @return the updated board
     */
-  private def move(from: SquareCoordinate, to: SquareCoordinate): Option[(ChessBoard, IOEvent)] = {
+  def move(from: Square, to: Square): Option[(ChessBoard, IOEvent)] = {
     val movingPiece = apply(from)
     val endPiece = apply(to)
     val startColor = movingPiece.color
@@ -215,14 +215,14 @@ class ChessBoard(
       //testing for en passant and castling
       movingPiece match {
         case Pawn(_, _) if apply(to).isEmpty && from.column != to.column =>
-          result = result.emptySquare(SquareCoordinate(to.column, from.row))
+          result = result.emptySquare(Square(to.column, from.row))
         case King(color, moved)
           if !moved && from == ChessBoard.ClassicalValues.kingStartSquare(turn) &&
             (to.column == 'c' || to.column == 'g') =>
           val row = if (color == White) 1 else 8
           val col = if (to.column == 'c') 'd' else 'f'
           val emptyCol = if (to.column == 'c') 'a' else 'h'
-          val res = result.updated(SquareCoordinate(col, row), Rook(color)).emptySquare(SquareCoordinate(emptyCol, row))
+          val res = result.updated(Square(col, row), Rook(color)).emptySquare(Square(emptyCol, row))
           result = res
         case _ =>
       }
@@ -273,7 +273,7 @@ class ChessBoard(
     else None
   }
 
-  private def isCheck(color: AnyColor = turn): Boolean = checkedSquare(color).isDefined
+   def isCheck(color: AnyColor = turn): Boolean = checkedSquare(color).isDefined
 
   /**
     * Tests if at least one of the kings is checked by finding their squares and testing these for being attacked.
@@ -281,11 +281,11 @@ class ChessBoard(
     * @param color kings of this color are tested
     * @return `true` if the player is checked, otherwise `false`
     */
-  private def checkedSquare(color: AnyColor = turn): Option[SquareCoordinate] = {
+  def checkedSquare(color: AnyColor = turn): Option[Square] = {
     for {
       c <- 1 to 8
       row <- 1 to 8
-      sqr = SquareCoordinate(columnLetter(c), row)
+      sqr = Square(columnLetter(c), row)
       piece = apply(sqr)
       if piece === King(color) && isAttacked(sqr)
     } yield sqr
@@ -301,7 +301,7 @@ class ChessBoard(
     * @param endPiece   the captured piece or [[NoPiece]] for an empty square
     * @return `true` if the move is legal, otherwise `false`
     */
-  private def isLegalMove(start: SquareCoordinate, end: SquareCoordinate, startPiece: Piece, endPiece: Piece): Boolean = {
+  def isLegalMove(start: Square, end: Square, startPiece: Piece, endPiece: Piece): Boolean = {
     val startCIndex = start.colIndx
     val endCIndex = end.colIndx
     val columnDif = endCIndex - startCIndex
@@ -318,7 +318,7 @@ class ChessBoard(
             val sPos = history.head.startPos
             val ePos = history.head.endPos
             piece === Pawn(color.opposite) &&
-              sPos == SquareCoordinate(end.column, ClassicalValues.pawnStartLine(color.opposite)) &&
+              sPos == Square(end.column, ClassicalValues.pawnStartLine(color.opposite)) &&
               ePos == sPos + (0, -2 * direction) &&
               lineDif == direction &&
               (columnDif == 1 || columnDif == -1) &&
@@ -340,11 +340,11 @@ class ChessBoard(
               if (startCIndex < endCIndex) AbstractSqrCoordinate.sqr2indxSqr(end) + (1, 0)
               else AbstractSqrCoordinate.sqr2indxSqr(end) - (2, 0)
             val rook = apply(rookSquare)
-            val squaresToTest = start to SquareCoordinate(if (startCIndex < endCIndex) 'g' else 'c', start.row)
+            val squaresToTest = start to Square(if (startCIndex < endCIndex) 'g' else 'c', start.row)
 
             def isSqrAttacked(sqr: AbstractSqrCoordinate[_]): Boolean = sqr match {
-              case square: SquareCoordinate => isAttacked(square, turn)
-              case square: NumericSquareCoordinate => isAttacked(square, turn)
+              case square: Square => isAttacked(square, turn)
+              case square: NumericSquare => isAttacked(square, turn)
             }
 
             rook == Rook(color) && squaresToTest.forall(sqr => !isSqrAttacked(sqr)) && isEmptyOrthogonal(start, end)
@@ -357,10 +357,10 @@ class ChessBoard(
     * An overloading method. It takes the color of the piece on the square as
     * the ''defender'', i.e. the not-attacking color.
     *
-    * @see isAttacked(sqr: SquareCoordinate, attacked: AnyColor): Boolean
+    * @see isAttacked(sqr: Square, attacked: AnyColor): Boolean
     * @return `true` if the square is attacked, otherwise `false`
     */
-  private def isAttacked(sqr: SquareCoordinate): Boolean = {
+  def isAttacked(sqr: Square): Boolean = {
     val attackedCol = apply(sqr).color
     attackedCol match {
       case col: AnyColor => isAttacked(sqr, col)
@@ -375,11 +375,11 @@ class ChessBoard(
     * @param attacked the ''defending'' color
     * @return `true` if the square is attacked, otherwise `false`
     */
-  private def isAttacked(sqr: SquareCoordinate, attacked: AnyColor): Boolean = {
+  def isAttacked(sqr: Square, attacked: AnyColor): Boolean = {
     attackingPieces(sqr, attacked) > 0
   }
 
-  private def attackingPieces(sqr: SquareCoordinate, attacked: AnyColor): Int = {
+  def attackingPieces(sqr: Square, attacked: AnyColor): Int = {
     implicit class Intersectable[P <: Piece](val content: Array[P]) {
       def ^[OtherP <: Piece](other: Array[OtherP]): Int = (for (i <- content; j <- other) yield if (j === i) 1 else 0) sum
     }
@@ -388,9 +388,9 @@ class ChessBoard(
     val colI = sqr.colIndx
     val row = sqr.row
 
-    def partNxtPiece(inc: (Int, Int)): Piece = nextPiece(NumericSquareCoordinate(colI, sqr.row), NumericSquareCoordinate(inc))
+    def partNxtPiece(inc: (Int, Int)): Piece = nextPiece(NumericSquare(colI, sqr.row), NumericSquare(inc))
 
-    def partApply(inc: (Int, Int)) = apply(NumericSquareCoordinate(colI, row) + inc)
+    def partApply(inc: (Int, Int)) = apply(NumericSquare(colI, row) + inc)
 
     val attackedByKnight: Int =
       Array(partApply(1, 2), partApply(2, 1), partApply(2, -1), partApply(1, -2), partApply(-1, 2), partApply(-2, 1), partApply(-2, -1), partApply(-1, -2)) count (Knight(opponent) === _)
@@ -407,7 +407,7 @@ class ChessBoard(
     val attackedByPawn: Int = {
       val dir = ClassicalValues.pawnDir(opponent.opposite)
 
-      def pieceAtOffset(colD: Int, rowD: Int): Piece = apply(NumericSquareCoordinate(colI, row) + (colD, rowD))
+      def pieceAtOffset(colD: Int, rowD: Int): Piece = apply(NumericSquare(colI, row) + (colD, rowD))
 
       Array(pieceAtOffset(1, dir), pieceAtOffset(-1, dir)) count (_ === Pawn(opponent))
     }
@@ -416,15 +416,15 @@ class ChessBoard(
   }
 
   //TODO implement
-  private def isBlocked: Boolean = false
+  def isBlocked: Boolean = false
 
   //TODO implement
-  private def isMate: Boolean = false
+  def isMate: Boolean = false
 
   //TODO implement
-  private def isStalemate: Boolean = false
+  def isStalemate: Boolean = false
 
-  private def isInsufficientMaterial: Boolean = isInsufficientMaterial(Black) && isInsufficientMaterial(White)
+  def isInsufficientMaterial: Boolean = isInsufficientMaterial(Black) && isInsufficientMaterial(White)
 
   /**
     * Tests if a specific color has not enough material to mate its opponent.
@@ -436,7 +436,7 @@ class ChessBoard(
     *
     * @return `true` if there is not enough material, otherwise `false`
     */
-  private def isInsufficientMaterial(color: AnyColor): Boolean = {
+  def isInsufficientMaterial(color: AnyColor): Boolean = {
     val piecesOnColor = allPieces map (tup => (if (tup._1.colIndx % 2 == tup._1.row % 2) Black else White, tup._2)) filter (_._2.color == color) filterNot (_._2 === King(color))
     val pieces = piecesOnColor map (_._2)
 
@@ -456,18 +456,18 @@ class ChessBoard(
     }
   }
 
-  private def isFivefoldRepetition: Boolean =
+  def isFivefoldRepetition: Boolean =
     positions.maxRepetition >= 5
 
-  private def allPieces: Array[(SquareCoordinate, AnyPiece)] = {
+  def allPieces: Array[(Square, AnyPiece)] = {
     val allSquares = for {
       x <- 1 to 8
       col = columnLetter(x)
       row <- 1 to 8
       piece: Piece = squares(col)(row)
       if piece.nonEmpty
-    } yield (SquareCoordinate(col, row), piece)
-    val typed = allSquares.toArray.asInstanceOf[Array[(SquareCoordinate, AnyPiece)]]
+    } yield (Square(col, row), piece)
+    val typed = allSquares.toArray.asInstanceOf[Array[(Square, AnyPiece)]]
     typed filter (x => x._2.nonEmpty)
   }
 
@@ -481,7 +481,7 @@ class ChessBoard(
     * @return the first piece on a line
     */
   @tailrec
-  private def nextPiece(start: NumericSquareCoordinate, increment: NumericSquareCoordinate): Piece = {
+  final def nextPiece(start: NumericSquare, increment: NumericSquare): Piece = {
     val incremented = start + increment
     if (incremented.isValid) apply(incremented) match {
       case NoPiece => nextPiece(incremented, increment)
@@ -495,7 +495,7 @@ class ChessBoard(
     *
     * @see isEmptyDiagonal
     */
-  private def isEmptyOrthogonal(from: SquareCoordinate, to: SquareCoordinate): Boolean = {
+  def isEmptyOrthogonal(from: Square, to: Square): Boolean = {
     val orthogonal = from._1 == to._1 || from._2 == to._2
     orthogonal && isEmptyConnection(from, to)
   }
@@ -505,7 +505,7 @@ class ChessBoard(
     *
     * @see isEmptyOrthogonal
     */
-  private def isEmptyDiagonal(from: SquareCoordinate, to: SquareCoordinate): Boolean = {
+  def isEmptyDiagonal(from: Square, to: Square): Boolean = {
     val startColIndex = from.colIndx
     val endColIndex = to.colIndx
     val diagonal = startColIndex - endColIndex == from._2 - to._2 || startColIndex - to._2 == endColIndex - from._2
@@ -513,10 +513,10 @@ class ChessBoard(
   }
 
   @tailrec
-  private def isEmptyConnection(from: SquareCoordinate, to: SquareCoordinate): Boolean = {
+  private def isEmptyConnection(from: Square, to: Square): Boolean = {
     val startColIndex = from.colIndx
     val endColIndex = to.colIndx
-    val incremented: SquareCoordinate = NumericSquareCoordinate((endColIndex - startColIndex).signum, (to._2 - from._2).signum) + from
+    val incremented: Square = NumericSquare((endColIndex - startColIndex).signum, (to._2 - from._2).signum) + from
     if (incremented == to) true
     else if (apply(incremented).isEmpty) isEmptyConnection(incremented, to)
     else false
@@ -529,7 +529,7 @@ class ChessBoard(
     * @param piece  the piece the square shall be updated to
     * @return a ChessBoard with updated squares.
     */
-  private[framework] def updated(square: SquareCoordinate, piece: Piece): ChessBoard = {
+   def updated(square: Square, piece: Piece): ChessBoard = {
     val updated = squares(square._1).updated(square._2, piece)
     clone(squares = squares.updated(square._1, updated))
   }
@@ -722,9 +722,9 @@ object ChessBoard {
     def pawnStartLine(color: AnyColor): Int =
       if (color == White) 2 else 7
 
-    /** @return the [[chess.framework.SquareCoordinate]] where the king of this color is placed. */
-    def kingStartSquare(color: AnyColor): SquareCoordinate =
-      SquareCoordinate('e', piecesStartLine(color))
+    /** @return the [[chess.framework.Square]] where the king of this color is placed. */
+    def kingStartSquare(color: AnyColor): Square =
+      Square('e', piecesStartLine(color))
 
     /** @return the row where all pieces of this color are generated. */
     def piecesStartLine(color: AnyColor): Int =

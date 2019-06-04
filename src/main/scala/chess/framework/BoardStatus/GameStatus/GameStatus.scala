@@ -25,7 +25,7 @@ object GameStatus {
     else if (state == StandardReq.toString) Left(StandardReq)
     else if (contains(state, "PromoReq(", ")")) {
       val sqr = state.substring(9, last)
-      val result = SquareCoordinate(sqr)
+      val result = Square(sqr)
       result match {
         case Some(square) => Left(PromoReq(square))
         case _ => failMessage
@@ -49,7 +49,7 @@ object StandardReq extends Active {
   override def toString: String = "Waiting"
 }
 
-case class PromoReq(square: SquareCoordinate) extends Active
+case class PromoReq(square: Square) extends Active
 
 object DrawAcceptanceReq extends Active {
   override def toString: String = "Draw reaction"

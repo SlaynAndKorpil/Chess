@@ -51,7 +51,7 @@ trait BoardMeta {
 
     if (promoPiece != NoPiece) {
       gameStatus match {
-        case PromoReq(sqr: SquareCoordinate) =>
+        case PromoReq(sqr: Square) =>
           val result = updated(sqr, promoPiece).clone(gameStatus = StandardReq)
           Some(result, RemovePromotion)
         case _ => None

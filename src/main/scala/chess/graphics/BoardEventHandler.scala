@@ -6,7 +6,7 @@ import chess.framework._
 trait BoardEventHandler {
   self: Board =>
 
-  private var selectedSquare: SquareCoordinate = _
+  private var selectedSquare: Square = _
 
   reactions += {
     case SquarePressed(square) =>
@@ -35,7 +35,7 @@ trait BoardEventHandler {
 
   def saveBoard(file: String): Unit = ChessBoard.save(board, file)
 
-  private def move(from: SquareCoordinate, to: SquareCoordinate): Unit =
+  private def move(from: Square, to: Square): Unit =
     receiveInput(MoveParams(from, to))
 
   private def promote(piece: (AnyColor, Boolean) => AnyPiece): Unit =

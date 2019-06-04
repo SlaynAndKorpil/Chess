@@ -1,3 +1,3 @@
 package chess.framework
 
-case class MoveData(startPos: SquareCoordinate, piece: Piece, endPos: SquareCoordinate, captured: Boolean)
+case class MoveData(startPos: Square, piece: Piece, endPos: Square, captured: Boolean)
