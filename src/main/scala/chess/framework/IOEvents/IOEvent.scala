@@ -9,8 +9,7 @@ object ShowDrawOffer extends IOEvent
 
 object RemoveDrawOffer extends IOEvent
 
-//TODO maybe include coordinate?
-object ShowPromotion extends IOEvent
+case class ShowPromotion(on: SquareCoordinate) extends IOEvent
 
 object RemovePromotion extends IOEvent
 

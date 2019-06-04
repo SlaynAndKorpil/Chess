@@ -8,13 +8,12 @@ import scala.swing._
 import scala.swing.event._
 
 trait PieceButton extends AbstractButton {
+  val eventType: this.type => ActionEvent
   var piece: Piece
-  var color: BoardColors.BoardColor
 
   background = color
   foreground = color
-
-  val eventType: this.type => ActionEvent
+  var color: BoardColors.BoardColor
 
   override def publish(e: Event): Unit =
     super.publish(e match {
@@ -23,11 +22,14 @@ trait PieceButton extends AbstractButton {
       case _ => e
     })
 
-
-  //width and height of actual square
-  def width: Int = peer.getWidth
-
-  def height: Int = peer.getHeight
+  override def paintComponent(g: Graphics2D): Unit = {
+    super.paintComponent(g)
+    val image: Image = Icons.icon(piece) match {
+      case Some(img) => resizeImage(img, peer)
+      case None => null
+    }
+    g.drawImage(image, 0, 0, peer)
+  }
 
   private def resizeImage(image: BufferedImage, observer: ImageObserver): Image = {
     val img: BufferedImage = image
@@ -41,12 +43,7 @@ trait PieceButton extends AbstractButton {
     result
   }
 
-  override def paintComponent(g: Graphics2D): Unit = {
-    super.paintComponent(g)
-    val image: Image = Icons.icon(piece) match {
-      case Some(img) => resizeImage(img, peer)
-      case None => null
-    }
-    g.drawImage(image, 0, 0, peer)
-  }
+  def width: Int = peer.getWidth
+
+  def height: Int = peer.getHeight
 }

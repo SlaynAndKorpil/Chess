@@ -11,8 +11,9 @@ import scala.swing._
 
 class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
   val promoMenu = new PromotionChooser(400, 100)
-  private[chess] var board: ChessBoard = ChessBoard.classicalBoard(this)
   listenTo(promoMenu)
+
+  private[chess] override var board: ChessBoard = ChessBoard.classicalBoard(this)
 
   setup()
 
@@ -26,35 +27,41 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
         else {
           val color: BoardColor = if (i % 2 == j % 2) Brown.White else Brown.Black
           val pos = SquareCoordinate(col, row)
-          new Square(color, pos, board(pos))
+          new SquareButton(color, pos, board(pos))
         }
     }
     contents foreach (comp => listenTo(comp))
   }
 
-  def unselect(square: SquareCoordinate): Unit = {
-    val row = 9 - square.row
-    val col = square.colIndx + 1
-    val indx = col + 9 * row - 10
-    contents(indx) match {
-      case s: Square => s.unselect()
+  def unselect(square: SquareCoordinate): Unit =
+    getSquareOnCoordinate(square) match {
+      case Some(s) => s.unselect()
       case _ =>
     }
-  }
+
+  private def getSquareOnCoordinate(square: SquareCoordinate): Option[SquareButton] =
+    if (square.isValid) {
+      val row = 9 - square.row
+      val col = square.colIndx + 1
+      val indx = col + 9 * row - 10
+      contents(indx) match {
+        case s: SquareButton => Some(s)
+        case _ => None
+      }
+    }
+    else None
 
   def unselectAll(): Unit =
     contents foreach {
-      case s: Square => s.unselect()
+      case s: SquareButton => s.unselect()
       case _ =>
     }
 
   override def update(): Unit = repaint()
 
-  override def react(event: IOEvent): Unit = event match {
-    case ShowCheck(on) => println(s"Checked king on $on")
-
+  chessReactions += {
     case ShowEnded(result) =>
-      val resultMessage: String = {
+      CDialog.showMessage({
         val res = result match {
           case BlackWins(_) => "win for black"
           case WhiteWins(_) => "win for white"
@@ -65,30 +72,39 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
           case x => x.toString
         }
         s"The game ended with a $res due to $reason."
-      }
-
-      CDialog.showMessage(resultMessage, "")
+      }, "")
 
     case ShowTakeback =>
       CDialog.showConfirmation(message = "Do you want to allow your opponent a takeback?", title = "Takeback", onSuccess = () => {
         receiveInput(TakebackAcceptance)
       }, onRejection = () => receiveInput(TakebackReject))
 
-    case RemovePromotion => promoMenu.close()
+    case RemovePromotion =>
+      promoMenu.close()
 
-    case ShowPromotion => promoMenu.open()
+    case ShowPromotion(pos) =>
+      getSquareOnCoordinate(pos) match {
+        case Some(square) =>
+          square.piece.color match {
+            case color: AnyColor =>
+              promoMenu.open(color, square.locationOnScreen)
+            case _ =>
+          }
+        case None =>
+      }
 
     case ShowDrawOffer =>
       CDialog.showConfirmation(message = "Do you want a draw?", title = "Draw offer", onSuccess = () => {
         receiveInput(DrawAcceptance)
       }, onRejection = () => receiveInput(DrawReject))
 
-    case _ =>
-  }
-
-  override def receiveInput(input: Input[_]): Unit = {
-    super.receiveInput(input)
-    repaint()
+    case ShowCheck(pos) =>
+      getSquareOnCoordinate(pos) match {
+        case Some(square) =>
+          square.checked = true
+          square.repaint()
+        case None =>
+      }
   }
 
   override def repaint(): Unit = {
@@ -98,7 +114,8 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
 
   def reload(): Unit =
     contents foreach {
-      case sq: Square =>
+      case sq: SquareButton =>
+        sq.checked = false
         sq.piece = board(sq.pos)
       case _ =>
     }

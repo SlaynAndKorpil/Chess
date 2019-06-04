@@ -26,8 +26,7 @@ trait ChessIO {
     */
   private[framework] var board: ChessBoard
 
-  //TODO this is only a temporary placeholder and should be replaced
-  def react(event: IOEvent): Unit
+  val chessReactions: BoardReactions = new BoardReactions()
 
   /**
     * This method should update the output (e.g a GUI) and reload the data
@@ -50,7 +49,7 @@ trait ChessIO {
       case Some(data) =>
         board = data._1
         update()
-        react(data._2)
+        chessReactions(data._2)
       case None =>
     }
   }

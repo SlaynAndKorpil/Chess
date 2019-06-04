@@ -260,7 +260,7 @@ class ChessBoard(
             ShowEnded(res.result)
           case _ => movingPiece match {
             case Pawn(color, _) if to.row == ClassicalValues.piecesStartLine(color.opposite) =>
-              ShowPromotion
+              ShowPromotion(to)
             case _ if movedBoard.isCheck() =>
               ShowCheck(movedBoard.checkedSquare().get)
             case _ =>

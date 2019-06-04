@@ -16,14 +16,20 @@ class PromotionChooser(val width: Int, val height: Int) extends Frame with Publi
   peer.setMinimumSize(new Dimension(width, height))
   peer.setMaximumSize(new Dimension(width, height))
 
-  location = new swing.Point(100, 100)
+  private var color: AnyColor = _
 
   reactions += {
     case promo: PromotionEvent =>
       publish(promo)
   }
 
-  //TODO somehow it listens to itself
+  def open(color: AnyColor, loc: swing.Point): Unit = {
+    location = loc
+    this.color = color
+    super.open()
+  }
+
+  //TODO somehow it listens to itself?!?
   deafTo(this)
 
   val backgroundCol: BoardColors.BoardColor = BoardColors.Brown.White

@@ -9,11 +9,9 @@ import scala.language.postfixOps
 
 /**
   * An interface between the console and the board
-  *
-  * @param plainBoard a board to play on
   */
-class InputInterpreter (plainBoard: ChessIO => ChessBoard) extends ChessIO {
-  private[chess] override var board: ChessBoard = plainBoard(this)
+class InputInterpreter extends ChessIO {
+  private[chess] override var board: ChessBoard = ChessBoard.classicalBoard
 
   /**
     * runs an interpretation of the console and plays the interpreted moves on the [[board]]
@@ -66,8 +64,8 @@ class InputInterpreter (plainBoard: ChessIO => ChessBoard) extends ChessIO {
 
   override def update(): Unit = println(board)
 
-  override def react(event: IOEvent): Unit = event match {
-    case ShowEnded(result) => Debugger debug s"ended with $result"
-    case _ =>
+  chessReactions += {
+    case ShowEnded(result) => println(s"ended with $result")
+    case message => println(message.toString)
   }
 }
