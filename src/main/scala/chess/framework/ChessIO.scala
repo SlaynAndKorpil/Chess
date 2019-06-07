@@ -8,6 +8,24 @@ import chess.framework.Input._
   * This interface contains some convenience methods for easier interaction with
   * the board as well as methods that are used by the board to cause side-effects.
   *
+  * Example implementation:
+  * {{{
+  *   class MyChessBoard extends ChessIO {
+  *     override def update(): Unit = println(board.toString)
+  *
+  *     chessReactions += {
+  *       case ShowDrawOffer =>
+  *         println("Do you want a draw?")
+  *       case ShowEnded(result) =>
+  *         println(s"The game ended with a $result")
+  *     }
+  *   }
+  *
+  *   val test = new MyBoard()
+  *
+  *   test.receiveInput(DrawOffer)
+  * }}}
+  *
   * @since alpha 0.1
   * @author Felix Lehner
   */
@@ -15,17 +33,26 @@ trait ChessIO {
   /**
     * An implicit self-reference used by all constructors and
     * generators of [[chess.framework.ChessBoard]] to ease their use.
+    *
+    * @note this should not be overridden
     */
   implicit val io: this.type = this
 
   /**
     * The board that is used as an internal representation of the data structure.
+    * This variable is mutable because [[chess.framework.ChessBoard]] is not although
+    * mutability is needed for a program that can react to input.
     *
-    * @note You can also rewrite the getter- and setter- method of this to redirect to something else.
     * @see [[chess.framework.ChessBoard#classicalBoard]]
     */
   protected var board: ChessBoard = _
 
+  /**
+    * All available reactions to input.
+    * @note You should not override this. Instead use the [[chess.framework.IOEvents.BoardReactions\.+=]]
+    *       or the [[chess.framework.IOEvents.BoardReactions\.++=]] methods to add reactions.
+    * @usecase Used by the `receiveInput` method to find reactions to any event occurring.
+    */
   protected val chessReactions: BoardReactions = new BoardReactions()
 
   /**
