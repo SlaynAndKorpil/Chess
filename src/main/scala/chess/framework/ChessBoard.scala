@@ -3,8 +3,8 @@ package chess.framework
 import chess.framework.BoardStatus.GameResult._
 import chess.framework.BoardStatus.GameStatus._
 import chess.framework.BoardStatus.ResultReason._
-import chess.framework.Input._
 import chess.framework.IOEvents._
+import chess.framework.Input._
 
 import scala.annotation.tailrec
 import scala.language.{implicitConversions, postfixOps}
@@ -29,24 +29,21 @@ class ChessBoard(
 
   import ChessBoard._
 
-  /**
-    * The move counter
-    */
+  /** The move counter */
   val turnCounter: Int = history.length / 2
 
-  /**
-    * @note When the coordinate is outside the board, [[NoPiece]] is returned.
-    * @param sqr coordinates on the board
-    * @return the piece at some specified position
-    */
-  def apply(sqr: Square): Piece = getSquare(sqr) getOrElse NoPiece
-
-  /**
-    * @param sqr coordinates of the wanted piece
-    * @return the chess square at a specific position on the board, [[None]] if the sqr does not exist
-    */
-  def getSquare(sqr: Square): Option[Piece] =
-    if (sqr.isValid) Some(squares(sqr._1)(sqr._2)) else None
+  /** All pieces and their position */
+  val allPieces: Array[(Square, AnyPiece)] = {
+    val allSquares = for {
+      x <- 1 to 8
+      col = columnLetter(x)
+      row <- 1 to 8
+      square = Square(col, row)
+      piece: Piece = apply(square)
+      if piece.nonEmpty
+    } yield (square, piece)
+    allSquares.toArray.asInstanceOf[Array[(Square, AnyPiece)]]
+  }
 
   /**
     * @param column the one-letter identifier of a column of squares on the board
@@ -101,6 +98,35 @@ class ChessBoard(
 
       case _ => None
     }
+
+  def mapPiece[T](func: (Square, AnyPiece) => T): IndexedSeq[T] =
+    for {
+      col <- 1 to 8
+      column = columnLetter(col)
+      row <- 1 to 8
+      square = Square(column, row)
+      piece = apply(square)
+      if piece.nonEmpty
+    } yield {
+      func(square, piece.asInstanceOf[AnyPiece])
+    }
+
+  /**
+    * @note When the coordinate is outside the board, [[NoPiece]] is returned.
+    * @param sqr coordinates on the board
+    * @return the piece at some specified position
+    */
+  def apply(sqr: Square): Piece = getSquare(sqr) getOrElse NoPiece
+
+  /**
+    * @param sqr coordinates of the wanted piece
+    * @return the chess square at a specific position on the board, [[None]] if the sqr does not exist
+    */
+  def getSquare(sqr: Square): Option[Piece] =
+    if (sqr.isValid) Some(squares(sqr._1)(sqr._2)) else None
+
+  def filterPieces(func: Piece => Boolean): Map[Char, Column] =
+    squares map { tup => tup._1 -> tup._2.filter(func) }
 
   /**
     * Generates a new [[ChessBoard]] which shares all attributes with this one
@@ -255,25 +281,25 @@ class ChessBoard(
 
 
     val action: IOEvent =
-        updatedStatus match {
-          case res: Ended =>
-            ShowEnded(res.result)
-          case _ => movingPiece match {
-            case Pawn(color, _) if to.row == ClassicalValues.piecesStartLine(color.opposite) =>
-              ShowPromotion(to)
-            case _ if movedBoard.isCheck() =>
-              ShowCheck(movedBoard.checkedSquare().get)
-            case _ =>
-              NoEvent
-          }
+      updatedStatus match {
+        case res: Ended =>
+          ShowEnded(res.result)
+        case _ => movingPiece match {
+          case Pawn(color, _) if to.row == ClassicalValues.piecesStartLine(color.opposite) =>
+            ShowPromotion(to)
+          case _ if movedBoard.isCheck() =>
+            ShowCheck(movedBoard.checkedSquare().get)
+          case _ =>
+            NoEvent
         }
+      }
 
 
     if (isValid) Some(movedBoard.clone(gameStatus = updatedStatus), action)
     else None
   }
 
-   def isCheck(color: AnyColor = turn): Boolean = checkedSquare(color).isDefined
+  def isCheck(color: AnyColor = turn): Boolean = checkedSquare(color).isDefined
 
   /**
     * Tests if at least one of the kings is checked by finding their squares and testing these for being attacked.
@@ -415,15 +441,88 @@ class ChessBoard(
     attackedByKnight + attackedByKing + attackedDiagonally + attackedOrthogonally + attackedByPawn
   }
 
+  /**
+    * Tests if a certain [[chess.framework.Square]] is blocked,
+    * i.e. the piece on the square cannot move.
+    * When the square is empty, `false` is returned.
+    */
+  def isBlockedSquare(square: Square): Boolean = {
+    val piece = apply(square)
+
+    def atOffset(off: (Int, Int)): Square = square + off
+
+    def offsetPiece(off: (Int, Int)) = apply(atOffset(off))
+
+    val res = piece match {
+      case Pawn(color, _) =>
+        val dir = ClassicalValues.pawnDir(color)
+        val opponent = color.opposite
+        val capturing = offsetPiece(1, dir).color == opponent || offsetPiece(-1, dir).color == opponent
+        val moving = offsetPiece(0, dir) isEmpty
+        val enPassant = history.nonEmpty && {
+          val piece = history.head.piece
+          val sPos = history.head.startPos
+          val ePos = history.head.endPos
+          piece === Pawn(opponent) && (ePos == atOffset(1, 0) || ePos == atOffset(-1, 0)) && ePos == sPos + (0, -2 * dir)
+        }
+        !capturing && !moving && !enPassant
+      case King(color, _) =>
+        val moves = Array(
+          0 -> 1, 0 -> -1,
+          1 -> 0, 1 -> -1, 1 -> 1,
+          -1 -> 0, -1 -> 1, -1 -> -1
+        )
+        !moves.exists(d => !isAttacked(atOffset(d), color) && offsetPiece(d).color != color)
+      case other if other.isInstanceOf[AnyPiece] =>
+        val offsets = other match {
+          case Knight(_, _) =>
+            Array(
+              1 -> 2, 1 -> -2,
+              -1 -> 2, -1 -> -2,
+              2 -> 1, 2 -> -1,
+              -2 -> 1, -2 -> -1
+            )
+          case Queen(_, _) =>
+            Array(
+              0 -> 1, 0 -> -1,
+              1 -> 0, 1 -> -1, 1 -> 1,
+              -1 -> 0, -1 -> 1, -1 -> -1
+            )
+          case Bishop(_, _) =>
+            Array(
+              1 -> 1, 1 -> -1,
+              -1 -> 1, -1 -> -1
+            )
+          case Rook(_, _) =>
+            Array(
+              0 -> 1, 0 -> -1,
+              1 -> 0, -1 -> 0
+            )
+          case _ =>
+            Array.empty
+        }
+        !offsets.exists(d => offsetPiece(d).color != other.color)
+      case NoPiece => false
+    }
+    Debugger debug s"$square blocked: $res"
+    res
+  }
+
   //TODO implement
   def isBlocked: Boolean = false
 
   //TODO implement
   def isMate: Boolean = false
 
-  //TODO implement
-  def isStalemate: Boolean = false
+  /** Tests for stalemate. */
+  def isStalemate: Boolean =
+    allPieces filter (p => p._2.color == turn) map (_._1) forall isBlockedSquare
 
+  /**
+    * Tests for insufficient material of any color.
+    *
+    * @see [[chess.framework.ChessBoard\.isInsufficientMaterial]]
+    */
   def isInsufficientMaterial: Boolean = isInsufficientMaterial(Black) && isInsufficientMaterial(White)
 
   /**
@@ -438,6 +537,11 @@ class ChessBoard(
     */
   def isInsufficientMaterial(color: AnyColor): Boolean = {
     val piecesOnColor = allPieces map (tup => (if (tup._1.colIndx % 2 == tup._1.row % 2) Black else White, tup._2)) filter (_._2.color == color) filterNot (_._2 === King(color))
+    //maybe replace piecesOnColor with this?
+    //val piecesOnColor_ = mapPiece { (square, piece) =>
+    //if (square.colIndx % 2 == square.row % 2) Black else White -> piece
+    //}
+
     val pieces = piecesOnColor map (_._2)
 
     val value: Int = (pieces map (_.value)).sum
@@ -458,18 +562,6 @@ class ChessBoard(
 
   def isFivefoldRepetition: Boolean =
     positions.maxRepetition >= 5
-
-  def allPieces: Array[(Square, AnyPiece)] = {
-    val allSquares = for {
-      x <- 1 to 8
-      col = columnLetter(x)
-      row <- 1 to 8
-      piece: Piece = squares(col)(row)
-      if piece.nonEmpty
-    } yield (Square(col, row), piece)
-    val typed = allSquares.toArray.asInstanceOf[Array[(Square, AnyPiece)]]
-    typed filter (x => x._2.nonEmpty)
-  }
 
   /**
     * Searches for the next piece.
@@ -512,6 +604,18 @@ class ChessBoard(
     diagonal && isEmptyConnection(from, to)
   }
 
+  /**
+    * Updates the board.
+    *
+    * @param square the coordinate of the square to updated
+    * @param piece  the piece the square shall be updated to
+    * @return a ChessBoard with updated squares.
+    */
+  def updated(square: Square, piece: Piece): ChessBoard = {
+    val updated = squares(square._1).updated(square._2, piece)
+    clone(squares = squares.updated(square._1, updated))
+  }
+
   @tailrec
   private def isEmptyConnection(from: Square, to: Square): Boolean = {
     val startColIndex = from.colIndx
@@ -520,18 +624,6 @@ class ChessBoard(
     if (incremented == to) true
     else if (apply(incremented).isEmpty) isEmptyConnection(incremented, to)
     else false
-  }
-
-  /**
-    * Updates the board.
-    *
-    * @param square the coordinate of the square to updated
-    * @param piece  the piece the square shall be updated to
-    * @return a ChessBoard with updated squares.
-    */
-   def updated(square: Square, piece: Piece): ChessBoard = {
-    val updated = squares(square._1).updated(square._2, piece)
-    clone(squares = squares.updated(square._1, updated))
   }
 }
 
@@ -672,6 +764,21 @@ object ChessBoard {
         {squares(col).saveData}
       </col> copy (label = col.toUpper toString)
 
+  /**
+    * Converts a column index to it's corresponding character.
+    */
+  def columnLetter(column: Int): Char = column match {
+    case 1 => 'a'
+    case 2 => 'b'
+    case 3 => 'c'
+    case 4 => 'd'
+    case 5 => 'e'
+    case 6 => 'f'
+    case 7 => 'g'
+    case 8 => 'h'
+    case _ => ' '
+  }
+
   /** @return `true` if a column with this identifier does exist, else `false` */
   def isValidColumn(column: Char): Boolean =
     columnIndex(column) <= 8 && columnIndex(column) >= 1
@@ -698,21 +805,6 @@ object ChessBoard {
     case 'H' => 7
     case _ => -1
   })
-
-  /**
-    * Converts a column index to it's corresponding character.
-    */
-  def columnLetter(column: Int): Char = column match {
-    case 1 => 'a'
-    case 2 => 'b'
-    case 3 => 'c'
-    case 4 => 'd'
-    case 5 => 'e'
-    case 6 => 'f'
-    case 7 => 'g'
-    case 8 => 'h'
-    case _ => ' '
-  }
 
   /**
     * Standard values for a classical chess game.

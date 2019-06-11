@@ -23,7 +23,9 @@ import chess.framework.Input._
   *
   *   val test = new MyBoard()
   *
-  *   test.receiveInput(DrawOffer)
+  *   test receiveInput DrawOffer
+  *   test receiveInput DrawReject
+  *   test receiveInput MoveParams(from = Square('d', 2), to = Square('d', 4))
   * }}}
   *
   * @since alpha 0.1
