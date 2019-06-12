@@ -51,15 +51,20 @@ trait ChessIO {
 
   /**
     * All available reactions to input.
-    * @note You should not override this. Instead use the [[chess.framework.IOEvents.BoardReactions\.+=]]
-    *       or the [[chess.framework.IOEvents.BoardReactions\.++=]] methods to add reactions.
+    * @note You should not override this. Instead use the [[chess.framework.IOEvents.BoardReactions#+=]]
+    *       or the [[chess.framework.IOEvents.BoardReactions#++=]] methods to add reactions.
+    * @see [[chess.framework.IOEvents events]]
     * @usecase Used by the `receiveInput` method to find reactions to any event occurring.
     */
   protected val chessReactions: BoardReactions = new BoardReactions()
 
   /**
     * This method should update the output (e.g a GUI) and reload the data
-    * from the [[chess.framework.ChessIO#board]] into the data structure you are using.
+    * from the [[chess.framework.ChessIO#board board]] into the data structure you are using.
+    *
+    * @note This should always clear any visual indication of a check as there is no event for this
+    *       because every king checked won't be checked after the next move (i.e. no legal move
+    *       of a checked player will ever result in being checked again.
     *
     * @usecase this method gets called by the `receiveInput` method whenever the board gets updated.
     */
@@ -70,15 +75,15 @@ trait ChessIO {
     *
     * @usecase This method is mostly for convenience so that implementations of
     *          this trait do not have to process the result themselves.
-    * @param input any form of [[Input]]
+    * @param input any form of [[chess.framework.Input]]
     */
   def receiveInput(input: Input[_]): Unit = {
     val res = board.receive(input)
     res match {
       case Some(data) =>
-        board = data._1
+        board = data.board
         update()
-        chessReactions(data._2)
+        data.events foreach (event => chessReactions(event))
       case None =>
     }
   }

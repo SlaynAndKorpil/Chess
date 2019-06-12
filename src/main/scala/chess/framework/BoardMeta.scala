@@ -3,28 +3,43 @@ package chess.framework
 import chess.framework.BoardStatus.GameResult.Win
 import chess.framework.BoardStatus.GameStatus.{Ended, GameStatus, PromoReq, StandardReq}
 import chess.framework.BoardStatus.ResultReason.Resignation
-import chess.framework.IOEvents.{IOEvent, RemoveTakeback, RemovePromotion}
+import chess.framework.IOEvents._
 
+/**
+  * Meta information and methods that are needed for a game.
+  * @usecase this gets mixed-in in [[chess.framework.ChessBoard ChessBoard]]
+  * @author Felix Lehner
+  * @version alpha 0.1
+  */
 trait BoardMeta {
   self: ChessBoard =>
 
+  /** A list of former moves */
   val history: List[MoveData]
 
+  /** A list of all former positions */
   val positions: Positions
 
+  /** The status the game is currently in */
   val gameStatus: GameStatus
 
-  private[framework] def takeback: Option[(ChessBoard, IOEvent)] =
+  /**
+    * Takes the last move back.
+    * If any of the players was checked, also a [[chess.framework.IOEvents.ShowCheck ShowCheck]] event is triggered.
+    */
+  private[framework] def takeback: Option[Output] =
     if (positions.length >= 1) {
-      Some(
-        clone(
-          squares = positions.head.pos,
-          positions = positions.--,
-          history = history.tail,
-          gameStatus = StandardReq,
-          turn = turn.opposite),
-        RemoveTakeback
-      )
+      val resBoard = clone(
+        squares = positions.head.pos,
+        positions = positions.--,
+        history = history.tail,
+        gameStatus = StandardReq,
+        turn = turn.opposite)
+      val takebackCheckEvent = resBoard.doOnCheck(pos => ShowCheck(pos), NoEvent)
+      Output(
+        resBoard,
+        Array(RemoveTakeback, takebackCheckEvent)
+      ) asSome
     }
     else None
 
@@ -33,9 +48,9 @@ trait BoardMeta {
     * Promotes a pawn to a given piece.
     *
     * @param piece the piece's apply method
-    * @return an updated [[ChessBoard]] of [[None]] when the piece type is incorrect
+    * @return an updated [[chess.framework.ChessBoard ChessBoard]] of [[scala.None]] when the piece type is incorrect
     */
-  private[framework] def promote(piece: (AnyColor, Boolean) => AnyPiece): Option[(ChessBoard, IOEvent)] = {
+  private[framework] def promote(piece: (AnyColor, Boolean) => AnyPiece): Option[Output] = {
     val promoColor = turn.opposite
     val promoPiece = piece match {
       case Queen =>
@@ -53,7 +68,8 @@ trait BoardMeta {
       gameStatus match {
         case PromoReq(sqr: Square) =>
           val result = updated(sqr, promoPiece).clone(gameStatus = StandardReq)
-          Some(result, RemovePromotion)
+          val promoCheckEvent: Array[IOEvent] = result.doOnCheck(pos => Array(ShowCheck(pos)), Array())
+          Output(result, RemovePromotion +: promoCheckEvent) asSome
         case _ => None
       }
     }

@@ -86,7 +86,6 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
 
     case RemovePromotion =>
       promoMenu.close()
-      displayCheck()
 
     case ShowPromotion(pos) =>
       getSquareOnCoordinate(pos) match {
@@ -106,17 +105,7 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
 
     case ShowCheck(pos) =>
       displayCheck(pos)
-
-    case RemoveTakeback =>
-      displayCheck()
   }
-
-  def displayCheck(): Unit =
-    board.checkedSquare() match {
-      case Some(pos) =>
-        displayCheck(pos)
-      case None =>
-    }
 
   def displayCheck(on: Square): Unit =
     getSquareOnCoordinate(on) match {

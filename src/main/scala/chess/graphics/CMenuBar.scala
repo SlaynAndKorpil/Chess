@@ -80,7 +80,7 @@ trait CMenuBar {
             case Right(board) =>
               chessBoard = board
               gameFrame.repaint()
-              gameFrame.displayCheck()
+              gameFrame.chessBoard.doOnCheck(pos => gameFrame.displayCheck(pos), ())
             case Left(errorMessage) =>
               Error error errorMessage.description
           }

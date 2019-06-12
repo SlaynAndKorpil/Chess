@@ -47,19 +47,19 @@ class ChessBoard(
 
   /**
     * @param column the one-letter identifier of a column of squares on the board
-    * @return a column of the board, [[None]] if no column with this identifier exists
+    * @return a column of the board, [[scala.None]] if no column with this identifier exists
     */
   def getColumn(column: Char): Option[Column] =
     if (isValidColumn(column)) Some(squares(column)) else None
 
   /**
-    * Handles different input types depending on the [[gameStatus]].
+    * Handles different input types depending on the [[chess.framework.ChessBoard#gameStatus gameStatus]].
     *
-    * @param input some [[Input]]
-    * @return an updated [[ChessBoard]] or [[None]] when the input is either unknown
-    *         or does not match the current input requirements given by [[gameStatus]].
+    * @param input some [[chess.framework.Input Input]]
+    * @return an updated [[chess.framework.ChessBoard ChessBoard]] or [[scala.None]] when the input is either unknown
+    *         or does not match the current input requirements given by [[chess.framework.ChessBoard#gameStatus gameStatus]].
     */
-  def receive[T](input: Input[T]): Option[(ChessBoard, IOEvent)] =
+  def receive[T](input: Input[T]): Option[Output] =
     input match {
       case MoveParams(from, to) if gameStatus == StandardReq =>
         move(from, to)
@@ -70,31 +70,31 @@ class ChessBoard(
       case DrawOffer if gameStatus == StandardReq =>
         if (positions.maxRepetition >= 3) {
           val res = Draw(Repetition)
-          Some(clone(gameStatus = Ended(res)), ShowEnded(res))
+          Output(clone(gameStatus = Ended(res)), Array(ShowEnded(res))) asSome
         }
         else {
-          Some(clone(gameStatus = DrawAcceptanceReq), ShowDrawOffer)
+          Output(clone(gameStatus = DrawAcceptanceReq), Array(ShowDrawOffer)) asSome
         }
 
       case DrawReject if gameStatus == DrawAcceptanceReq =>
-        Some(clone(gameStatus = StandardReq), NoEvent)
+        Output(clone(gameStatus = StandardReq), Array(NoEvent)) asSome
 
       case DrawAcceptance if gameStatus == DrawAcceptanceReq =>
         val res = Draw(DrawAgreement)
-        Some(clone(gameStatus = Ended(res)), ShowEnded(res))
+        Output(clone(gameStatus = Ended(res)), Array(ShowEnded(res))) asSome
 
       case TakebackProposal if gameStatus == StandardReq =>
-        Some(clone(gameStatus = TakebackAcceptanceReq), ShowTakeback)
+        Output(clone(gameStatus = TakebackAcceptanceReq), Array(ShowTakeback)) asSome
 
       case TakebackAcceptance if gameStatus == TakebackAcceptanceReq =>
         takeback
 
       case TakebackReject if gameStatus == TakebackAcceptanceReq =>
-        Some(clone(gameStatus = StandardReq), RemoveTakeback)
+        Output(clone(gameStatus = StandardReq), Array(RemoveTakeback)) asSome
 
       case Resign if gameStatus == StandardReq =>
         val res = resign
-        Some(clone(gameStatus = res), ShowEnded(res.result))
+        Output(clone(gameStatus = res), Array(ShowEnded(res.result))) asSome
 
       case _ => None
     }
@@ -112,7 +112,7 @@ class ChessBoard(
     }
 
   /**
-    * @note When the coordinate is outside the board, [[NoPiece]] is returned.
+    * @note When the coordinate is outside the board, [[chess.framework.NoPiece NoPiece]] is returned.
     * @param sqr coordinates on the board
     * @return the piece at some specified position
     */
@@ -120,7 +120,7 @@ class ChessBoard(
 
   /**
     * @param sqr coordinates of the wanted piece
-    * @return the chess square at a specific position on the board, [[None]] if the sqr does not exist
+    * @return the chess square at a specific position on the board, [[scala.None]] if the sqr does not exist
     */
   def getSquare(sqr: Square): Option[Piece] =
     if (sqr.isValid) Some(squares(sqr._1)(sqr._2)) else None
@@ -129,7 +129,7 @@ class ChessBoard(
     squares map { tup => tup._1 -> tup._2.filter(func) }
 
   /**
-    * Generates a new [[ChessBoard]] which shares all attributes with this one
+    * Generates a new [[chess.framework.ChessBoard ChessBoard]] which shares all attributes with this one
     * but all that are defined in the parameters.
     *
     * @usecase Used to change specific values of the board.
@@ -148,7 +148,7 @@ class ChessBoard(
     * Stores the board in the xml format.
     *
     * @note The version attribute is used when loading to find the right loading method.
-    * @usecase Used to save&load [[ChessBoard]]s
+    * @usecase Used to save&load [[chess.framework.ChessBoard ChessBoard]]s
     * @see [[chess.framework.SaveLoader]]
     * @see [[chess.framework.ChessBoard#save]]
     * @return an xml-[[scala.xml.Elem]] with all data of the [[chess.framework.ChessBoard]]
@@ -210,16 +210,20 @@ class ChessBoard(
 
   /**
     * Moves a piece after testing for validity of the move which depends on the following aspects:
-    * both squares have to be on the board, either you capture an enemy piece or you move on an empty square,
-    * the moved piece must be of the color [[turn]], it must be a legal movement of the type of piece
-    * and the player must not be checked after the move.
-    * When the move is legal, the pieces and the turn are changed and the move is added to the [[history]].
+    *
+    * -both squares have to be on the board
+    * -either you capture an enemy piece or you move on an empty square
+    * -the moved piece must be of the color [[chess.framework.ChessBoard#turn turn]]
+    * -it must be a legal movement of the type of piece
+    * -the player must not be checked after the move.
+    *
+    * When the move is legal, the pieces and the turn are changed and the move is added to the [[chess.framework.ChessBoard#history history]].
     *
     * @param from the start square
     * @param to   the end-coordinates
     * @return the updated board
     */
-  def move(from: Square, to: Square): Option[(ChessBoard, IOEvent)] = {
+  def move(from: Square, to: Square): Option[Output] = {
     val movingPiece = apply(from)
     val endPiece = apply(to)
     val startColor = movingPiece.color
@@ -295,11 +299,26 @@ class ChessBoard(
       }
 
 
-    if (isValid) Some(movedBoard.clone(gameStatus = updatedStatus), action)
+    if (isValid) Some(Output(movedBoard.clone(gameStatus = updatedStatus), Array(action)))
     else None
   }
 
+  /** Tests if a player is currently checked. */
   def isCheck(color: AnyColor = turn): Boolean = checkedSquare(color).isDefined
+
+  /**
+    * @param func      a method that will be called when the player is checked
+    * @param onFailure a return value if the player is not checked
+    * @param color     the player's color
+    * @tparam T some return type
+    * @return either the result of `func` or `onFailure`
+    */
+  def doOnCheck[T](func: Square => T, onFailure: T, color: AnyColor = turn): T = checkedSquare() match {
+    case Some(pos) =>
+      func(pos)
+    case None =>
+      onFailure
+  }
 
   /**
     * Tests if at least one of the kings is checked by finding their squares and testing these for being attacked.
@@ -324,7 +343,7 @@ class ChessBoard(
     * @param start      the start square
     * @param end        the ending square
     * @param startPiece the moved piece
-    * @param endPiece   the captured piece or [[NoPiece]] for an empty square
+    * @param endPiece   the captured piece or [[chess.framework.NoPiece NoPiece]] for an empty square
     * @return `true` if the move is legal, otherwise `false`
     */
   def isLegalMove(start: Square, end: Square, startPiece: Piece, endPiece: Piece): Boolean = {
@@ -383,7 +402,7 @@ class ChessBoard(
     * An overloading method. It takes the color of the piece on the square as
     * the ''defender'', i.e. the not-attacking color.
     *
-    * @see isAttacked(sqr: Square, attacked: AnyColor): Boolean
+    * @see [[chess.framework.ChessBoard#isAttacked isAttacked]]
     * @return `true` if the square is attacked, otherwise `false`
     */
   def isAttacked(sqr: Square): Boolean = {
@@ -405,6 +424,13 @@ class ChessBoard(
     attackingPieces(sqr, attacked) > 0
   }
 
+  /**
+    * Counts all pieces that are attacking a square.
+    *
+    * @param sqr      the square that gets tested
+    * @param attacked the ''defending'' color
+    * @return `true` if the square is attacked, otherwise `false`
+    */
   def attackingPieces(sqr: Square, attacked: AnyColor): Int = {
     implicit class Intersectable[P <: Piece](val content: Array[P]) {
       def ^[OtherP <: Piece](other: Array[OtherP]): Int = (for (i <- content; j <- other) yield if (j === i) 1 else 0) sum
@@ -519,7 +545,7 @@ class ChessBoard(
   /**
     * Tests for insufficient material of any color.
     *
-    * @see [[chess.framework.ChessBoard\.isInsufficientMaterial]]
+    * @see [[chess.framework.ChessBoard#isInsufficientMaterial(color: chess\.framework\.AnyColor)* isInsufficientMaterial]]
     */
   def isInsufficientMaterial: Boolean = isInsufficientMaterial(Black) && isInsufficientMaterial(White)
 
@@ -565,7 +591,7 @@ class ChessBoard(
     * Searches for the next piece.
     *
     * @usecase useful for searching on an diagonal or orthogonal
-    * @note Returns [[NoPiece]] when no piece is found.
+    * @note Returns [[chess.framework.NoPiece NoPiece]] when no piece is found.
     * @param start     the start square
     * @param increment the incrementation every iteration
     * @return the first piece on a line
@@ -583,7 +609,7 @@ class ChessBoard(
   /**
     * Tests if two squares are on the same orthogonal and if the space between them is empty.
     *
-    * @see isEmptyDiagonal
+    * @see [[chess.framework.ChessBoard#isEmptyDiagonal isEmptyDiagonal]]
     */
   def isEmptyOrthogonal(from: Square, to: Square): Boolean = {
     val orthogonal = from._1 == to._1 || from._2 == to._2
@@ -593,7 +619,7 @@ class ChessBoard(
   /**
     * Tests if two squares are located on the same diagonal and the next piece on this diagonal is the piece on the end-square.
     *
-    * @see isEmptyOrthogonal
+    * @see [[chess.framework.ChessBoard#isEmptyOrthogonal isEmptyOrthogonal]]
     */
   def isEmptyDiagonal(from: Square, to: Square): Boolean = {
     val startColIndex = from.colIndx
@@ -630,7 +656,7 @@ object ChessBoard {
   /**
     * The data-version; used to verify `.save` files (stored games/ boards).
     *
-    * @note this constant will be updated with every update changing the way of saving [[ChessBoard]]s.
+    * @note this constant will be updated with every update changing the way of saving [[chess.framework.ChessBoard ChessBoard]]s.
     * @version alpha 0.1
     */
   val Version = 0L
@@ -643,7 +669,7 @@ object ChessBoard {
   /**
     * Fills a 8 * 8 board with a specific piece.
     *
-    * @return a fully filled [[chess.framework.ChessBoard]]
+    * @return a fully filled [[chess.framework.ChessBoard ChessBoard]]
     */
   def fill(piece: Piece)(implicit io: ChessIO): ChessBoard = this (Array.fill(8)(Column(piece)), Nil, Positions.empty, White).get
 
@@ -779,7 +805,7 @@ object ChessBoard {
     case _ => ' '
   }
 
-  /** @return `true` if a column with this identifier does exist, else `false` */
+  /** @return `true` if a column with this identifier does exist, else `false`*/
   def isValidColumn(column: Char): Boolean =
     columnIndex(column) <= 8 && columnIndex(column) >= 1
 
