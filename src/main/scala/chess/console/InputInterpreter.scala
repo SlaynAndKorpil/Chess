@@ -43,10 +43,10 @@ class InputInterpreter extends ChessIO {
               println("saving...")
               save(board, in2)
             case "load" => load(in2) match {
-              case Some(loadedBoard) =>
+              case Right(loadedBoard) =>
                 board = loadedBoard
                 println(board)
-              case None => Error error "This save file is either from an older version or not existing."
+              case Left(errorMessage) => Error error errorMessage.description
             }
             case _ => Error error "wrong input format"
           }

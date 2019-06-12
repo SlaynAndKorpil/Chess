@@ -453,7 +453,7 @@ class ChessBoard(
 
     def offsetPiece(off: (Int, Int)) = apply(atOffset(off))
 
-    val res = piece match {
+    piece match {
       case Pawn(color, _) =>
         val dir = ClassicalValues.pawnDir(color)
         val opponent = color.opposite
@@ -504,8 +504,6 @@ class ChessBoard(
         !offsets.exists(d => offsetPiece(d).color != other.color)
       case NoPiece => false
     }
-    Debugger debug s"$square blocked: $res"
-    res
   }
 
   //TODO implement
@@ -748,15 +746,17 @@ object ChessBoard {
     * @param path the file
     * @return a board or [[scala.None]] when the board was saved in a different version.
     */
-  def load(path: String)(implicit io: ChessIO): Option[ChessBoard] = {
+  def load(path: String)(implicit io: ChessIO): Either[LoadingError.LoadingError, ChessBoard] = {
     val fullPath = path + (if (path contains ".") "" else ".save")
-    try new SaveLoader().load(xml.XML.load(fullPath))
+    loadExactPath(fullPath)
+  }
+
+  def loadExactPath(path: String)(implicit io: ChessIO): Either[LoadingError.LoadingError, ChessBoard] =
+    try SaveLoader.load(xml.XML.load(path))
     catch {
       case _: Throwable =>
-        Error error s"failed to load the file $fullPath"
-        None
+        Left(LoadingError.FileNotFoundError(path))
     }
-  }
 
   def saveSquares(squares: Map[Char, Column]): NodeSeq =
     for (x <- 1 to 8; col = columnLetter(x)) yield

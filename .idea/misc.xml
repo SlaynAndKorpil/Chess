@@ -27,7 +27,7 @@
   </component>
   <component name="ScaladocSettings">
     <option name="outputDir" value="C:\Users\user\Desktop\ChessDocs" />
-    <option name="additionalFlags" value="-@usecase" />
+    <option name="additionalFlags" value="" />
     <option name="maxHeapSize" value="" />
     <option name="docTitle" value="Chess documentation" />
     <option name="verbose" value="false" />

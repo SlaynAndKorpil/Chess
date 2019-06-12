@@ -4,7 +4,7 @@ import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.{IndexedSeqLike, mutable}
 import scala.language.postfixOps
-import scala.xml.{Elem, NodeSeq}
+import scala.xml.Elem
 
 /**
   * A column that contains 8 pieces.
@@ -58,7 +58,7 @@ final class Column(ps: Array[Piece]) extends IndexedSeq[Piece] with IndexedSeqLi
     */
   def saveData: IndexedSeq[Elem] = {
     var result: IndexedSeq[Elem] = IndexedSeq()
-    pieces.indices.foreach(i => if (pieces(i).nonEmpty) result = result :+ pieces(i).xml.copy(label = "l" + (i + 1)))
+    pieces.indices.foreach(i => if (pieces(i).nonEmpty) result = result :+ pieces(i).toXml.copy(label = "l" + (i + 1)))
     result
   }
 
@@ -67,6 +67,7 @@ final class Column(ps: Array[Piece]) extends IndexedSeq[Piece] with IndexedSeqLi
     *
     * @return this column as comma separated data
     */
+  @deprecated("Not necessary anymore")
   def asCSVLine: String =
     pieces map (piece => {
       val moved = if (piece.moved) piece.moved.toString else ""
@@ -94,18 +95,5 @@ object Column {
     def apply(): mutable.Builder[Piece, Column] = newBuilder
 
     def apply(from: Column): mutable.Builder[Piece, Column] = newBuilder
-  }
-
-  /**
-    * Loads a [[chess.framework.Column]] from xml data.
-    *
-    * @param xml data formatted as xml
-    * @return the loaded column
-    */
-  def loadFromXML(xml: NodeSeq): Column = {
-    val result =
-      for (i <- 1 to 8; label = "l" + i; data = xml \ label)
-        yield Piece.fromXML(data)
-    new Column(result.toArray)
   }
 }

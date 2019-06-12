@@ -10,6 +10,7 @@ import chess.graphics.BoardColors._
 import scala.swing._
 
 class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
+  //TODO maybe use a real popup for this?
   val promoMenu = new PromotionChooser(400, 100)
   listenTo(promoMenu)
 
@@ -85,6 +86,7 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
 
     case RemovePromotion =>
       promoMenu.close()
+      displayCheck()
 
     case ShowPromotion(pos) =>
       getSquareOnCoordinate(pos) match {
