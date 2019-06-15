@@ -1,5 +1,7 @@
 package chess.framework.IOEvents
 
+import chess.framework.JavaInterfacing.JReaction
+
 /**
   * Contains and provokes reactions
   * to [[chess.framework.IOEvents events]].

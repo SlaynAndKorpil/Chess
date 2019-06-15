@@ -1,4 +1,6 @@
-package chess.framework.IOEvents;
+package chess.framework.JavaInterfacing;
+
+import chess.framework.IOEvents.IOEvent;
 
 import java.util.function.*;
 
