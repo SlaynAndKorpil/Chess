@@ -18,7 +18,7 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
 
   def chessBoard: ChessBoard = board
 
-  board = ChessBoard.classicalBoard(this)
+  var board: ChessBoard = ChessBoard.classicalBoard(this)
 
   setup()
 

@@ -5,6 +5,8 @@ import chess.framework.BoardStatus.GameStatus.{Ended, GameStatus, PromoReq, Stan
 import chess.framework.BoardStatus.ResultReason.Resignation
 import chess.framework.IOEvents._
 
+import scala.language.postfixOps
+
 /**
   * Meta information and methods that are needed for a game.
   * @usecase this gets mixed-in in [[chess.framework.ChessBoard ChessBoard]]

@@ -284,22 +284,19 @@ class ChessBoard(
       else movedBoard.gameStatus
 
 
-    val action: IOEvent =
-      updatedStatus match {
-        case res: Ended =>
-          ShowEnded(res.result)
-        case _ => movingPiece match {
-          case Pawn(color, _) if to.row == ClassicalValues.piecesStartLine(color.opposite) =>
-            ShowPromotion(to)
-          case _ if movedBoard.isCheck() =>
-            ShowCheck(movedBoard.checkedSquare().get)
-          case _ =>
-            NoEvent
-        }
+    val endedEvent: IOEvent = updatedStatus match {
+        case res: Ended => ShowEnded(res.result)
+        case _ => NoEvent
       }
 
+    val promoEvent = movingPiece match {
+      case Pawn(color, _) if to.row == ClassicalValues.piecesStartLine(color.opposite) => ShowPromotion(to)
+      case _ => NoEvent
+    }
 
-    if (isValid) Some(Output(movedBoard.clone(gameStatus = updatedStatus), Array(action)))
+    val checkEvent = movedBoard.doOnCheck(pos => ShowCheck(pos), NoEvent)
+
+    if (isValid) Some(Output(movedBoard.clone(gameStatus = updatedStatus), Array(endedEvent, checkEvent, promoEvent)))
     else None
   }
 

@@ -11,7 +11,7 @@ import scala.language.postfixOps
   * An interface between the console and the board
   */
 class InputInterpreter extends ChessIO {
-  board = ChessBoard.classicalBoard
+  var board: ChessBoard = ChessBoard.classicalBoard
 
   /**
     * runs an interpretation of the console and plays the interpreted moves on the [[board]]

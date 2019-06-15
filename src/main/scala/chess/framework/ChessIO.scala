@@ -28,6 +28,7 @@ import chess.framework.Input._
   *   test receiveInput MoveParams(from = Square('d', 2), to = Square('d', 4))
   * }}}
   *
+  * @see [[chess.framework.JavaInterfacing.JChessIO the java version]]
   * @since alpha 0.1
   * @author Felix Lehner
   */
@@ -38,7 +39,7 @@ trait ChessIO {
     *
     * @note this should not be overridden
     */
-  implicit val io: this.type = this
+  protected implicit val io: this.type = this
 
   /**
     * The board that is used as an internal representation of the data structure.
@@ -47,7 +48,7 @@ trait ChessIO {
     *
     * @see [[chess.framework.ChessBoard#classicalBoard]]
     */
-  protected var board: ChessBoard = _
+  protected var board: ChessBoard
 
   /**
     * All available reactions to input.
@@ -68,7 +69,7 @@ trait ChessIO {
     *
     * @usecase this method gets called by the `receiveInput` method whenever the board gets updated.
     */
-  def update(): Unit
+  protected def update(): Unit
 
   /**
     * This redirects any input to the board and unpacks and processes the output.
@@ -77,7 +78,7 @@ trait ChessIO {
     *          this trait do not have to process the result themselves.
     * @param input any form of [[chess.framework.Input]]
     */
-  def receiveInput(input: Input[_]): Unit = {
+  protected def receiveInput(input: Input[_]): Unit = {
     val res = board.receive(input)
     res match {
       case Some(data) =>
