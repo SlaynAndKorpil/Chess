@@ -5,7 +5,7 @@ import chess.framework.IOEvents.IOEvent;
 import java.util.function.*;
 
 /**
- * A java version of Reaction.
+ * A java version of Reaction for convenience.
  * This takes a Consumer as reaction for interoperability with java.
  * @param <T> some event type
  * @author Felix Lehner

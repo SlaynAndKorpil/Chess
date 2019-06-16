@@ -1,6 +1,7 @@
 package chess.framework.IOEvents
 
 import chess.framework.JavaInterfacing.JReaction
+import chess.framework.{Debugger, Error}
 
 /**
   * Contains and provokes reactions
@@ -17,7 +18,7 @@ class BoardReactions {
     * and calls the associated reaction.
     */
   def apply(event: IOEvent): Unit =
-    reactions find (_.isDefinedAt(event))  match {
+    reactions find (_.isDefinedAt(event)) match {
     case Some(eventHandler) => eventHandler(event)
     case None =>
   }
@@ -34,10 +35,15 @@ class BoardReactions {
     this.reactions ++= reactions
 
   /**
-    * Adds a
+    * Adds a reaction.
     * Used for convenience reasons when implementing a [[chess.framework.ChessIO]] with java.
     */
-  def add[T <: IOEvent](reaction: JReaction[T]): Unit = this += {
-    case x: T => reaction.reaction.accept(x)
+  def add[T <: IOEvent](reaction: JReaction[T]): Unit = this += new PartialFunction[IOEvent, Unit] {
+    override def isDefinedAt(x: IOEvent): Boolean = x match {
+      case _: T => true
+      case _ => false
+    }
+
+    override def apply(v1: IOEvent): Unit = reaction.reaction.accept(v1.asInstanceOf[T])
   }
 }

@@ -38,7 +38,7 @@ sealed trait Piece {
   })
 }
 
-object NoPiece extends Piece {
+case object NoPiece extends Piece {
   /** @note only for internal use; simply returns this object */
   private[chess] def apply(c: Color, b: Boolean): NoPiece.type = this
 
@@ -99,5 +99,15 @@ object Piece {
       case _ => NoPiece
     }
     case NoColor => NoPiece
+  }
+
+  def apply(id: Char): Option[(AnyColor, Boolean) => AnyPiece] = id.toUpper match {
+    case 'P' => Some(Pawn.apply)
+    case 'B' => Some(Bishop.apply)
+    case 'N' => Some(Knight.apply)
+    case 'R' => Some(Rook.apply)
+    case 'Q' => Some(Queen.apply)
+    case 'K' => Some(King.apply)
+    case _ => None
   }
 }
