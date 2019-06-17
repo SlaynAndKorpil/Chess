@@ -5,6 +5,7 @@ import chess.framework.ChessIO;
 import chess.framework.IOEvents.BoardReactions;
 import chess.framework.IOEvents.IOEvent;
 import chess.framework.Input.Input;
+import chess.framework.JavaInterfacing.Reactions.JReaction;
 import chess.framework.Output;
 import scala.collection.IndexedSeq;
 

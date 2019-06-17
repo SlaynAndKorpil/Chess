@@ -83,7 +83,7 @@ class ChessBoard(
         val res = Draw(DrawAgreement)
         Output(clone(gameStatus = Ended(res)), Array(ShowEnded(res))) asSome
 
-      case TakebackProposal if gameStatus == StandardReq =>
+      case TakebackProposal if gameStatus == StandardReq || gameStatus.isInstanceOf[Ended] =>
         Output(clone(gameStatus = TakebackAcceptanceReq), Array(ShowTakeback)) asSome
 
       case TakebackAcceptance if gameStatus == TakebackAcceptanceReq =>
@@ -261,6 +261,7 @@ class ChessBoard(
       result.updated(to, resPiece).emptySquare(from)
     }
 
+    //TODO test if saving only every second move (i.e. only white/black moves) works the same
     val movedBoard = doMove.clone(positions = positions + Position(squares))
 
     def isValid: Boolean =

@@ -1,8 +1,8 @@
-package chess.framework.JavaInterfacing;
+package chess.framework.JavaInterfacing.Reactions;
 
 import chess.framework.IOEvents.IOEvent;
 
-import java.util.function.*;
+import java.util.function.Consumer;
 
 /**
  * A java version of Reaction for convenience.
@@ -11,9 +11,7 @@ import java.util.function.*;
  * @author Felix Lehner
  * @version alpha 0.1
  */
-public class JReaction<T extends IOEvent> {
-    public JReaction (Consumer<T> reaction) {
-        this.reaction = reaction;
-    }
-    public final Consumer<T> reaction;
+public abstract class JReaction<T extends IOEvent> {
+    public abstract boolean isDefinedAt(IOEvent event);
+    public Consumer<T> reaction;
 }
