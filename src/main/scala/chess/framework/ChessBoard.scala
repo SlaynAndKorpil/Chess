@@ -475,13 +475,19 @@ class ChessBoard(
 
     def atOffset(off: (Int, Int)): Square = square + off
 
-    def offsetPiece(off: (Int, Int)) = apply(atOffset(off))
+    def offsetPiece(off: (Int, Int)) = getSquare(atOffset(off))
 
     piece match {
       case Pawn(color, _) =>
         val dir = ClassicalValues.pawnDir(color)
-        val opponent = color.opposite
-        val capturing = offsetPiece(1, dir).color == opponent || offsetPiece(-1, dir).color == opponent
+        val opponent: AnyColor = color.opposite
+        val capturing: Boolean = (offsetPiece(1, dir) match {
+          case Some(offPiece) => offPiece.color == opponent
+          case None => false
+        }) || (offsetPiece(-1, dir) match {
+          case Some(offPiece) => offPiece.color == opponent
+          case None => false
+        })
         val moving = offsetPiece(0, dir) isEmpty
         val enPassant = history.nonEmpty && {
           val piece = history.head.piece
@@ -496,7 +502,10 @@ class ChessBoard(
           1 -> 0, 1 -> -1, 1 -> 1,
           -1 -> 0, -1 -> 1, -1 -> -1
         )
-        !moves.exists(d => !isAttacked(atOffset(d), color) && offsetPiece(d).color != color)
+        !moves.exists(d => !isAttacked(atOffset(d), color)
+          && offsetPiece(d)
+            .flatMap(offPiece => Option(offPiece.color != color))
+            .getOrElse(false))
       case other if other.isInstanceOf[AnyPiece] =>
         val offsets = other match {
           case Knight(_, _) =>
@@ -525,13 +534,27 @@ class ChessBoard(
           case _ =>
             Array.empty
         }
-        !offsets.exists(d => offsetPiece(d).color != other.color)
+        !offsets.exists(i => offsetPiece(i)
+          .flatMap(piece => Option(piece.color != other.color))
+          .getOrElse(false)
+        )
       case NoPiece => false
     }
   }
 
-  //TODO implement
-  def isBlocked: Boolean = false
+  /** Tests if the position is blocked */
+  def isBlocked: Boolean = {
+    val piecesBlocked = allPieces filterNot (_._2.isInstanceOf[King]) map (_._1) forall isBlockedSquare
+    val kingsBlocked = {
+      val kings = allPieces filter (_._2.isInstanceOf[King])
+      //TODO pathfinding algorithm
+
+
+
+      false
+    }
+    piecesBlocked && kingsBlocked
+  }
 
   //TODO implement
   def isMate: Boolean = false
