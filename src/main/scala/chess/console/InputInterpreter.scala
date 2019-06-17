@@ -43,10 +43,8 @@ class InputInterpreter extends ChessIO {
               println("saving...")
               save(board, in2)
             case "load" => load(in2) match {
-              case Right(loadedBoard) =>
-                board = loadedBoard
-                println(board)
-              case Left(errorMessage) => Error error errorMessage.description
+              case Some(errorMessage) => Error error errorMessage.description
+              case None =>
             }
             case _ => Error error "wrong input format"
           }

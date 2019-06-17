@@ -46,9 +46,16 @@ trait ChessIO {
     * This variable is mutable because [[chess.framework.ChessBoard]] is not although
     * mutability is needed for a program that can react to input.
     *
-    * @see [[chess.framework.ChessBoard#classicalBoard]]
+    * @see [[chess.framework.ChessBoard#classicalBoard]] for initialization
     */
   protected var board: ChessBoard
+
+  def chessBoard_=(board: ChessBoard): Unit = {
+    this.board = board
+    update()
+  }
+
+  def chessBoard: ChessBoard = board
 
   /**
     * All available reactions to input.
@@ -67,7 +74,7 @@ trait ChessIO {
     *       because every king checked won't be checked after the next move (i.e. no legal move
     *       of a checked player will ever result in being checked again.
     *
-    * @usecase this method gets called by the `receiveInput` method whenever the board gets updated.
+    * @usecase this method is called whenever the chessboard gets updated.
     */
   protected def update(): Unit
 
@@ -82,10 +89,18 @@ trait ChessIO {
     val res = board.receive(input)
     res match {
       case Some(data) =>
-        board = data.board
-        update()
+        chessBoard = data.board
         data.events foreach (event => chessReactions(event))
       case None =>
     }
   }
+
+  protected def load(filePath: String): Option[chess.framework.LoadingError.LoadingError] =
+    ChessBoard.load(filePath) match {
+      case Right(loadedBoard) =>
+        chessBoard = loadedBoard
+        loadedBoard.doOnCheck(pos => chessReactions(IOEvents.ShowCheck(pos)), Unit)
+        None
+      case Left(error) => Some(error)
+    }
 }

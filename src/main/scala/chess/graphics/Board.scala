@@ -4,6 +4,7 @@ import chess.framework.BoardStatus.GameResult._
 import chess.framework.BoardStatus.ResultReason._
 import chess.framework.IOEvents._
 import chess.framework.Input._
+import chess.framework.LoadingError.LoadingError
 import chess.framework._
 import chess.graphics.BoardColors._
 
@@ -14,11 +15,7 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
   val promoMenu = new PromotionChooser(400, 100)
   listenTo(promoMenu)
 
-  def chessBoard_=(board: ChessBoard): Unit = this.board = board
-
-  def chessBoard: ChessBoard = board
-
-  var board: ChessBoard = ChessBoard.classicalBoard(this)
+  override protected var board: ChessBoard = ChessBoard.classicalBoard(this)
 
   setup()
 
@@ -32,7 +29,7 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
         else {
           val color: BoardColor = if (i % 2 == j % 2) Brown.White else Brown.Black
           val pos = Square(col, row)
-          new SquareButton(color, pos, board(pos))
+          new SquareButton(color, pos, chessBoard(pos))
         }
     }
     contents foreach (comp => listenTo(comp))
@@ -124,7 +121,11 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
     contents foreach {
       case sq: SquareButton =>
         sq.checked = false
-        sq.piece = board(sq.pos)
+        sq.piece = chessBoard(sq.pos)
       case _ =>
     }
+
+  override def receiveInput(input: Input[_]): Unit = super.receiveInput(input)
+
+  override def load(filePath: String): Option[LoadingError] = super.load(filePath)
 }

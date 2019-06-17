@@ -1,6 +1,7 @@
 package chess.framework.JavaInterfacing;
 
 import chess.framework.ChessBoard;
+import chess.framework.ChessBoard$;
 import chess.framework.ChessIO;
 import chess.framework.IOEvents.BoardReactions;
 import chess.framework.IOEvents.IOEvent;
@@ -22,11 +23,18 @@ import java.util.function.Function;
 @SuppressWarnings("ALL")
 public abstract class JChessIO {
     /**
+     * Initiallizes with a classic chess board.
+     */
+    public JChessIO() {
+        this(ChessBoard$.MODULE$::classicalBoard);
+    }
+
+    /**
      * Initializes the chessBoard as well as the wrappedRef.
      *
      * @param func a generator for chessboards (e.g. <code>ChessBoard$.MODULE$::classicalBoard</code>)
      */
-    public JChessIO(Function<ChessIO, ChessBoard> func) {
+    protected JChessIO(Function<ChessIO, ChessBoard> func) {
         wrappedRef = new ChessIO() {
             public void board_$eq(ChessBoard board) {
                 JChessIO.this.setChessBoard(board);
@@ -110,7 +118,7 @@ public abstract class JChessIO {
      * because every king checked won't be checked after the next move (i.e. no legal move
      * of a checked player will ever result in being checked again.
      * <p>
-     * This method gets called by the `receiveInput` method after every change of the board.
+     * This method gets called after every change of the board.
      */
     protected abstract void update();
 
