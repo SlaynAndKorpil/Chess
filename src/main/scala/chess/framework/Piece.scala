@@ -10,18 +10,7 @@ sealed trait Piece {
 
   val value: Int
 
-  def toXml: Elem =
-    <piece>
-      <id>
-        {identifier}
-      </id>
-      <color>
-        {color}
-      </color>
-      <moved>
-        {moved}
-      </moved>
-    </piece>
+  def toXml: Elem = <piece id={identifier.toString} color={color.toString} moved={moved.toString}/>
 
   def isEmpty: Boolean
 

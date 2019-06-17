@@ -51,11 +51,7 @@ class Positions(val positions: Array[Position], val maxRepetition: Int) {
     * @return an xml object
     */
   def toXML: NodeSeq = {
-    val data = positions map { p =>
-      <pos>
-        {ChessBoard.saveSquares(p.pos)}
-      </pos>
-    }
+    val data = positions map { p => <pos>{ChessBoard.saveSquares(p.pos)}</pos>}
     NodeSeq.fromSeq(data)
   }
 }

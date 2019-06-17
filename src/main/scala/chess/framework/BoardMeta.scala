@@ -16,7 +16,7 @@ import scala.language.postfixOps
 trait BoardMeta {
   self: ChessBoard =>
 
-  /** A list of former moves */
+  /** A list of all played moves. */
   val history: List[MoveData]
 
   /** A list of all former positions */

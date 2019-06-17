@@ -151,7 +151,7 @@ class ChessBoard(
     * @usecase Used to save&load [[chess.framework.ChessBoard ChessBoard]]s
     * @see [[chess.framework.SaveLoader]]
     * @see [[chess.framework.ChessBoard#save]]
-    * @return an xml-[[scala.xml.Elem]] with all data of the [[chess.framework.ChessBoard]]
+    * @return an xml-[[scala.xml.Elem element]] with all relevant data of the [[chess.framework.ChessBoard]]
     */
   def save: Elem =
     <chessboard version={Version.toString}>
@@ -159,21 +159,7 @@ class ChessBoard(
         {saveSquares(squares)}
       </board>
       <moves>
-        {history map (m =>
-        <move>
-          <start>
-            {m.startPos.column}{m.startPos.row}
-          </start>
-          <end>
-            {m.endPos.column}{m.endPos.row}
-          </end>
-          <movedPiece>
-            {m.piece}
-          </movedPiece>
-          <capture>
-            {m.captured}
-          </capture>
-        </move>)}
+        {history map (m => <move start={m.startPos.column.toString + m.startPos.row.toString} end={m.endPos.column.toString + m.endPos.row.toString} capture={m.captured.toString} piece={m.piece.toString}/>)}
       </moves>
       <turn>
         {turn}
@@ -286,9 +272,9 @@ class ChessBoard(
 
 
     val endedEvent: IOEvent = updatedStatus match {
-        case res: Ended => ShowEnded(res.result)
-        case _ => NoEvent
-      }
+      case res: Ended => ShowEnded(res.result)
+      case _ => NoEvent
+    }
 
     val promoEvent = movingPiece match {
       case Pawn(color, _) if to.row == ClassicalValues.piecesStartLine(color.opposite) => ShowPromotion(to)
@@ -504,8 +490,8 @@ class ChessBoard(
         )
         !moves.exists(d => !isAttacked(atOffset(d), color)
           && offsetPiece(d)
-            .flatMap(offPiece => Option(offPiece.color != color))
-            .getOrElse(false))
+          .flatMap(offPiece => Option(offPiece.color != color))
+          .getOrElse(false))
       case other if other.isInstanceOf[AnyPiece] =>
         val offsets = other match {
           case Knight(_, _) =>
@@ -548,7 +534,6 @@ class ChessBoard(
     val kingsBlocked = {
       val kings = allPieces filter (_._2.isInstanceOf[King])
       //TODO pathfinding algorithm
-
 
 
       false
@@ -680,7 +665,7 @@ object ChessBoard {
     * @note this constant will be updated with every update changing the way of saving [[chess.framework.ChessBoard ChessBoard]]s.
     * @version alpha 0.1
     */
-  val Version = 0L
+  val Version = 1L
 
   /**
     * @return An empty chess board
@@ -806,10 +791,7 @@ object ChessBoard {
     }
 
   def saveSquares(squares: Map[Char, Column]): NodeSeq =
-    for (x <- 1 to 8; col = columnLetter(x)) yield
-      <col>
-        {squares(col).saveData}
-      </col> copy (label = col.toUpper toString)
+    for (x <- 1 to 8; col = columnLetter(x)) yield <col>{squares(col).saveData}</col> copy (label = col.toUpper toString)
 
   /**
     * Converts a column index to it's corresponding character.
@@ -826,7 +808,7 @@ object ChessBoard {
     case _ => ' '
   }
 
-  /** @return `true` if a column with this identifier does exist, else `false`*/
+  /** @return `true` if a column with this identifier does exist, else `false` */
   def isValidColumn(column: Char): Boolean =
     columnIndex(column) <= 8 && columnIndex(column) >= 1
 
