@@ -9,7 +9,7 @@ abstract class TripleDirectionalPathfinder[ResultType](override val vector: (Int
       override def success(on: Square): Result[ResultType] = TripleDirectionalPathfinder.this.terminate(on)
 
       override def decision(pos: Square): WaypointResult.Value = TripleDirectionalPathfinder.this.decision(pos)
-    }
+    }.apply(from + vector)
 
     val res2 = this.apply(from + vector)
 
@@ -19,10 +19,11 @@ abstract class TripleDirectionalPathfinder[ResultType](override val vector: (Int
       override def success(on: Square): Result[ResultType] = TripleDirectionalPathfinder.this.terminate(on)
 
       override def decision(pos: Square): WaypointResult.Value = TripleDirectionalPathfinder.this.decision(pos)
-    }
+    } apply(from + vector)
 
-    //FIXME wrong parameters, result type unknown
-    if (Array(res1, res2, res3).contains(success(from))) success(from)
-    else terminate(from)
+    Array(res1, res2, res3) find (_.isSuccess) match {
+      case Some(success) => success
+      case None => Failure
+    }
   }
 }
