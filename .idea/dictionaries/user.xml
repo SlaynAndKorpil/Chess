@@ -9,6 +9,7 @@
       <w>lehner</w>
       <w>nocolor</w>
       <w>passant</w>
+      <w>resizes</w>
       <w>sqrs</w>
       <w>takeback</w>
       <w>takebacks</w>
@@ -17,6 +18,7 @@
       <w>unselect</w>
       <w>unsufficent</w>
       <w>usecase</w>
+      <w>waypoint</w>
     </words>
   </dictionary>
 </component>
