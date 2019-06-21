@@ -5,6 +5,7 @@ import chess.framework.BoardStatus.GameStatus._
 import chess.framework.BoardStatus.ResultReason._
 import chess.framework.IOEvents._
 import chess.framework.Input._
+import chess.framework.pathfinding.WaypointResult
 
 import scala.annotation.tailrec
 import scala.language.{implicitConversions, postfixOps}
@@ -528,25 +529,53 @@ class ChessBoard(
     }
   }
 
-  /** Tests if the position is blocked */
+  /**
+    * Tests for blockage by testing if every piece is blocked
+    * and the kings are unable to reach any opponent piece.
+    */
   def isBlocked: Boolean = {
-    val piecesBlocked = allPieces filterNot (_._2.isInstanceOf[King]) map (_._1) forall isBlockedSquare
-    val kingsBlocked = {
-      val kings = allPieces filter (_._2.isInstanceOf[King])
-      //TODO pathfinding algorithm
+    def piecesBlocked = allPieces filterNot (_._2.isInstanceOf[King]) map (_._1) forall isBlockedSquare
+    def kingsBlocked = {
+      val kings: Array[(Square, AnyPiece)] = allPieces filter (_._2.isInstanceOf[King])
 
+      def kingIsBlocked(pos: Square): Boolean = {
+        import pathfinding.{KingMovementPathfinder, Success, Failure}, WaypointResult._
+        val kingColor = this.apply(pos).color.asInstanceOf[AnyColor]
 
-      false
+        new KingMovementPathfinder {
+          override def decision(pos: Square): WaypointResult.Value = getSquare(pos) match {
+            case Some(piece) => piece.color match {
+              case color: AnyColor if !isAttacked(pos, color) && kingColor != color =>
+                WaypointResult.Positive
+              case _ =>
+                Termination
+            }
+            case None =>
+              Termination
+          }
+        }.apply(pos) match {
+          case Success(_) => false
+          case Failure => true
+        }
+      }
+
+      kings.forall(king => kingIsBlocked(king._1))
     }
+
     piecesBlocked && kingsBlocked
   }
 
   //TODO implement
   def isMate: Boolean = false
 
-  /** Tests for stalemate. */
+  /**
+    * Tests for stalemate (when a player is not checked but cannot move
+    * because every possible move would result in him being checked).
+    */
   def isStalemate: Boolean =
-    allPieces filter (p => p._2.color == turn) map (_._1) forall isBlockedSquare
+    allPieces
+      .filter(p => p._2.color == turn)
+      .map(_._1) forall isBlockedSquare
 
   /**
     * Tests for insufficient material of any color.
@@ -590,6 +619,7 @@ class ChessBoard(
     }
   }
 
+  /** Tests for a 5x repetition of the same position. */
   def isFivefoldRepetition: Boolean =
     positions.maxRepetition >= 5
 
@@ -808,7 +838,7 @@ object ChessBoard {
     case _ => ' '
   }
 
-  /** @return `true` if a column with this identifier does exist, else `false` */
+  /** @return `true` if a column with this identifier does exist, else `false`*/
   def isValidColumn(column: Char): Boolean =
     columnIndex(column) <= 8 && columnIndex(column) >= 1
 

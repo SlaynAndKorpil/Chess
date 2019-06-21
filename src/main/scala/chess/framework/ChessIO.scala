@@ -28,7 +28,7 @@ import chess.framework.Input._
   *   test receiveInput MoveParams(from = Square('d', 2), to = Square('d', 4))
   * }}}
   *
-  * @see [[chess.framework.JavaInterfacing.JChessIO the java version]]
+  * @see [[chess.framework.javaInterfacing.JChessIO the java version]]
   * @since alpha 0.1
   * @author Felix Lehner
   */
@@ -103,4 +103,6 @@ trait ChessIO {
         None
       case Left(error) => Some(error)
     }
+
+  protected def save(filePath: String): Unit = ChessBoard.save(chessBoard, filePath)
 }

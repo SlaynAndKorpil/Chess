@@ -1,4 +1,4 @@
-package chess.framework.JavaInterfacing.Reactions;
+package chess.framework.javaInterfacing.Reactions;
 
 import chess.framework.IOEvents.IOEvent;
 import chess.framework.IOEvents.RemoveDrawOffer$;

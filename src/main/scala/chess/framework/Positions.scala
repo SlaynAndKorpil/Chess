@@ -89,12 +89,10 @@ object NoPositions extends Positions(Array(), 0) {
   override def toXML: NodeSeq = NodeSeq.Empty
 }
 
-/** Stores a position in XML format. */
+/** Stores a position. */
 case class Position(pos: Map[Char, Column]) extends AnyVal {
   /**
-    * Compares this position with another.
-    *
-    * @note This tests only for things relevant for repetition.
+    * Compares this position with another only taking the piece type and its color into account.
     * @param other another position to compare with
     * @return `true` if equal otherwise `false`
     */
@@ -107,11 +105,10 @@ case class Position(pos: Map[Char, Column]) extends AnyVal {
           val otherPiece = otherPos(y)
           val piece = thisPos(y)
           piece match {
-            case Pawn(_, _) => piece == otherPiece //TODO moved is not the only relevance for en passant
+            case Pawn(_, _) => piece == otherPiece
             case King(_, _) => piece == otherPiece
             case Rook(_, _) => piece == otherPiece
-            case _ =>
-              piece === otherPiece
+            case _ => piece === otherPiece
           }
         }
       }

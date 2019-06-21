@@ -1,6 +1,6 @@
 package chess.framework.IOEvents
 
-import chess.framework.JavaInterfacing.Reactions.JReaction
+import chess.framework.javaInterfacing.Reactions.JReaction
 import chess.framework.{Debugger, Error}
 
 /**
@@ -35,7 +35,7 @@ class BoardReactions {
     this.reactions ++= reactions
 
   /**
-    * Creates a reaction from a [[chess.framework.JavaInterfacing.Reactions.JReaction JReaction]]
+    * Creates a reaction from a [[chess.framework.javaInterfacing.Reactions.JReaction JReaction]]
     * and adds it the the reaction list.
     * Used for convenience reasons when implementing a [[chess.framework.ChessIO]] with java.
     */

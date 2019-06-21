@@ -40,7 +40,7 @@ trait CMenuBar {
 
     object colorMode extends CMenuItem("Color mode", KeyEvent.VK_C, _ => ())
 
-    object takeback extends CMenuItem("Takeback", KeyEvent.VK_T, _ =>
+    object takeback extends CMenuItem("Takeback", KeyEvent.VK_T, Shortcut.takeback, _ =>
       gameFrame.receiveInput(TakebackProposal))
 
     object resign extends CMenuItem("Resign", KeyEvent.VK_R, _ =>

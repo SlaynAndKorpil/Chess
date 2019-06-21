@@ -2,7 +2,6 @@ package chess.graphics
 
 import java.awt.image.BufferedImage
 import java.io.File
-import javax.swing.{Icon, ImageIcon}
 import chess.framework._
 import javax.imageio.ImageIO
 import scala.xml.Elem
@@ -12,19 +11,19 @@ import scala.xml.Elem
   */
 //TODO exception-handling!!!
 object Icons {
-  val dirs: Elem = xml.XML.load(piecesIconDir)
+  val dirs: Elem = xml.XML.load(getClass.getResourceAsStream(piecesIconDir))
 
   /**
     * Splits an image horizontally into 6 equally sized parts.
     * These should show the 6 different chess pieces in this order: King, Queen, Bishop, Knight, Rook, Pawn
     * @see [[blackImages]]; [[whiteImages]]
-    * @return a sequence of these 6 images as [[ImageIcon]]s
+    * @return a sequence of these 6 images as [[java.awt.image.BufferedImage]]s
     */
   private def splitImg (image: BufferedImage): Seq[BufferedImage] =
     for (i <- 0 until 6) yield image.getSubimage(i*image.getWidth/6, 0, image.getWidth/6, image.getHeight)
 
-  private val blackImages: Seq[BufferedImage] = splitImg(ImageIO.read(new File(assetsDir + (dirs \ "BlackPieces" \@ "dir"))))
-  private val whiteImages: Seq[BufferedImage] = splitImg(ImageIO.read(new File(assetsDir + (dirs \ "WhitePieces" \@ "dir"))))
+  private val blackImages: Seq[BufferedImage] = splitImg(ImageIO.read(getClass.getResourceAsStream(assetsDir + (dirs \ "BlackPieces" \@ "dir"))))
+  private val whiteImages: Seq[BufferedImage] = splitImg(ImageIO.read(getClass.getResourceAsStream(assetsDir + (dirs \ "WhitePieces" \@ "dir"))))
 
   val PawnBlack: BufferedImage = blackImages(5)
   val PawnWhite: BufferedImage = whiteImages(5)
@@ -41,21 +40,20 @@ object Icons {
 
 
   /**
-    * Assigns for every piece the correct [[Icon]]
+    * Assigns for every piece the correct [[java.awt.image.BufferedImage]]
     */
-  def icon (p: Piece): Option[BufferedImage] = p match {
-    case Pawn(Black, _) => Some(PawnBlack)
-    case Pawn(White, _) => Some(PawnWhite)
-    case Bishop(Black, _) => Some(BishopBlack)
-    case Bishop(White, _) => Some(BishopWhite)
-    case Knight(Black, _) => Some(KnightBlack)
-    case Knight(White, _) => Some(KnightWhite)
-    case Rook(Black, _) => Some(RookBlack)
-    case Rook(White, _) => Some(RookWhite)
-    case Queen(Black, _) => Some(QueenBlack)
-    case Queen(White, _) => Some(QueenWhite)
-    case King(Black, _) => Some(KingBlack)
-    case King(White, _) => Some(KingWhite)
-    case _ => None
+  def icon (p: AnyPiece): BufferedImage = p match {
+    case Pawn(Black, _) => PawnBlack
+    case Pawn(White, _) => PawnWhite
+    case Bishop(Black, _) => BishopBlack
+    case Bishop(White, _) => BishopWhite
+    case Knight(Black, _) => KnightBlack
+    case Knight(White, _) => KnightWhite
+    case Rook(Black, _) => RookBlack
+    case Rook(White, _) => RookWhite
+    case Queen(Black, _) => QueenBlack
+    case Queen(White, _) => QueenWhite
+    case King(Black, _) => KingBlack
+    case King(White, _) => KingWhite
   }
 }

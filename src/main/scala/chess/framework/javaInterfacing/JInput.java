@@ -1,4 +1,4 @@
-package chess.framework.JavaInterfacing;
+package chess.framework.javaInterfacing;
 
 import chess.framework.Input.*;
 import chess.framework.Square;

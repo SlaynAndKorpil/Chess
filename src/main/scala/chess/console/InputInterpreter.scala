@@ -1,7 +1,6 @@
 package chess.console
 
 import chess.framework._
-import ChessBoard.{save, load}
 import chess.framework.IOEvents._
 import chess.framework.Input._
 
@@ -41,7 +40,7 @@ class InputInterpreter extends ChessIO {
               System.exit(0)
             case "save" =>
               println("saving...")
-              save(board, in2)
+              save(in2)
             case "load" => load(in2) match {
               case Some(errorMessage) => Error error errorMessage.description
               case None =>
