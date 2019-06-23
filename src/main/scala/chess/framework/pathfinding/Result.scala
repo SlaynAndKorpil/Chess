@@ -1,12 +1,12 @@
 package chess.framework.pathfinding
 
-sealed abstract class Result[+T] {
+sealed abstract class Result[@specialized(Boolean) +T] {
   def content: T
 
   def isSuccess: Boolean
 }
 
-case class Success[+T](override val content: T) extends Result[T] {
+case class Success[@specialized(Boolean) +T](override val content: T) extends Result[T] {
   override def isSuccess: Boolean = true
 }
 

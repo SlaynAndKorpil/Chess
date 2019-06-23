@@ -117,13 +117,13 @@ class ChessBoard(
     * @param sqr coordinates on the board
     * @return the piece at some specified position
     */
-  def apply(sqr: Square): Piece = getSquare(sqr) getOrElse NoPiece
+  def apply(sqr: Square): Piece = getPiece(sqr) getOrElse NoPiece
 
   /**
     * @param sqr coordinates of the wanted piece
     * @return the chess square at a specific position on the board, [[scala.None]] if the sqr does not exist
     */
-  def getSquare(sqr: Square): Option[Piece] =
+  def getPiece(sqr: Square): Option[Piece] =
     if (sqr.isValid) Some(squares(sqr._1)(sqr._2)) else None
 
   def filterPieces(func: Piece => Boolean): Map[Char, Column] =
@@ -462,7 +462,7 @@ class ChessBoard(
 
     def atOffset(off: (Int, Int)): Square = square + off
 
-    def offsetPiece(off: (Int, Int)) = getSquare(atOffset(off))
+    def offsetPiece(off: (Int, Int)) = getPiece(atOffset(off))
 
     piece match {
       case Pawn(color, _) =>
@@ -534,24 +534,31 @@ class ChessBoard(
     * and the kings are unable to reach any opponent piece.
     */
   def isBlocked: Boolean = {
-    def piecesBlocked = allPieces filterNot (_._2.isInstanceOf[King]) map (_._1) forall isBlockedSquare
-    def kingsBlocked = {
-      val kings: Array[(Square, AnyPiece)] = allPieces filter (_._2.isInstanceOf[King])
+    def piecesBlocked =
+      allPieces
+        .filterNot(_._2.isInstanceOf[King])
+        .map(_._1)
+        .forall(isBlockedSquare)
 
-      def kingIsBlocked(pos: Square): Boolean = {
-        import pathfinding.{KingMovementPathfinder, Success, Failure}, WaypointResult._
-        val kingColor = this.apply(pos).color.asInstanceOf[AnyColor]
+    def kingsBlocked = {
+      val kings: Array[(Square, AnyPiece)] = allPieces filter (_._2.isInstanceOf[King]) reverse
+
+      def kingIsBlocked(kingOnSq: (Square, AnyPiece)): Boolean = {
+        import WaypointResult._
+        import pathfinding.{Failure, KingMovementPathfinder, Success}
+        val pos = kingOnSq._1
+        val king = kingOnSq._2
+
+        val kingColor = king.color
 
         new KingMovementPathfinder {
-          override def decision(pos: Square): WaypointResult.Value = getSquare(pos) match {
-            case Some(piece) => piece.color match {
-              case color: AnyColor if !isAttacked(pos, color) && kingColor != color =>
-                WaypointResult.Positive
-              case _ =>
-                Termination
-            }
-            case None =>
-              Termination
+          override def decision(pos: Square): WaypointResult.Value = getPiece(pos) match {
+            case Some(piece) if !isAttacked(pos, kingColor) && kingColor != piece.color =>
+              piece.color match {
+                case color: AnyColor if color == kingColor.opposite => Positive
+                case _ => Continuation
+              }
+            case _ => Termination
           }
         }.apply(pos) match {
           case Success(_) => false
@@ -559,7 +566,7 @@ class ChessBoard(
         }
       }
 
-      kings.forall(king => kingIsBlocked(king._1))
+      kings.forall(king => kingIsBlocked(king))
     }
 
     piecesBlocked && kingsBlocked
@@ -838,7 +845,7 @@ object ChessBoard {
     case _ => ' '
   }
 
-  /** @return `true` if a column with this identifier does exist, else `false`*/
+  /** @return `true` if a column with this identifier does exist, else `false` */
   def isValidColumn(column: Char): Boolean =
     columnIndex(column) <= 8 && columnIndex(column) >= 1
 
