@@ -475,7 +475,7 @@ class ChessBoard(
           case Some(offPiece) => offPiece.color == opponent
           case None => false
         })
-        val moving = offsetPiece(0, dir) isEmpty
+        val moving = offsetPiece(0, dir).getOrElse(NoPiece).isEmpty
         val enPassant = history.nonEmpty && {
           val piece = history.head.piece
           val sPos = history.head.startPos
@@ -551,7 +551,7 @@ class ChessBoard(
 
         val kingColor = king.color
 
-        new KingMovementPathfinder {
+        val pathfindRes = new KingMovementPathfinder {
           override def decision(pos: Square): WaypointResult.Value = getPiece(pos) match {
             case Some(piece) if !isAttacked(pos, kingColor) && kingColor != piece.color =>
               piece.color match {
@@ -560,13 +560,12 @@ class ChessBoard(
               }
             case _ => Termination
           }
-        }.apply(pos) match {
-          case Success(_) => false
-          case Failure => true
-        }
+        }.apply(pos)
+
+        !pathfindRes.isSuccess
       }
 
-      kings.forall(king => kingIsBlocked(king))
+      kings forall kingIsBlocked
     }
 
     piecesBlocked && kingsBlocked
