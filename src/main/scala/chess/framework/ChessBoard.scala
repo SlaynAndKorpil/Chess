@@ -573,8 +573,30 @@ class ChessBoard(
     piecesBlocked && kingsBlocked
   }
 
-  //TODO implement
-  def isMate: Boolean = false
+  /** Tests for mate. */
+  def isMate: Boolean = isCheck() && {
+    // assuming there is only one king per color
+    val testedKing = allPieces filter (_._2 === King(turn)) head
+    val kingColor = turn
+    val kingSq = testedKing._1
+
+    val adjacentVectors = Array(
+      (-1, -1), (-1, 0), (-1, 1),
+      (0, -1), (0, 1),
+      (1, -1), (1, 0), (1, 1)
+    )
+
+     val adjacents =
+       adjacentVectors
+         .map (v => kingSq + v)
+         .filter (_.isValid)
+
+    val canMove = adjacents exists (a => !isAttacked(a, kingColor, withKing = true) && apply(a).color != kingColor)
+
+    Debugger debug s"king can move: $canMove"
+
+    !canMove
+  }
 
   /**
     * Tests for stalemate (when a player is not checked but cannot move
