@@ -8,14 +8,15 @@ sealed trait GameResult {
 }
 
 object GameResult {
-  def apply(reason: String): Option[GameResult] = {
-    val last = reason.last
-    if (contains(reason, "BlackWins(", ")"))
-      createResult(reason.substring(10, last), BlackWins.apply)
-    else if (contains(reason, "WhiteWins(", ")"))
-      createResult(reason.substring(10, last), WhiteWins.apply)
-    else if (contains(reason, "Draw(", ")"))
-      createResult(reason.substring(5, last), Draw.apply)
+  def apply(result: String): Option[GameResult] = {
+    val last = result.length - 1
+    if (contains(result, "BlackWins(", ")"))
+      createResult(result.substring(10, last), BlackWins.apply)
+    else if (contains(result, "WhiteWins(", ")"))
+      createResult(result.substring(10, last), WhiteWins.apply)
+    else if (contains(result, "Draw(", ")")) {
+      createResult(result.substring(5, last), Draw.apply)
+    }
     else None
   }
 
@@ -27,7 +28,7 @@ object GameResult {
     }
   }
 
-  def contains(in: String, start: String, end: String): Boolean =
+  private[BoardStatus] def contains(in: String, start: String, end: String): Boolean =
     in.startsWith(start) && in.endsWith(end)
 }
 

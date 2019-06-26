@@ -13,21 +13,25 @@ object UnknownVersionError extends LoadingError {
 }
 
 object ParsingError extends LoadingError {
-  override val description: String = "Unable to parse this file."
+  override val description: String = "Failed to parse this file."
 }
 
 case class ColumnLoadingError(columnXML: String) extends LoadingError {
-  override val description: String = "Unable to load a column from xml: " + columnXML
+  override val description: String = "Failed to load a column from xml: " + columnXML
 }
 
 case class PieceLoadingError(pieceXML: String) extends LoadingError {
-  override val description: String = "Unable to load a piece from xml: " + pieceXML
+  override val description: String = "Failed to load a piece from xml: " + pieceXML
 }
 
 case class BoardLoadingError(squaresXML: String) extends LoadingError {
-  override val description: String = "Unable to load a board from xml: " + squaresXML
+  override val description: String = "Failed to load a board from xml: " + squaresXML
 }
 
 case class HistoryError(history: String) extends LoadingError {
-  override val description: String = "Unable to load history from xml: " + history
+  override val description: String = "Failed to load history from xml: " + history
+}
+
+case class GameStatusLoadingError(status: String) extends LoadingError {
+  override val description: String = "Failed to load status " + status
 }

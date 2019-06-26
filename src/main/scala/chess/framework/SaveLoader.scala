@@ -18,7 +18,11 @@ object SaveLoader {
     * @return a [[ChessBoard]] or [[None]] as a failure
     */
   def load(xml: Elem)(implicit io: ChessIO): Either[LoadingError, ChessBoard] = {
-    val version = (xml \@ "version").toLong
+    val version =
+      try {(xml \@ "version").toLong}
+      catch {
+        case _: Throwable => -1
+      }
     val loader = loaderForVersion(version)
     loader.load(xml)
   }
@@ -34,6 +38,7 @@ object SaveLoader {
   def loaderForVersion(version: Long): Loader = version match {
     case 1 => Loader2
     case 0 => Loader1
+    case -1 => NoLoaderDefined //reservation for fallback loader
     case _ => NoLoaderDefined
   }
 
@@ -175,7 +180,7 @@ object SaveLoader {
   }
 
   object Loader2 extends Loader {
-    override def load(xml: Elem)(implicit io: ChessIO): Either[LoadingError, ChessBoard] = {
+    override def load(xml: Elem)(implicit io: ChessIO): Either[LoadingError, ChessBoard] = try {
       val boardData = xml \ "board"
       val moves = xml \ "moves" \ "move"
       val color = Color(extractWithFilter(xml, "turn"))
@@ -222,11 +227,17 @@ object SaveLoader {
           if (squares.isLeft) Left(squares.left.get)
           else if (history.isLeft) Left(history.left.get)
           else if (positions.isLeft) Left(positions.left.get)
+          else if (gameStatus.isLeft) Left(gameStatus.left.get)
           else {
             Right(new ChessBoard(squares = squares.right.get.toMap, history = history.right.get, positions = positions.right.get, turn = color, gameStatus = gameStatus.right.get))
           }
         case _ => Left(ParsingError)
       }
+    }
+    catch {
+      case e: Throwable =>
+        e.printStackTrace()
+        Left(ParsingError)
     }
 
     override def loadSquaresFromXML(xml: Node): Either[LoadingError, IndexedSeq[(Char, Column)]] = {
