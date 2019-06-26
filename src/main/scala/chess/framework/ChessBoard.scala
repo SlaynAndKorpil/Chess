@@ -317,7 +317,7 @@ class ChessBoard(
       row <- 1 to 8
       sqr = Square(columnLetter(c), row)
       piece = apply(sqr)
-      if piece === King(color) && isAttacked(sqr)
+      if piece === King(color) && isAttacked(sqr, withKing = true)
     } yield sqr
   } headOption
 
@@ -373,8 +373,8 @@ class ChessBoard(
             val squaresToTest = start to Square(if (startCIndex < endCIndex) 'g' else 'c', start.row)
 
             def isSqrAttacked(sqr: AbstractSqrCoordinate[_]): Boolean = sqr match {
-              case square: Square => isAttacked(square, turn)
-              case square: NumericSquare => isAttacked(square, turn)
+              case square: Square => isAttacked(square, turn, withKing = true)
+              case square: NumericSquare => isAttacked(square, turn, withKing = true)
             }
 
             rook == Rook(color) && squaresToTest.forall(sqr => !isSqrAttacked(sqr)) && isEmptyOrthogonal(start, end)
@@ -390,10 +390,10 @@ class ChessBoard(
     * @see [[chess.framework.ChessBoard#isAttacked isAttacked]]
     * @return `true` if the square is attacked, otherwise `false`
     */
-  def isAttacked(sqr: Square): Boolean = {
+  def isAttacked(sqr: Square, withKing: Boolean): Boolean = {
     val attackedCol = apply(sqr).color
     attackedCol match {
-      case col: AnyColor => isAttacked(sqr, col)
+      case col: AnyColor => isAttacked(sqr, col, withKing)
       case NoColor => false
     }
   }
@@ -405,8 +405,8 @@ class ChessBoard(
     * @param attacked the ''defending'' color
     * @return `true` if the square is attacked, otherwise `false`
     */
-  def isAttacked(sqr: Square, attacked: AnyColor): Boolean = {
-    attackingPieces(sqr, attacked) > 0
+  def isAttacked(sqr: Square, attacked: AnyColor, withKing: Boolean): Boolean = {
+    attackingPieces(sqr, attacked, withKing) > 0
   }
 
   /**
@@ -414,9 +414,10 @@ class ChessBoard(
     *
     * @param sqr      the square that gets tested
     * @param attacked the ''defending'' color
+    * @param withKing whether the king should be counted as possible attacker
     * @return `true` if the square is attacked, otherwise `false`
     */
-  def attackingPieces(sqr: Square, attacked: AnyColor): Int = {
+  def attackingPieces(sqr: Square, attacked: AnyColor, withKing: Boolean = true): Int = {
     implicit class Intersectable[P <: Piece](val content: Array[P]) {
       def ^[OtherP <: Piece](other: Array[OtherP]): Int = (for (i <- content; j <- other) yield if (j === i) 1 else 0) sum
     }
@@ -433,7 +434,8 @@ class ChessBoard(
       Array(partApply(1, 2), partApply(2, 1), partApply(2, -1), partApply(1, -2), partApply(-1, 2), partApply(-2, 1), partApply(-2, -1), partApply(-1, -2)) count (Knight(opponent) === _)
 
     val attackedByKing: Int =
-      Array.apply(partApply(1, 1), partApply(-1, 1), partApply(1, -1), partApply(-1, -1), partApply(0, 0), partApply(-1, 0), partApply(1, 0), partApply(0, -1), partApply(0, 1)) count (King(opponent) === _)
+      if (withKing) Array.apply(partApply(1, 1), partApply(-1, 1), partApply(1, -1), partApply(-1, -1), partApply(0, 0), partApply(-1, 0), partApply(1, 0), partApply(0, -1), partApply(0, 1)) count (King(opponent) === _)
+      else 0
 
     val attackedDiagonally: Int =
       Array(Queen(opponent), Bishop(opponent)) ^ Array(partNxtPiece(1, 1), partNxtPiece(-1, -1), partNxtPiece(1, -1), partNxtPiece(-1, 1))
@@ -489,7 +491,7 @@ class ChessBoard(
           1 -> 0, 1 -> -1, 1 -> 1,
           -1 -> 0, -1 -> 1, -1 -> -1
         )
-        !moves.exists(d => !isAttacked(atOffset(d), color)
+        !moves.exists(d => !isAttacked(atOffset(d), color, withKing = false)
           && offsetPiece(d)
           .flatMap(offPiece => Option(offPiece.color != color))
           .getOrElse(false))
@@ -545,7 +547,7 @@ class ChessBoard(
 
       def kingIsBlocked(kingOnSq: (Square, AnyPiece)): Boolean = {
         import WaypointResult._
-        import pathfinding.{Failure, KingMovementPathfinder, Success}
+        import pathfinding.KingMovementPathfinder
         val pos = kingOnSq._1
         val king = kingOnSq._2
 
@@ -553,7 +555,7 @@ class ChessBoard(
 
         val pathfindRes = new KingMovementPathfinder {
           override def decision(pos: Square): WaypointResult.Value = getPiece(pos) match {
-            case Some(piece) if !isAttacked(pos, kingColor) && kingColor != piece.color =>
+            case Some(piece) if !isAttacked(pos, kingColor, withKing = false) && kingColor != piece.color =>
               piece.color match {
                 case color: AnyColor if color == kingColor.opposite => Positive
                 case _ => Continuation

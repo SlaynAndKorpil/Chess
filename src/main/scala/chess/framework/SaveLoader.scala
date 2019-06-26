@@ -57,13 +57,11 @@ object SaveLoader {
   }
 
   /**
-    * Chosen when no other loader is defined for this version
+    * Chosen when no other loader is defined for a specific version
     */
   object NoLoaderDefined extends Loader {
-    /** @return always returns [[scala.collection.immutable.Seq#empty]] */
     override def loadSquaresFromXML(xml: Node): Either[LoadingError, IndexedSeq[(Char, Column)]] = Left(BoardLoadingError(xml.toString))
 
-    /** @return always returns [[scala.None]] because there is no loading operation known for this version */
     override def load(xml: Elem)(implicit io: ChessIO): Either[LoadingError, ChessBoard] = Left(UnknownVersionError)
 
     override def loadColumnFromXML(xml: NodeSeq): Either[LoadingError, Column] = Left(ColumnLoadingError(xml.toString))
