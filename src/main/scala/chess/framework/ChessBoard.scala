@@ -57,7 +57,7 @@ class ChessBoard(
     * Handles different input types depending on the [[chess.framework.ChessBoard#gameStatus gameStatus]].
     *
     * @param input some [[chess.framework.Input Input]]
-    * @return an updated [[chess.framework.ChessBoard ChessBoard]] or [[scala.None]] when the input is either unknown
+    * @return some [[chess.framework.Output]] or [[scala.None]] when the input is either unknown
     *         or does not match the current input requirements given by [[chess.framework.ChessBoard#gameStatus gameStatus]].
     */
   def receive[T](input: Input[T]): Option[Output] =
