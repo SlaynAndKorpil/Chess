@@ -1,9 +1,6 @@
 package chess
 
-
 object Main extends App {
-  //  chess.console.Run.main(Array())
-    chess.graphics.Run.main(Array())
-//    import test.test.TestImpl
-//    val testIO = new TestImpl()
+    if (args contains "console") chess.console.Run.main(Array())
+    else chess.graphics.Run.main(Array())
 }
