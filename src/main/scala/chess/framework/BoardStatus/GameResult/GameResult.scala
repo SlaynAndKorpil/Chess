@@ -3,7 +3,9 @@ package chess.framework.BoardStatus.GameResult
 import chess.framework.BoardStatus.ResultReason._
 import chess.framework._
 
+/** The result of an ended game. */
 sealed trait GameResult {
+  /** The reason of this result. */
   val reason: ResultReason
 }
 

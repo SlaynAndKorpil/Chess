@@ -23,14 +23,11 @@ class BoardReactions {
     case None =>
   }
 
+  /** Adds a reaction for specific events (defined with `isDefinedAt` method of reaction.) */
   def +=(reaction: PartialFunction[IOEvent, Unit]): Unit =
     reactions +:= reaction
 
-//  def +=(reaction: Reaction): Unit =
-//    reactions +:= {
-//      case reaction.isDefinedFor => reaction.reaction(_)
-//    }
-
+  /** Adds a list of reactions. */
   def ++=(reactions: IndexedSeq[PartialFunction[IOEvent, Unit]]): Unit =
     this.reactions ++= reactions
 

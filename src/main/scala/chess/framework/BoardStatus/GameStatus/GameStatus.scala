@@ -4,6 +4,11 @@ import chess.framework.BoardStatus.GameResult.GameResult
 import chess.framework.LoadingError.GameStatusLoadingError
 import chess.framework._
 
+/**
+  * The status of a [[chess.framework.ChessBoard]]
+  * @version alpha 0.1
+  * @author Felix Lehner
+  */
 sealed trait GameStatus {
   def isActive: Boolean
 }
@@ -38,24 +43,31 @@ object GameStatus {
   }
 }
 
+/** An ended game */
 case class Ended(result: GameResult) extends GameStatus {
   def isActive: Boolean = false
 }
 
+/** The game is still active*/
 sealed trait Active extends GameStatus {
   def isActive: Boolean = true
 }
 
+/** Waiting for standard input(move, draw offer, ...). */
 object StandardReq extends Active {
   override def toString: String = "Waiting"
 }
 
-case class PromoReq(square: Square) extends Active
+/** Waiting for a promotion */
+case class PromoReq(on: Square) extends Active
 
+/** Waiting for an answer to a draw offer. */
 object DrawAcceptanceReq extends Active {
   override def toString: String = "Draw reaction"
 }
 
+
+/** Waiting for an answer to a takeback request. */
 object TakebackAcceptanceReq extends Active {
   override def toString: String = "TakebackAcceptanceReq"
 }

@@ -1,5 +1,10 @@
 package chess.framework
 
+/**
+  * A color.
+  * @version alpha 0.1
+  * @author Felix Lehner
+  */
 sealed trait Color {
   def opposite: Color
 }

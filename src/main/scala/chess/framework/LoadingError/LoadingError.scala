@@ -1,5 +1,6 @@
 package chess.framework.LoadingError
 
+/** Represents an error that occurred when loading a chess board. */
 trait LoadingError {
   val description: String
 }

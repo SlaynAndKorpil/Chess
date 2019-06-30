@@ -39,8 +39,14 @@ class Positions(val positions: Array[Position], val maxRepetition: Int) {
   /** @return the number of stored positions */
   def length: Int = positions.length
 
+  /**
+    * @return The last position
+    */
   def head: Position = positions.head
 
+  /**
+    * @return All but the last position.
+    */
   def tail: Positions = Positions(positions.tail)
 
   /**

@@ -4,6 +4,11 @@ import chess.framework.ChessBoard.{columnIndex, columnLetter}
 
 import scala.language.implicitConversions
 
+/**
+  * A coordinate of a square.
+  * @version alpha 0.1
+  * @author Felix Lehner
+  */
 sealed abstract class AbstractSqrCoordinate[ColumnType] {
   val column: ColumnType
   val row: Int
@@ -50,12 +55,20 @@ sealed abstract class AbstractSqrCoordinate[ColumnType] {
 
   def unary_- : Square = NumericSquare(-colIndx, -row)
 
+  /**
+    * All adjacent squares.
+    * @see [[chess.framework.AbstractSqrCoordinate#validAdjacents]] for
+    *     adjacent squares that are on the board.
+    */
   def adjacents: IndexedSeq[Return] = IndexedSeq(
     (-1, -1), (-1, 0), (-1, 1),
     (0, -1), (0, 1),
     (1, -1), (1, 0), (1, 1)
   ) map (this + _)
 
+  /**
+    * All adjacent squares that are on the board.
+    */
   def validAdjacents: IndexedSeq[Return] = adjacents filter (_.isValid)
 
   def toTuple: (ColumnType, Int) = (column, row)

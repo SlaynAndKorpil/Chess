@@ -35,7 +35,7 @@ case class ChessBoard (
   /** The move counter */
   val turnCounter: Int = history.length / 2
 
-  /** All pieces and their position */
+  /** All pieces (excluding [[chess.framework.NoPiece NoPiece]]s) and their position */
   lazy val allPieces: Array[(Square, AnyPiece)] = {
     val allSquares = for {
       x <- 1 to 8
@@ -149,7 +149,7 @@ case class ChessBoard (
            ): ChessBoard = ChessBoard(squares, history, positions, turn, gameStatus)(io)
 
   /**
-    * Stores the board in the xml format.
+    * Stores this object in the xml format.
     *
     * @note The version attribute is used when loading to find the right loading method.
     * @usecase Used to save&load [[chess.framework.ChessBoard ChessBoard]]s
@@ -221,7 +221,6 @@ case class ChessBoard (
 
     def doMove = this.doMove(from, to, movingPiece, startColor, endColor)
 
-    //TODO test if saving only every second move (i.e. only white/black moves) works the same
     val movedBoard = doMove.clone(positions = positions + Position(squares))
 
     def isValid: Boolean =
@@ -257,7 +256,7 @@ case class ChessBoard (
 
     val checkEvent = movedBoard.doOnCheck(pos => ShowCheck(pos), NoEvent)
 
-    if (isValid) Some(Output(movedBoard.clone(gameStatus = updatedStatus), Array(endedEvent, checkEvent, promoEvent)))
+    if (isValid) Some(Output(movedBoard.clone(gameStatus = updatedStatus), Array(checkEvent, endedEvent, promoEvent)))
     else None
   }
 
@@ -636,7 +635,7 @@ case class ChessBoard (
     val kingSq = testedKing._1
     val alliedPieces = allPieces.filter(_._2.color == kingColor).filter(_._2 !== King(kingColor))
 
-    //tests if a piece can move to a specific position
+    //tests if any piece can move to a specific position (-> block or capture)
     def piecesCanMoveTo(sqr: Square): Boolean = {
       val endPiece = apply(sqr)
       alliedPieces exists (sp => !isPinnedPiece(sp._1) && isLegalMove(sp._1, sqr, sp._2, endPiece))
@@ -861,11 +860,9 @@ object ChessBoard {
     ), Nil, Positions.empty, White, StandardReq
   )
 
-//  def apply(squares: Map[Char, Column], history: List[MoveData], positions: Positions, turn: AnyColor, gameStatus: GameStatus)(implicit io: ChessIO): Option[ChessBoard] =
-//    if (squares.size >= 8)
-//      Some(new ChessBoard(squares, history, positions, turn, gameStatus))
-//    else None
-
+  /**
+    * Generator for chessboards.
+    */
   def apply(columns: Array[Column], history: List[MoveData] = Nil, positions: Positions = Positions.empty, turn: AnyColor = White)(implicit io: ChessIO): Option[ChessBoard] =
     if (columns.length >= 8)
       Some(new ChessBoard(
@@ -883,7 +880,7 @@ object ChessBoard {
     else None
 
   /**
-    * Saves a [[chess.framework.ChessBoard]] to a `.save` file using the xml format.
+    * Saves a [[chess.framework.ChessBoard]] to a file using the xml format.
     *
     * @param fileName a name for the save; technically it's possible to use a file path but this does often lead to errors (due to a lazy developer...)
     */
@@ -897,8 +894,10 @@ object ChessBoard {
   }
 
   /**
-    * Loads a [[chess.framework.ChessBoard]] from a file.
+    * Loads a [[chess.framework.ChessBoard]] from a file and adds `.save`
+    * if the path does not contain any file extension.
     *
+    * @see [[chess.framework.ChessBoard#loadExactPath loadExactPath]]
     * @param path the file
     * @return a board or [[scala.None]] when the board was saved in a different version.
     */
@@ -907,6 +906,10 @@ object ChessBoard {
     loadExactPath(fullPath)
   }
 
+  /**
+    * Loads a board from a path without alternating it.
+    * @see [[chess.framework.ChessBoard#load load]]
+    */
   def loadExactPath(path: String)(implicit io: ChessIO): Either[LoadingError.LoadingError, ChessBoard] =
     try SaveLoader.load(xml.XML.load(path))
     catch {

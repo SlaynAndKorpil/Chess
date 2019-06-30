@@ -2,6 +2,7 @@ package chess.framework.pathfinding
 
 import chess.framework.Square
 
+/** Applies the movement of a king to a pathfinder. */
 abstract class KingMovementPathfinder extends Pathfinder[Boolean] {
   override def success(on: Square): Success[Boolean] = Success(true)
 

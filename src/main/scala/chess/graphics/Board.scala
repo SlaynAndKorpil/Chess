@@ -15,7 +15,7 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
   val promoMenu = new PromotionChooser(400, 100)
   listenTo(promoMenu)
 
-  override protected var board: ChessBoard = ChessBoard.classicalBoard(this)
+  override protected var board: ChessBoard = ChessBoard.classicalBoard
 
   setup()
 

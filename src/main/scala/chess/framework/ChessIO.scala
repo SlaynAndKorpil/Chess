@@ -12,6 +12,7 @@ import chess.framework.Input._
   * {{{
   *   class MyChessBoard extends ChessIO {
   *     override def update(): Unit = println(board.toString)
+  *     override protected var board: ChessBoard = ChessBoard.classicalBoard
   *
   *     chessReactions += {
   *       case ShowDrawOffer =>

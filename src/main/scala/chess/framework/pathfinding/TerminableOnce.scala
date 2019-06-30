@@ -1,6 +1,12 @@
 package chess.framework.pathfinding
 import chess.framework.Square
 
+/**
+  * Wraps another pathfinder and lets it run in a sandbox-like
+  * manner so it gets 'reflected' the first time it is terminated.
+  * @version alpha 0.1
+  * @author Felix Lehner
+  */
 case class TerminableOnce[@specialized(Boolean) ResultType](pathfinder: VectorPathfinder[ResultType]) extends Pathfinder[ResultType] {
   val pF = new TripleDirectionalPathfinder[ResultType](pathfinder.vector) {
     override def success(on: Square): Result[ResultType] = pathfinder.success(on)
