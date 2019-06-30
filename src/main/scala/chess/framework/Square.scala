@@ -8,45 +8,62 @@ sealed abstract class AbstractSqrCoordinate[ColumnType] {
   val column: ColumnType
   val row: Int
 
+  type Return >: this.type <: AbstractSqrCoordinate[ColumnType]
+
+  @inline
   def _1: ColumnType = column
 
+  @inline
   def _2: Int = row
 
   def colIndx: Int
 
-  def to(square: AbstractSqrCoordinate[_]): List[AbstractSqrCoordinate[_]] = {
+  def to(square: AbstractSqrCoordinate[ColumnType]): List[Return] = {
     val inc = (square.colIndx - colIndx).signum -> (square.row - row).signum
-    val incremented = this + inc
-    this :: {
+    val incremented: Return = this + inc
+    val head: Return = this
+    val tail: List[Return] =
       if (incremented == this) Nil
-      else incremented.to(square)
-    }
+      else incremented.to(square).asInstanceOf[List[Return]]
+    head :: tail
   }
 
-  def until[T](square: AbstractSqrCoordinate[_]): List[AbstractSqrCoordinate[_]] = {
+  def until(square: AbstractSqrCoordinate[ColumnType]): List[Return] = {
     val inc = (square.colIndx - colIndx).signum -> (square.row - row).signum
     val incremented = this + inc
-    this :: {
+    val head: Return = this
+    val tail: List[Return] =
       if (incremented == square) Nil
-      else incremented until square
-    }
+      else incremented.until(square).asInstanceOf[List[Return]]
+    head :: tail
   }
 
-  def +(sq: AbstractSqrCoordinate[_]): AbstractSqrCoordinate[_]
+  def +(sq: AbstractSqrCoordinate[_]): Return
 
-  def -(sq: AbstractSqrCoordinate[_]): AbstractSqrCoordinate[_]
+  def -(sq: AbstractSqrCoordinate[_]): Return
 
-  def +(sq: (Int, Int)): AbstractSqrCoordinate[_]
+  def +(sq: (Int, Int)): Return
 
-  def -(sq: (Int, Int)): AbstractSqrCoordinate[_]
+  def -(sq: (Int, Int)): Return
 
   def unary_+ : Square = NumericSquare(colIndx, row)
 
   def unary_- : Square = NumericSquare(-colIndx, -row)
 
+  def adjacents: IndexedSeq[Return] = IndexedSeq(
+    (-1, -1), (-1, 0), (-1, 1),
+    (0, -1), (0, 1),
+    (1, -1), (1, 0), (1, 1)
+  ) map (this + _)
+
+  def validAdjacents: IndexedSeq[Return] = adjacents filter (_.isValid)
+
   def toTuple: (ColumnType, Int) = (column, row)
 
-  def isValid: Boolean
+  /**
+    * Checks if this square is inside of a 8x8 board.
+    */
+  def isValid: Boolean = colIndx >= 1 && colIndx <= 8 && row >= 1 && row <= 8
 
   override def toString: String = s"$column$row"
 }
@@ -55,12 +72,9 @@ sealed abstract class AbstractSqrCoordinate[ColumnType] {
 final case class Square(column: Char, row: Int) extends AbstractSqrCoordinate[Char] {
   val colIndx: Int = columnIndex(column)
 
-  /**
-    * Checks if this square is inside the board.
-    */
-  override def isValid: Boolean = ChessBoard.isValidColumn(column) && row >= 1 && row <= 8
+  override type Return = Square
 
-  override def +(sq: AbstractSqrCoordinate[_]): Square = sq match {
+  override def +(sq: AbstractSqrCoordinate[_]): Return = sq match {
     case Square(col, line) =>
       Square(columnLetter(columnIndex(column)+columnIndex(col)), row + line)
     case NumericSquare(col, line) => Square(columnLetter(columnIndex(column) + col), row + line)
@@ -87,10 +101,7 @@ object Square {
 final case class NumericSquare(column: Int, row: Int) extends AbstractSqrCoordinate[Int] {
   def colIndx: Int = column
 
-  /**
-    * Checks if this square is inside the board.
-    */
-  override def isValid: Boolean = column >= 1 && column <= 8 && row >= 1 && row <= 8
+  override type Return = NumericSquare
 
   override def +(sq: AbstractSqrCoordinate[_]): NumericSquare = sq match {
     case Square(col, line) => NumericSquare(column + columnIndex(col), row + line)
@@ -111,12 +122,12 @@ object NumericSquare {
 
 object AbstractSqrCoordinate {
   /**
-    * implicit conversion from [[Square]] to [[NumericSquare]]
+    * implicit conversion from [[chess.framework.Square]] to [[chess.framework.NumericSquare]]
     */
   implicit def sqr2indxSqr(sqr: Square): NumericSquare = NumericSquare(sqr.colIndx, sqr.row)
 
   /**
-    * implicit conversion from [[NumericSquare]] to [[Square]]
+    * implicit conversion from [[chess.framework.NumericSquare]] to [[chess.framework.Square]]
     */
   implicit def indxSqr2sqr(iSqr: NumericSquare): Square = Square(columnLetter(iSqr.column), iSqr.row)
 }
