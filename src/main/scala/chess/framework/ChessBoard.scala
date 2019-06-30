@@ -36,7 +36,7 @@ case class ChessBoard (
   val turnCounter: Int = history.length / 2
 
   /** All pieces and their position */
-  val allPieces: Array[(Square, AnyPiece)] = {
+  lazy val allPieces: Array[(Square, AnyPiece)] = {
     val allSquares = for {
       x <- 1 to 8
       col = columnLetter(x)
