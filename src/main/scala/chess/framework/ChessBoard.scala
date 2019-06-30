@@ -607,7 +607,7 @@ case class ChessBoard (
 
         val kingColor = king.color
 
-        val pathfindRes = new KingMovementPathfinder {
+        val pathfindingRes = new KingMovementPathfinder {
           override def decision(pos: Square): WaypointResult.Value = getPiece(pos) match {
             case Some(piece) if !isAttacked(pos, kingColor, withKing = false) && kingColor != piece.color =>
               piece.color match {
@@ -618,7 +618,7 @@ case class ChessBoard (
           }
         }.apply(pos)
 
-        !pathfindRes.isSuccess
+        !pathfindingRes.isSuccess
       }
 
       kings forall kingIsBlocked
@@ -643,7 +643,10 @@ case class ChessBoard (
 
     val adjacents = kingSq.validAdjacents
 
-    val canMove = adjacents exists (a => !isAttacked(a, kingColor, withKing = true) && apply(a).color != kingColor)
+    val kingCanMove = adjacents exists (a => {
+      val adjacentPiece = apply(a)
+      !isAttacked(a, kingColor, withKing = true) && adjacentPiece.color != kingColor && !doMove(kingSq, a, testedKing._2, kingColor, adjacentPiece.color).isCheck(kingColor)
+    })
 
     def canBlock: Boolean =
       attackingPieces(kingSq, kingColor, withKing = false) <= 1 && {
@@ -655,7 +658,7 @@ case class ChessBoard (
         }
       }
 
-    !canMove && !canBlock
+    !kingCanMove && !canBlock
   }
 
   /**
