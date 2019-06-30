@@ -593,6 +593,7 @@ case class ChessBoard (
     def piecesBlocked =
       allPieces
         .filterNot(_._2.isInstanceOf[King])
+        .filter(sp => isPinnedPiece(sp._1))
         .map(_._1)
         .forall(isBlockedSquare)
 
