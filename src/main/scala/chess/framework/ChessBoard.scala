@@ -520,7 +520,8 @@ case class ChessBoard (
 
     def offsetPiece(off: (Int, Int)) = getPiece(atOffset(off))
 
-    piece match {
+    if (isPinnedPiece(square)) true
+    else piece match {
       case Pawn(color, _) =>
         val dir = ClassicalValues.pawnDir(color)
         val opponent: AnyColor = color.opposite
@@ -593,7 +594,6 @@ case class ChessBoard (
     def piecesBlocked =
       allPieces
         .filterNot(_._2.isInstanceOf[King])
-        .filter(sp => isPinnedPiece(sp._1))
         .map(_._1)
         .forall(isBlockedSquare)
 
