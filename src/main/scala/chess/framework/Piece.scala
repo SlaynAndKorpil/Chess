@@ -20,6 +20,9 @@ sealed trait Piece {
   def ===[T <: Piece] (other: T): Boolean =
     this.identifier == other.identifier && this.color == other.color
 
+  def !==[T <: Piece] (other: T): Boolean =
+    this.identifier != other.identifier || this.color != other.color
+
   override def toString: String = " " + identifier + (color match {
     case White => "w"
     case Black => "b"

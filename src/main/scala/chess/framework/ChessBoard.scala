@@ -472,35 +472,10 @@ case class ChessBoard (
 
   def attackingSquares(sqr: Square, attacked: AnyColor, withKing: Boolean = true): Array[(Square, AnyPiece)] = {
     val opponent = attacked.opposite
-    val attackers = allPieces filter (_._2.color == opponent)
-
-    val attackingKnights: Array[(Square, AnyPiece)] = attackers.filter (_._2 === Knight(opponent))
-        .filter (sp => {
-          val square = sp._1
-          math.pow(square.colIndx - sqr.colIndx, 2) + math.pow(square.row - sqr.row, 2) == 5
-        })
-
-    val attackingKings: Array[(Square, AnyPiece)] =
-      if (withKing) attackers.filter(_._2 === King(opponent))
-        .filter (sp => {
-          val square = sp._1
-          (square.colIndx - sqr.colIndx).abs <= 1 && (square.row - sqr.row).abs <= 1
-        })
-      else Array()
-
-    val attackingQueens: Array[(Square, AnyPiece)] = attackers.filter(_._2 === Queen(opponent))
-        .filter (sp => isEmptyDiagonal(sp._1, sqr) || isEmptyOrthogonal(sp._1, sqr))
-
-    val attackingRooks = attackers.filter(_._2 === Rook(opponent))
-      .filter (sp => isEmptyOrthogonal(sp._1, sqr))
-
-    val attackingBishops = attackers.filter(_._2 === Bishop(opponent))
-      .filter (sp => isEmptyDiagonal(sp._1, sqr))
-
-    val attackingPawns = attackers.filter(_._2 === Pawn(opponent))
-      .filter (sp => false)
-
-    attackingKnights ++ attackingKings ++ attackingQueens ++ attackingRooks ++ attackingBishops ++ attackingPawns
+    allPieces
+      .filter (_._2.color == opponent)
+      .filter (ap => withKing || (ap._2 !== King(opponent)))
+      .filter (a => isLegalMove(a._1, sqr, a._2, apply(sqr)))
   }
 
   /**
@@ -658,14 +633,12 @@ case class ChessBoard (
     val testedKing = allPieces filter (_._2 === King(turn)) head
     val kingColor = turn
     val kingSq = testedKing._1
-    val alliedPieces = allPieces.filter(_._2.color == kingColor)
+    val alliedPieces = allPieces.filter(_._2.color == kingColor).filter(_._2 !== King(kingColor))
 
     //tests if a piece can move to a specific position
     def piecesCanMoveTo(sqr: Square): Boolean = {
       val endPiece = apply(sqr)
-      alliedPieces forall (sp =>
-        isPinnedPiece(sp._1) && isLegalMove(sp._1, sqr, sp._2, endPiece)
-        )
+      alliedPieces exists (sp => !isPinnedPiece(sp._1) && isLegalMove(sp._1, sqr, sp._2, endPiece))
     }
 
     val adjacents = kingSq.validAdjacents
@@ -676,13 +649,11 @@ case class ChessBoard (
       attackingPieces(kingSq, kingColor, withKing = false) <= 1 && {
         // it can be safely assumed here that the amount of attacking pieces is exactly 1
         val attacker = attackingSquares(kingSq, kingColor, withKing = false).head
-        (attacker._2 match {
+        attacker._2 match {
           case Knight(_, _) => piecesCanMoveTo(attacker._1)
-          case _ => (attacker._1 until kingSq) forall piecesCanMoveTo
-        }) && !isAttacked(attacker._1, kingColor.opposite, withKing = true)
+          case _ => (attacker._1 until kingSq) exists piecesCanMoveTo
+        }
       }
-
-    Debugger debug s"canMove: $canMove, canBlock: $canBlock"
 
     !canMove && !canBlock
   }
