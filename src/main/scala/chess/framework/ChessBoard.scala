@@ -53,7 +53,8 @@ case class ChessBoard (
     * @return a column of the board, [[scala.None]] if no column with this identifier exists
     */
   def getColumn(column: Char): Option[Column] =
-    if (isValidColumn(column)) Some(squares(column)) else None
+    if (isValidColumn(column)) Some(squares(column))
+    else None
 
   /**
     * Handles different input types depending on the [[chess.framework.ChessBoard#gameStatus gameStatus]].
@@ -126,7 +127,8 @@ case class ChessBoard (
     * @return the chess square at a specific position on the board, [[scala.None]] if the sqr does not exist
     */
   def getPiece(sqr: Square): Option[Piece] =
-    if (sqr.isValid) Some(squares(sqr._1)(sqr._2)) else None
+    if (sqr.isValid) Some(squares(sqr._1)(sqr._2))
+    else None
 
   def filterPieces(func: Piece => Boolean): Map[Char, Column] =
     squares map { tup => tup._1 -> tup._2.filter(func) }
@@ -484,7 +486,8 @@ case class ChessBoard (
   }
 
   /**
-    * Tests if there is a piece on a specific square that is pinned (i.e. it blocks an attack against the king).
+    * Tests if there is a piece on a specific square that is pinned (it blocks an attack against the king)
+    * and thereby cannot be moved.
     */
   def isPinnedPiece(square: Square): Boolean = getPiece(square) match {
     case Some(piece) =>
@@ -696,11 +699,11 @@ case class ChessBoard (
     * @return `true` if there is not enough material, otherwise `false`
     */
   def isInsufficientMaterial(color: AnyColor): Boolean = {
-    val piecesOnColor = allPieces map (tup => (if (tup._1.colIndx % 2 == tup._1.row % 2) Black else White, tup._2)) filter (_._2.color == color) filterNot (_._2 === King(color))
-    //maybe replace piecesOnColor with this?
-    //val piecesOnColor_ = mapPiece { (square, piece) =>
-    //if (square.colIndx % 2 == square.row % 2) Black else White -> piece
-    //}
+    val piecesOnColor =
+      allPieces
+        .map { tup => /*replace square with square color*/ (if (tup._1.colIndx % 2 == tup._1.row % 2) Black else White, tup._2) }
+        .filter (_._2.color == color)
+        .filterNot (_._2 === King(color))
 
     val pieces = piecesOnColor map (_._2)
 
@@ -993,6 +996,6 @@ object ChessBoard {
       */
     def pawnDir(color: AnyColor): Int =
       if (color == White) 1 else -1
-  }
+}
 
 }
