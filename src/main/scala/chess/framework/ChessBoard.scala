@@ -665,10 +665,12 @@ case class ChessBoard (
     * Tests for stalemate (when a player is not checked but cannot move
     * because every possible move would result in him being checked).
     */
-  def isStalemate: Boolean =
+  def isStalemate: Boolean = !isCheck() && {
     allPieces
       .filter(p => p._2.color == turn)
-      .map(_._1) forall isBlockedSquare
+      .map(_._1)
+      .forall (isBlockedSquare)
+  }
 
   /**
     * Tests for insufficient material of any color.
