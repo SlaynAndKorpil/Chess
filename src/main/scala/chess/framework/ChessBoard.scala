@@ -230,7 +230,7 @@ case class ChessBoard (
         startColor == turn &&
         startColor != endColor &&
         isLegalMove(from, to, movingPiece, endPiece) &&
-        !movedBoard.isCheck(turn)
+        !movedBoard.isCheck
 
     val updatedStatus: GameStatus =
       if (movedBoard.isBlocked) Ended(Draw by Blocked)
@@ -305,6 +305,12 @@ case class ChessBoard (
 
   /** Tests if a player is currently checked. */
   def isCheck(color: AnyColor = turn): Boolean = checkedSquare(color).isDefined
+
+  /**
+    * Whether [[chess.framework.ChessBoard#turn turn]]'s king is checked.
+    * Use this instead of `isCheck()` or `isCheck(turn)` to improve performance.
+    */
+  lazy val isCheck: Boolean = isCheck()
 
   /**
     * @param func      a method that will be called when the player is checked
@@ -628,7 +634,7 @@ case class ChessBoard (
   }
 
   /** Tests for mate. */
-  def isMate: Boolean = isCheck() && {
+  def isMate: Boolean = isCheck && {
     // assuming there is only one king per color
     val testedKing = allPieces filter (_._2 === King(turn)) head
     val kingColor = turn
@@ -665,7 +671,7 @@ case class ChessBoard (
     * Tests for stalemate (when a player is not checked but cannot move
     * because every possible move would result in him being checked).
     */
-  def isStalemate: Boolean = !isCheck() && {
+  def isStalemate: Boolean = !isCheck && {
     allPieces
       .filter(p => p._2.color == turn)
       .map(_._1)
