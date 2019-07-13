@@ -66,7 +66,6 @@ object DrawAcceptanceReq extends Active {
   override def toString: String = "Draw reaction"
 }
 
-
 /** Waiting for an answer to a takeback request. */
 object TakebackAcceptanceReq extends Active {
   override def toString: String = "TakebackAcceptanceReq"

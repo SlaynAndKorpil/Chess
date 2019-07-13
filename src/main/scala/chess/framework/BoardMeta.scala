@@ -37,10 +37,10 @@ trait BoardMeta {
         history = history.tail,
         gameStatus = StandardReq,
         turn = turn.opposite)
-      val takebackCheckEvent = resBoard.doOnCheck(pos => ShowCheck(pos), NoEvent)
+      val takebackCheckEvents = resBoard.doOnCheck(pos => ShowCheck(pos), NoEvent)
       Output(
         resBoard,
-        Array(RemoveTakeback, takebackCheckEvent)
+        Array(RemoveTakeback) ++ takebackCheckEvents
       ) asSome
     }
     else None
@@ -70,8 +70,8 @@ trait BoardMeta {
       gameStatus match {
         case PromoReq(sqr: Square) =>
           val result = updated(sqr, promoPiece).clone(gameStatus = StandardReq)
-          val promoCheckEvent: Array[IOEvent] = result.doOnCheck(pos => Array(ShowCheck(pos)), Array())
-          Output(result, RemovePromotion +: promoCheckEvent) asSome
+          val promoCheckEvents: IndexedSeq[IOEvent] = result.doOnCheck[Array[IOEvent]](pos => Array(ShowCheck(pos)), Array()).flatten
+          Output(result, RemovePromotion +: promoCheckEvents) asSome
         case _ => None
       }
     }

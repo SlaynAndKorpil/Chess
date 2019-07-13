@@ -76,9 +76,7 @@ case class ChessBoard (
           val res = Draw(Repetition)
           Output(clone(gameStatus = Ended(res)), Array(ShowEnded(res))) asSome
         }
-        else {
-          Output(clone(gameStatus = DrawAcceptanceReq), Array(ShowDrawOffer)) asSome
-        }
+        else Output(clone(gameStatus = DrawAcceptanceReq), Array(ShowDrawOffer)) asSome
 
       case DrawReject if gameStatus == DrawAcceptanceReq =>
         Output(clone(gameStatus = StandardReq), Array(NoEvent)) asSome
@@ -111,15 +109,14 @@ case class ChessBoard (
       square = Square(column, row)
       piece = apply(square)
       if piece.nonEmpty
-    } yield {
-      func(square, piece.asInstanceOf[AnyPiece])
-    }
+    } yield func(square, piece.asInstanceOf[AnyPiece])
 
   /**
     * @note When the coordinate is outside the board, [[chess.framework.NoPiece NoPiece]] is returned.
     * @param sqr coordinates on the board
     * @return the piece at some specified position
     */
+  @inline
   def apply(sqr: Square): Piece = getPiece(sqr) getOrElse NoPiece
 
   /**
@@ -204,12 +201,13 @@ case class ChessBoard (
     * Moves a piece after testing for validity of the move which depends on the following aspects:
     *
     * -both squares have to be on the board
-    * -either you capture an enemy piece or you move on an empty square
+    * -you must capture an enemy piece or move on an empty square
     * -the moved piece must be of the color [[chess.framework.ChessBoard#turn turn]]
     * -it must be a legal movement of the type of piece
     * -the player must not be checked after the move.
     *
-    * When the move is legal, the pieces and the turn are changed and the move is added to the [[chess.framework.ChessBoard#history history]].
+    * When the move is legal, the pieces and the turn are changed and
+    * the move is added to the [[chess.framework.ChessBoard#history history]].
     *
     * @param from the start square
     * @param to   the end-coordinates
@@ -234,7 +232,7 @@ case class ChessBoard (
         isLegalMove(from, to, movingPiece, endPiece) &&
         !movedBoard.isCheck
 
-    val updatedStatus: GameStatus =
+    lazy val updatedStatus: GameStatus =
       if (movedBoard.isBlocked) Ended(Draw by Blocked)
       else if (movedBoard.isFivefoldRepetition) Ended(Draw by Repetition)
       else if (movedBoard.isStalemate) Ended(Draw by Stalemate)
@@ -246,19 +244,19 @@ case class ChessBoard (
       else movedBoard.gameStatus
 
 
-    val endedEvent: IOEvent = updatedStatus match {
+    lazy val endedEvent: IOEvent = updatedStatus match {
       case res: Ended => ShowEnded(res.result)
       case _ => NoEvent
     }
 
-    val promoEvent = movingPiece match {
+    lazy val promoEvent: IOEvent = movingPiece match {
       case Pawn(color, _) if to.row == ClassicalValues.piecesStartLine(color.opposite) => ShowPromotion(to)
       case _ => NoEvent
     }
 
-    val checkEvent = movedBoard.doOnCheck(pos => ShowCheck(pos), NoEvent)
+    val checkEvents: IndexedSeq[IOEvent] = movedBoard.doOnCheck(pos => ShowCheck(pos), NoEvent)
 
-    if (isValid) Some(Output(movedBoard.clone(gameStatus = updatedStatus), Array(checkEvent, endedEvent, promoEvent)))
+    if (isValid) Some(Output(movedBoard.clone(gameStatus = updatedStatus), checkEvents ++ Array(endedEvent, promoEvent)))
     else None
   }
 
@@ -306,35 +304,36 @@ case class ChessBoard (
   }
 
   /** Tests if a player is currently checked. */
-  def isCheck(color: AnyColor = turn): Boolean = checkedSquare(color).isDefined
+  def isCheck(color: AnyColor = turn): Boolean = checkedSquares(color) nonEmpty
 
   /**
     * Whether [[chess.framework.ChessBoard#turn turn]]'s king is checked.
     * Use this instead of `isCheck()` or `isCheck(turn)` to improve performance.
     */
+  @inline
   lazy val isCheck: Boolean = isCheck()
 
   /**
+    * Calls a function for every checked square (a square with a checked king on it).
     * @param func      a method that will be called when the player is checked
     * @param onFailure a return value if the player is not checked
     * @param color     the player's color
     * @tparam T some return type
     * @return either the result of `func` or `onFailure`
     */
-  def doOnCheck[T](func: Square => T, onFailure: T, color: AnyColor = turn): T = checkedSquare() match {
-    case Some(pos) =>
-      func(pos)
-    case None =>
-      onFailure
+  def doOnCheck[T](func: Square => T, onFailure: T, color: AnyColor = turn): IndexedSeq[T] = {
+    val sqrs = checkedSquares()
+    if (sqrs nonEmpty) sqrs map func
+    else IndexedSeq(onFailure)
   }
 
   /**
-    * Tests if at least one of the kings is checked by finding their squares and testing these for being attacked.
+    * Finds all checked kings of one color.
     *
     * @param color kings of this color are tested
-    * @return `true` if the player is checked, otherwise `false`
+    * @return a list of all positions with checked kings
     */
-  def checkedSquare(color: AnyColor = turn): Option[Square] = {
+  def checkedSquares(color: AnyColor = turn): IndexedSeq[Square] = {
     for {
       c <- 1 to 8
       row <- 1 to 8
@@ -425,7 +424,7 @@ case class ChessBoard (
     * Tests a square for being attacked.
     *
     * @param sqr      the square that gets tested
-    * @param attacked the ''defending'' color
+    * @param attacked the 'defending' color
     * @return `true` if the square is attacked, otherwise `false`
     */
   def isAttacked(sqr: Square, attacked: AnyColor, withKing: Boolean): Boolean = {
@@ -480,9 +479,10 @@ case class ChessBoard (
   def attackingSquares(sqr: Square, attacked: AnyColor, withKing: Boolean = true): Array[(Square, AnyPiece)] = {
     val opponent = attacked.opposite
     allPieces
-      .filter (_._2.color == opponent)
-      .filter (ap => withKing || (ap._2 !== King(opponent)))
-      .filter (a => isLegalMove(a._1, sqr, a._2, apply(sqr)))
+      .filter (_._2.color == opponent) // filter all pieces of the correct color
+      .filter (ap => withKing || (ap._2 !== King(opponent))) // exclude all kings if withKing is true
+      .filter (a => isLegalMove(a._1, sqr, a._2, apply(sqr))) // filter for all pieces that can move to that square
+    // TODO maybe exclude all pinned pieces?
   }
 
   /**
@@ -495,23 +495,25 @@ case class ChessBoard (
         case NoPiece => false
         case King(_, _) => false
         case anyPiece: AnyPiece =>
-          // it is assumed that there is exactly one king per color
-          val king = allPieces filter (_._2 === King(anyPiece.color)) head
-          val negVec = NumericSquare((square.colIndx - king._1.colIndx).signum, (square.row - king._1.row).signum)
+          val kings = allPieces filter (_._2 === King(anyPiece.color))
+          kings exists { king =>
+            val negVec = NumericSquare((square.colIndx - king._1.colIndx).signum, (square.row - king._1.row).signum)
 
-          val possiblePinner = nextPiece(square, negVec)
+            val possiblePinner = nextPiece(square, negVec)
 
-          if (isEmptyDiagonal(king._1, square)) possiblePinner match {
-            case Bishop(_, _) => true
-            case Queen(_, _) => true
-            case _ => false
+            if (isEmptyDiagonal(king._1, square)) possiblePinner match {
+              case Bishop(_, _) => true
+              case Queen(_, _) => true
+              case _ => false
+            }
+
+            else if (isEmptyOrthogonal(king._1, square)) possiblePinner match {
+              case Rook(_, _) => true
+              case Queen(_, _) => true
+              case _ => false
+            }
+            else false
           }
-          else if (isEmptyOrthogonal(king._1, square)) possiblePinner match {
-            case Rook(_, _) => true
-            case Queen(_, _) => true
-            case _ => false
-          }
-          else false
       }
     case None => false
   }
@@ -638,36 +640,37 @@ case class ChessBoard (
 
   /** Tests for mate. */
   def isMate: Boolean = isCheck && {
-    // assuming there is only one king per color
-    val testedKing = allPieces filter (_._2 === King(turn)) head
-    val kingColor = turn
-    val kingSq = testedKing._1
-    val alliedPieces = allPieces.filter(_._2.color == kingColor).filter(_._2 !== King(kingColor))
+    val testedKings = allPieces filter (_._2 === King(turn))
+    testedKings exists { testedKing =>
+      val kingColor = turn
+      val kingSq = testedKing._1
+      val alliedPieces = allPieces.filter(_._2.color == kingColor).filter(_._2 !== King(kingColor))
 
-    //tests if any piece can move to a specific position (-> block or capture)
-    def piecesCanMoveTo(sqr: Square): Boolean = {
-      val endPiece = apply(sqr)
-      alliedPieces exists (sp => !isPinnedPiece(sp._1) && isLegalMove(sp._1, sqr, sp._2, endPiece))
-    }
-
-    val adjacents = kingSq.validAdjacents
-
-    val kingCanMove = adjacents exists (a => {
-      val adjacentPiece = apply(a)
-      !isAttacked(a, kingColor, withKing = true) && adjacentPiece.color != kingColor && !doMove(kingSq, a, testedKing._2, kingColor, adjacentPiece.color).isCheck(kingColor)
-    })
-
-    def canBlock: Boolean =
-      attackingPieces(kingSq, kingColor, withKing = false) <= 1 && {
-        // it can be safely assumed here that the amount of attacking pieces is exactly 1
-        val attacker = attackingSquares(kingSq, kingColor, withKing = false).head
-        attacker._2 match {
-          case Knight(_, _) => piecesCanMoveTo(attacker._1)
-          case _ => (attacker._1 until kingSq) exists piecesCanMoveTo
-        }
+      //tests if any piece can move to a specific position (-> block or capture)
+      def piecesCanMoveTo(sqr: Square): Boolean = {
+        val endPiece = apply(sqr)
+        alliedPieces exists (sp => !isPinnedPiece(sp._1) && isLegalMove(sp._1, sqr, sp._2, endPiece))
       }
 
-    !kingCanMove && !canBlock
+      val adjacents = kingSq.validAdjacents
+
+      val kingCanMove = adjacents exists (a => {
+        val adjacentPiece = apply(a)
+        !isAttacked(a, kingColor, withKing = true) && adjacentPiece.color != kingColor && !doMove(kingSq, a, testedKing._2, kingColor, adjacentPiece.color).isCheck(kingColor)
+      })
+
+      def canBlock: Boolean =
+        attackingPieces(kingSq, kingColor, withKing = false) <= 1 && {
+          // it can be safely assumed here that the amount of attacking pieces is exactly 1
+          val attacker = attackingSquares(kingSq, kingColor, withKing = false).head
+          attacker._2 match {
+            case Knight(_, _) => piecesCanMoveTo(attacker._1)
+            case _ => (attacker._1 until kingSq) exists piecesCanMoveTo
+          }
+        }
+
+      !kingCanMove && !canBlock
+    }
   }
 
   /**
@@ -979,7 +982,7 @@ object ChessBoard {
   object ClassicalValues {
     /** @return the row where all pawns of this color are placed. */
     def pawnStartLine(color: AnyColor): Int =
-      if (color == White) 2 else 7
+      piecesStartLine(color) + pawnDir(color)
 
     /** @return the [[chess.framework.Square]] where the king of this color is placed. */
     def kingStartSquare(color: AnyColor): Square =
@@ -996,6 +999,6 @@ object ChessBoard {
       */
     def pawnDir(color: AnyColor): Int =
       if (color == White) 1 else -1
-}
+  }
 
 }

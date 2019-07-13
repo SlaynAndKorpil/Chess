@@ -17,8 +17,7 @@ class Positions(val positions: Array[Position], val maxRepetition: Int) {
   /** Adds a new position and updates the repetition counter. */
   def +(that: Position): Positions = {
     val maxRep: Int = {
-      val temp: Int = positions count (that == _)
-      val len = temp
+      val len = positions count (that == _)
       if (len > maxRepetition) len
       else maxRepetition
     }
