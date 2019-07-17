@@ -32,10 +32,6 @@ abstract class KingMovementPathfinder extends Pathfinder[Boolean] {
 
   private case class KingMovement(override val vector: (Int, Int))
     extends TripleDirectionalPathfinder[Boolean](vector) with BooleanPathfinder {
-    override def terminate(on: Square): Failure.type = super.terminate(on)
-
-    override def success(on: Square): Success[Boolean] = super.success(on)
-
     override def decision(pos: Square): WaypointResult.Value = KingMovementPathfinder.this.decision(pos)
   }
 }

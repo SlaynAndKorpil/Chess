@@ -231,14 +231,14 @@ case class ChessBoard (
         !movedBoard.isCheck(turn)
 
     lazy val updatedStatus: GameStatus =
-      if (movedBoard.isBlocked) Ended(Draw by Blocked)
+      if (movedBoard.isInsufficientMaterial) Ended(Draw by InsufficientMaterial)
       else if (movedBoard isFivefoldRepetition) Ended(Draw by Repetition)
       else if (movedBoard isStalemate) Ended(Draw by Stalemate)
       else if (movedBoard isMate) Ended(turn match {
         case White => WhiteWins by Mate
         case Black => BlackWins by Mate
       })
-      else if (movedBoard.isInsufficientMaterial) Ended(Draw by InsufficientMaterial)
+      else if (movedBoard.isBlocked) Ended(Draw by Blocked)
       else movedBoard.gameStatus
 
 
@@ -618,6 +618,8 @@ case class ChessBoard (
 
         val kingColor = king.color
 
+        Debugger debug s"king: $kingColor"
+
         val pathfindingRes = new KingMovementPathfinder {
           override def decision(pos: Square): WaypointResult.Value = getPiece(pos) match {
             case Some(piece) if !isAttacked(pos, kingColor, withKing = false) && kingColor != piece.color =>
@@ -852,8 +854,6 @@ object ChessBoard {
       'e' -> new Column(Map(
         1 -> King(White),
         2 -> Pawn(White),
-        3 -> King(White),
-        6 -> King(Black),
         7 -> Pawn(Black),
         8 -> King(Black)
       )),

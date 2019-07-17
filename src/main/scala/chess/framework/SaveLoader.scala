@@ -19,7 +19,7 @@ object SaveLoader {
     */
   def load(xml: Elem)(implicit io: ChessIO): Either[LoadingError, ChessBoard] = {
     val version =
-      try {(xml \@ "version").toLong}
+      try { (xml \@ "version").toLong }
       catch {
         case _: Throwable => -1
       }
