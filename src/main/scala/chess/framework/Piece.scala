@@ -28,7 +28,6 @@ sealed trait Piece {
 
   def nonEmpty: Boolean = !isEmpty
 
-  //TODO needs rework, should not depend on uniquity of the identifier
   /** Compares this with another piece only under consideration of the piece type (identifier and color). */
   def ===[T <: Piece](other: T): Boolean =
     this.identifier == other.identifier && this.color == other.color

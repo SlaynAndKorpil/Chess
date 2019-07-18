@@ -482,7 +482,6 @@ case class ChessBoard (
       .filter (_._2.color == opponent) // filter all pieces of the correct color
       .filter (ap => withKing || (ap._2 !== King(opponent))) // exclude all kings if withKing is true
       .filter (a => isLegalMove(a._1, sqr, a._2, apply(sqr))) // filter for all pieces that can move to that square
-    // TODO maybe exclude all pinned pieces?
   }
 
   /**
@@ -617,8 +616,6 @@ case class ChessBoard (
         val king = kingOnSq._2
 
         val kingColor = king.color
-
-        Debugger debug s"king: $kingColor"
 
         val pathfindingRes = new KingMovementPathfinder {
           override def decision(pos: Square): WaypointResult.Value = getPiece(pos) match {
