@@ -703,21 +703,23 @@ case class ChessBoard (
     * @return `true` if there is not enough material, otherwise `false`
     */
   def isInsufficientMaterial(color: AnyColor): Boolean = {
-    val piecesOnColor =
+    val piecesOfColor = // pieces of specified color without kings
       allPieces
         .map { tup => /*replace square with square color*/ (if (tup._1.colIndx % 2 == tup._1.row % 2) Black else White, tup._2) }
         .filter (_._2.color == color)
         .filterNot (_._2 === King(color))
 
-    val pieces = piecesOnColor map (_._2)
+    val pieces = piecesOfColor map (_._2) // actual pieces
 
-    val value: Int = (pieces map (_.value)).sum
+    val value: Int = (pieces map (_.value)).sum // sum of all values
 
     def existsPawn = pieces.exists(_ === Pawn(color))
 
+    def existsMajorPiece = pieces.exists(p => p === Rook(color) || p === Queen(color))
+
     (value <= 0) || {
-      !existsPawn && {
-        val bishops = piecesOnColor filter (_._2 === Bishop(color))
+      !existsMajorPiece && !existsPawn && {
+        val bishops = piecesOfColor filter (_._2 === Bishop(color))
         val knights = pieces filter (_ === Knight(color))
 
         def bishopsOfSameColor = bishops.exists(_._1 == White) != bishops.exists(_._1 == Black)
