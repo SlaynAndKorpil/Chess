@@ -218,13 +218,18 @@ case class ChessBoard (
     * @return the updated board
     */
   def move(from: Square, to: Square): Option[Output] = if (from.isValid && to.isValid) {
+    Debugger debug s"before: ${positions.maxRepetition}"
+    val x = isFiftyMovesRuleApplying
     val movingPiece = apply(from)
     val endPiece = apply(to)
     val startColor = movingPiece.color
     val endColor = endPiece.color
 
+    Debugger debug s"move $turnCounter"
+
     def doMove = this.doMove(from, to, movingPiece, startColor, endColor)
 
+    // FIXMe Issue #18 probably caused by the late addition of the new position
     val movedBoard = doMove.clone(positions = positions + Position(squares))
 
     def isValid: Boolean =
@@ -257,6 +262,7 @@ case class ChessBoard (
     }
 
     val checkEvents: IndexedSeq[IOEvent] = movedBoard.doOnCheck(pos => ShowCheck(pos), NoEvent)
+    Debugger debug s"after: ${movedBoard.positions.maxRepetition}"
 
     if (isValid) Some(Output(movedBoard.clone(gameStatus = updatedStatus), checkEvents ++ Array(endedEvent, promoEvent)))
     else None
@@ -746,14 +752,14 @@ case class ChessBoard (
 
     def existsMajorPiece = pieces.exists(p => p === Rook(color) || p === Queen(color))
 
-    (value <= 0) || {
+    (value == 0) || {
       !existsMajorPiece && !existsPawn && {
         val bishops = piecesOfColor filter (_._2 === Bishop(color))
         val knights = pieces filter (_ === Knight(color))
 
         def bishopsOfSameColor = bishops.exists(_._1 == White) != bishops.exists(_._1 == Black)
 
-        (knights.isEmpty && (bishops.isEmpty || bishopsOfSameColor)) || (bishops.isEmpty && knights.length < 2)
+        (knights.isEmpty && bishopsOfSameColor) || (bishops.isEmpty && knights.length == 1)
       }
     }
   }
