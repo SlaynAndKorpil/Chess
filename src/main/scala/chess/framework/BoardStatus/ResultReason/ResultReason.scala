@@ -15,7 +15,7 @@ object ResultReason {
     case Mate.toString => Some(Mate)
     case Resignation.toString => Some(Resignation)
     case Time.toString => Some(Resignation)
-    case Stalemate.toString => Some(Resignation)
+    case Stalemate.toString => Some(Stalemate)
     case DrawAgreement.toString => Some(DrawAgreement)
     case Repetition.toString => Some(Repetition)
     case Blocked.toString => Some(Blocked)
