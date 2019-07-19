@@ -20,6 +20,7 @@ object ResultReason {
     case Repetition.toString => Some(Repetition)
     case Blocked.toString => Some(Blocked)
     case InsufficientMaterial.toString => Some(InsufficientMaterial)
+    case FiftyMovesRule.toString => Some(FiftyMovesRule)
     case _ => None
   }
 }
@@ -68,4 +69,8 @@ object Blocked extends DrawResultReason {
 /** Draw by insufficient material. */
 object InsufficientMaterial extends DrawResultReason {
   override val toString: String = "InsufficientMaterial"
+}
+
+object FiftyMovesRule extends  DrawResultReason {
+  override val toString: String = "FiftyMovesRule"
 }

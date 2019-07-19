@@ -73,7 +73,11 @@ case class ChessBoard (
 
       case DrawOffer if gameStatus == StandardReq =>
         if (positions.maxRepetition >= 3) {
-          val res = Draw(Repetition)
+          val res = Draw by Repetition
+          Output(clone(gameStatus = Ended(res)), Array(ShowEnded(res))) asSome
+        }
+        else if (isFiftyMovesRuleApplying) {
+          val res = Draw by FiftyMovesRule
           Output(clone(gameStatus = Ended(res)), Array(ShowEnded(res))) asSome
         }
         else Output(clone(gameStatus = DrawAcceptanceReq), Array(ShowDrawOffer)) asSome
@@ -238,7 +242,7 @@ case class ChessBoard (
         case White => WhiteWins by Mate
         case Black => BlackWins by Mate
       })
-      else if (movedBoard.isBlocked) Ended(Draw by Blocked)
+      else if (movedBoard isBlocked) Ended(Draw by Blocked)
       else movedBoard.gameStatus
 
 
@@ -515,6 +519,31 @@ case class ChessBoard (
           }
       }
     case None => false
+  }
+
+  /**
+    * Tests if the 50 moves rule applies to this game.
+    * This means that in the last 50 moves no pawn was moved and no piece was captured.
+    */
+  def isFiftyMovesRuleApplying: Boolean =
+    movesSinceLastCapture / 2 > 50 && movesSinceLastPawnMove / 2 > 50
+
+  /**
+    * @return the number of moves since the last time a capture happened.
+    */
+  private def movesSinceLastCapture: Int = {
+    val index = history.indexWhere(_.captured)
+    if (index == -1) history.length
+    else index + 1
+  }
+
+  /**
+    * @return the amount of moves since the last time a pawn was moved
+    */
+  private def movesSinceLastPawnMove: Int = {
+    val index = history.indexWhere(_.piece.isInstanceOf[Pawn])
+    if (index == -1) history.length
+    else index + 1
   }
 
   /**
