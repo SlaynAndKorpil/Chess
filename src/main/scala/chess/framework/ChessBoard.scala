@@ -17,8 +17,8 @@ import scala.xml.{Elem, NodeSeq}
   * and defines an access via the `receive` method.
   * Use the companion object to initialize.
   *
-  * @constructor The constructor takes nearly all variables the class consists of
-  *              to make immutability possible.
+  * @constructor The implicit `io` param is used as an interface
+  *              by/to this obj.
   * @version alpha 0.1
   * @author Felix Lehner
   */
@@ -104,7 +104,10 @@ case class ChessBoard (
 
       case _ => None
     }
-
+  
+  /**
+   * Applies a function to all pieces and returns the results.
+   */
   def mapPiece[T](func: (Square, AnyPiece) => T): IndexedSeq[T] =
     for {
       col <- 1 to 8
@@ -116,7 +119,8 @@ case class ChessBoard (
     } yield func(square, piece.asInstanceOf[AnyPiece])
 
   /**
-    * @note When the coordinate is outside the board, [[chess.framework.NoPiece NoPiece]] is returned.
+    * Gives the piece at any position.
+    * When the coordinate is outside the board, [[chess.framework.NoPiece NoPiece]] is returned.
     * @param sqr coordinates on the board
     * @return the piece at some specified position
     */
@@ -131,6 +135,10 @@ case class ChessBoard (
     if (sqr.isValid) Some(squares(sqr._1)(sqr._2))
     else None
 
+  /** 
+   * Filters for all pieces that match a predicate.
+   *
+   */
   def filterPieces(func: Piece => Boolean): Map[Char, Column] =
     squares map { tup => tup._1 -> tup._2.filter(func) }
 
@@ -180,7 +188,7 @@ case class ChessBoard (
     </chessboard>
 
   /**
-    * Formats the board as a [[String]]
+    * Formats the board as a [[String]].
     *
     * @usecase Used in consoleUI to show the board in console
     * @see [[chess.console.InputInterpreter]]
@@ -962,7 +970,10 @@ object ChessBoard {
       case _: Throwable =>
         Left(LoadingError.FileNotFoundError(path))
     }
-
+   
+  /**
+   * Saves a board as XML
+   */
   def saveSquares(squares: Map[Char, Column]): NodeSeq =
     for (x <- 1 to 8; col = columnLetter(x)) yield <col>{squares(col).saveData}</col> copy (label = col.toUpper toString)
 
