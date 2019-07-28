@@ -223,9 +223,7 @@ case class ChessBoard (
     val startColor = movingPiece.color
     val endColor = endPiece.color
 
-    def doMove = this.doMove(from, to, movingPiece, startColor, endColor)
-
-    val movedBoard = doMove.clone(positions = positions + Position(squares))
+    val movedBoard = doMove(from, to, movingPiece, startColor, endColor).clone(positions = positions + Position(squares))
 
     def isValid: Boolean =
         from != to &&
@@ -235,8 +233,9 @@ case class ChessBoard (
         !movedBoard.isCheck(turn)
 
     lazy val updatedStatus: GameStatus =
-      if (movedBoard.isInsufficientMaterial) Ended(Draw by InsufficientMaterial)
-      else if (movedBoard isFivefoldRepetition) Ended(Draw by Repetition)
+      if (movedBoard isInsufficientMaterial) Ended(Draw by InsufficientMaterial)
+      else if (movedBoard.clone(positions = movedBoard.positions + Position(movedBoard.squares)).isFivefoldRepetition)
+        Ended(Draw by Repetition)
       else if (movedBoard isStalemate) Ended(Draw by Stalemate)
       else if (movedBoard isMate) Ended(turn match {
         case White => WhiteWins by Mate
@@ -646,7 +645,7 @@ case class ChessBoard (
 
         val kingColor = king.color
 
-        val pathfindingRes = new KingMovementPathfinder {
+        val pathfinderRes = new KingMovementPathfinder {
           override def decision(pos: Square): WaypointResult.Value = getPiece(pos) match {
             case Some(piece) if !isAttacked(pos, kingColor, withKing = false) && kingColor != piece.color =>
               piece.color match {
@@ -657,7 +656,7 @@ case class ChessBoard (
           }
         }.apply(pos)
 
-        !pathfindingRes.isSuccess
+        !pathfinderRes.isSuccess
       }
 
       kings forall kingIsBlocked

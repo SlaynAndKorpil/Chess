@@ -1,7 +1,6 @@
 package chess.framework.IOEvents
 
 import chess.framework.javaInterfacing.Reactions.JReaction
-import chess.framework.{Debugger, Error}
 
 /**
   * Contains and provokes reactions
@@ -11,7 +10,7 @@ import chess.framework.{Debugger, Error}
   * @version alpha 0.1
   */
 class BoardReactions {
-  private var reactions: Array[PartialFunction[IOEvent, Unit]] = Array()
+  private var reactions = Vector.empty[PartialFunction[IOEvent, Unit]]
 
   /**
     * Chooses the first fitting response to an event

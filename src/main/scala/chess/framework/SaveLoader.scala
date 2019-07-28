@@ -101,7 +101,7 @@ object SaveLoader {
               if (errors.nonEmpty) errors.head.asInstanceOf[Left[LoadingError, Positions]]
               else {
                 val positions = pos map (_.right.get) map (_.toMap) map (p => Position(p))
-                Right(Positions(positions.toArray))
+                Right(Positions(positions.toVector))
               }
             }
           }
@@ -213,7 +213,7 @@ object SaveLoader {
               if (errors.nonEmpty) errors.head.asInstanceOf[Left[LoadingError, Positions]]
               else {
                 val positions = pos map (_.right.get) map (_.toMap) map (p => Position(p))
-                Right(Positions(positions.toArray))
+                Right(Positions(positions.toVector))
               }
             }
           }

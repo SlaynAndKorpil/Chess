@@ -12,7 +12,7 @@ import scala.xml._
   * @version alpha 0.1
   * @author Felix Lehner
   */
-class Positions(val positions: Array[Position], val maxRepetition: Int) {
+class Positions(val positions: IndexedSeq[Position], val maxRepetition: Int) {
 
   /** Adds a new position and updates the repetition counter. */
   def +(that: Position): Positions = {
@@ -69,7 +69,7 @@ object Positions {
     * Creates a [[chess.framework.Positions]] from existing positions
     * and calculates the highest number of repetitions.
     */
-  def apply(positions: Array[Position]): Positions = {
+  def apply(positions: IndexedSeq[Position]): Positions = {
     var currentMax = 0
     positions foreach { pos: Position =>
       val max = positions.count(pos == _) - 1
@@ -78,7 +78,7 @@ object Positions {
     Positions(positions, currentMax)
   }
 
-  def apply(positions: Array[Position], maxRepetitionCount: Int): Positions = new Positions(positions, maxRepetitionCount)
+  def apply(positions: IndexedSeq[Position], maxRepetitionCount: Int): Positions = new Positions(positions, maxRepetitionCount)
 }
 
 /**
@@ -86,8 +86,8 @@ object Positions {
   *
   * @author Felix Lehner
   */
-object NoPositions extends Positions(Array(), 0) {
-  override def +(pos: Position): Positions = Positions(Array(pos), 0)
+object NoPositions extends Positions(Vector(), 0) {
+  override def +(pos: Position): Positions = Positions(Vector(pos), 0)
 
   override def -- : Positions = this
 
@@ -98,26 +98,29 @@ object NoPositions extends Positions(Array(), 0) {
 case class Position(pos: Map[Char, Column]) extends AnyVal {
   /**
     * Compares this position with another only taking the piece type and its color into account.
+    *
     * @param other another position to compare with
     * @return `true` if equal otherwise `false`
     */
   def ==(other: Position): Boolean = {
-    val compared: Seq[Seq[Boolean]] =
-      for (x <- 1 to 8; col = columnLetter(x)) yield {
-        val otherPos = other.pos(col)
-        val thisPos = this.pos(col)
-        for (y <- 1 to 8) yield {
-          val otherPiece = otherPos(y)
-          val piece = thisPos(y)
-          piece match {
-            case Pawn(_, _) => piece == otherPiece
-            case King(_, _) => piece == otherPiece
-            case Rook(_, _) => piece == otherPiece
-            case _ => piece === otherPiece
-          }
+    val compared: IndexedSeq[Boolean] =
+      for {
+        col <- 1 to 8
+        column = columnLetter(col)
+        row <- 1 to 8
+        square = Square(column, row)
+        otherPiece = other.pos(column)(row)
+        piece = this.pos(column)(row)
+      } yield {
+        val bool = piece match {
+          case p: Pawn => p == otherPiece
+          case p: King => p == otherPiece
+          case p: Rook => p == otherPiece
+          case _ => piece === otherPiece
         }
+        bool
       }
-    val neg = compared.flatten contains false
+    val neg = compared contains false
     !neg
   }
 }

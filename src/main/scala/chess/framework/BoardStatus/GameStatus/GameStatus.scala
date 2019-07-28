@@ -44,7 +44,7 @@ object GameStatus {
 }
 
 /** An ended game */
-case class Ended(result: GameResult) extends GameStatus {
+final case class Ended(result: GameResult) extends GameStatus {
   def isActive: Boolean = false
 }
 

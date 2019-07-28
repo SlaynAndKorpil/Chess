@@ -45,19 +45,19 @@ object Win {
   }
 }
 
-case class BlackWins(reason: WinResultReason) extends Win
+final case class BlackWins(reason: WinResultReason) extends Win
 
 object BlackWins {
   def by(reason: WinResultReason): BlackWins = BlackWins(reason)
 }
 
-case class WhiteWins(reason: WinResultReason) extends Win
+final case class WhiteWins(reason: WinResultReason) extends Win
 
 object WhiteWins {
   def by(reason: WinResultReason): WhiteWins = WhiteWins(reason)
 }
 
-case class Draw(reason: DrawResultReason) extends GameResult
+final case class Draw(reason: DrawResultReason) extends GameResult
 
 object Draw {
   def by(reason: DrawResultReason): Draw = Draw(reason)

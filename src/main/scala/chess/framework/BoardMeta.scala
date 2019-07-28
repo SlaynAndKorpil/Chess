@@ -33,7 +33,7 @@ trait BoardMeta {
     if (positions.length >= 1) {
       val resBoard = clone(
         squares = positions.head.pos,
-        positions = positions.--,
+        positions = positions --,
         history = history.tail,
         gameStatus = StandardReq,
         turn = turn.opposite)

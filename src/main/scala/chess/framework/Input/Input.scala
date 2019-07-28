@@ -11,10 +11,10 @@ import chess.framework.{AnyColor, AnyPiece, Square}
 sealed abstract class Input[InputType](val value: InputType)
 
 /** A move action. */
-case class MoveParams(from: Square, to: Square) extends Input(from -> to)
+final case class MoveParams(from: Square, to: Square) extends Input(from -> to)
 
 /** A promotion to a piece type. */
-case class Promotion(piece: (AnyColor, Boolean) => AnyPiece) extends Input(piece)
+final case class Promotion(piece: (AnyColor, Boolean) => AnyPiece) extends Input(piece)
 
 sealed trait Command extends Input[Unit]
 
