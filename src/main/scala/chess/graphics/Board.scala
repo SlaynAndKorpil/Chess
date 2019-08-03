@@ -1,7 +1,7 @@
 package chess.graphics
 
 import chess.framework.BoardStatus.GameResult._
-import chess.framework.BoardStatus.ResultReason._
+import chess.framework.BoardStatus.ResultReason.DrawResultReason.InsufficientMaterial
 import chess.framework.IOEvents._
 import chess.framework.Input._
 import chess.framework.LoadingError.LoadingError

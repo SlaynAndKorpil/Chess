@@ -9,7 +9,7 @@ import scala.xml._
   * Saves all former positions of [[chess.framework.ChessBoard]]
   *
   * @param positions a list of known positions
-  * @version alpha 0.1
+  * @version alpha 0.2
   * @author Felix Lehner
   */
 class Positions(val positions: IndexedSeq[Position], val maxRepetition: Int) {
@@ -29,7 +29,6 @@ class Positions(val positions: IndexedSeq[Position], val maxRepetition: Int) {
     *
     * @usecase Useful for takebacks
     * @see [[chess.framework.ChessBoard]]
-    * @return
     */
   def -- : Positions = Positions(positions.tail)
 

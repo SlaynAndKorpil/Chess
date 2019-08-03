@@ -5,7 +5,7 @@ import chess.framework.{AnyColor, AnyPiece, Square}
 /**
   * Inputs for [[chess.framework.ChessBoard#receive ChessBoard]] or [[chess.framework.ChessIO#receiveInput ChessIO]]
   *
-  * @version alpha 0.1
+  * @version alpha 0.2
   * @author Felix Lehner
   */
 sealed abstract class Input[InputType](val value: InputType)

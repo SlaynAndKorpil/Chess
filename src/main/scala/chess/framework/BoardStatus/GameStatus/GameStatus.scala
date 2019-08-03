@@ -6,7 +6,7 @@ import chess.framework._
 
 /**
   * The status of a [[chess.framework.ChessBoard]]
-  * @version alpha 0.1
+  * @version alpha 0.2
   * @author Felix Lehner
   */
 sealed trait GameStatus {

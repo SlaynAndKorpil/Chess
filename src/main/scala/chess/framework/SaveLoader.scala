@@ -7,6 +7,11 @@ import chess.framework.LoadingError._
 import scala.language.postfixOps
 import scala.xml._
 
+/**
+  * A loader for saved games.
+  * @author Felix Lehner
+  * @version alpha 0.2
+  */
 object SaveLoader {
   /** the most recent loader */
   val preferredLoader: Loader = loaderForVersion(ChessBoard.Version)

@@ -2,7 +2,7 @@ package chess.framework
 
 import chess.framework.BoardStatus.GameResult._
 import chess.framework.BoardStatus.GameStatus._
-import chess.framework.BoardStatus.ResultReason._
+import chess.framework.BoardStatus.ResultReason.WinResultReason._, chess.framework.BoardStatus.ResultReason.DrawResultReason._
 import chess.framework.IOEvents._
 import chess.framework.Input._
 import chess.framework.pathfinding.WaypointResult
@@ -19,7 +19,7 @@ import scala.xml.{Elem, NodeSeq}
   *
   * @constructor The implicit `io` param is used as an interface
   *              by/to this obj.
-  * @version alpha 0.1
+  * @version alpha 0.2
   * @author Felix Lehner
   */
 case class ChessBoard (
@@ -265,8 +265,11 @@ case class ChessBoard (
 
     val checkEvents: IndexedSeq[IOEvent] = movedBoard.doOnCheck(pos => ShowCheck(pos), NoEvent)
 
-    if (isValid) Some(Output(movedBoard.clone(gameStatus = updatedStatus), checkEvents ++ Array(endedEvent, promoEvent)))
-    else None
+    if (isValid) {
+      val resBoard = movedBoard.clone(gameStatus = updatedStatus)
+      val events = checkEvents ++ Array(endedEvent, promoEvent)
+      Output(resBoard, events) asSome
+    } else None
   } else None
 
   /**

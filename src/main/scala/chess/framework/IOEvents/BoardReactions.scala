@@ -7,7 +7,7 @@ import chess.framework.javaInterfacing.Reactions.JReaction
   * to [[chess.framework.IOEvents events]].
   *
   * @author Felix Lehner
-  * @version alpha 0.1
+  * @version alpha 0.2
   */
 class BoardReactions {
   private var reactions = Vector.empty[PartialFunction[IOEvent, Unit]]

@@ -3,74 +3,24 @@ package chess.framework.BoardStatus.ResultReason
 /**
   * The reason why a game ended with a specific result.
   *
-  * @version alpha 0.1
+  * @version alpha 0.2
   * @author Felix Lehner
   */
-sealed trait ResultReason {
-  override def toString: String
-}
-
-object ResultReason {
-  def apply(reason: String): Option[ResultReason] = reason match {
-    case Mate.toString => Some(Mate)
-    case Resignation.toString => Some(Resignation)
-    case Time.toString => Some(Resignation)
-    case Stalemate.toString => Some(Stalemate)
-    case DrawAgreement.toString => Some(DrawAgreement)
-    case Repetition.toString => Some(Repetition)
-    case Blocked.toString => Some(Blocked)
-    case InsufficientMaterial.toString => Some(InsufficientMaterial)
-    case FiftyMovesRule.toString => Some(FiftyMovesRule)
-    case _ => None
-  }
-}
+sealed trait ResultReason extends Enumeration
 
 /** Reasons for a win. */
-sealed trait WinResultReason extends ResultReason
-
-/** Ended by mate */
-object Mate extends WinResultReason {
-  override val toString: String = "Mate"
-}
-
-/** Ended by resignation */
-object Resignation extends WinResultReason {
-  override val toString: String = "Resignation"
-}
-
-/** Ended by time */
-object Time extends WinResultReason {
-  override val toString: String = "Time"
+object WinResultReason extends ResultReason {
+  val Mate: WinResultReason.Value = Value
+  val Resignation: WinResultReason.Value = Value
+  val Time: WinResultReason.Value = Value
 }
 
 /** Reasons for a draw. */
-sealed trait DrawResultReason extends ResultReason
-
-/** Drawn because of a stalemate */
-object Stalemate extends DrawResultReason {
-  override val toString: String = "Stalemate"
-}
-
-/** Draw because of a draw agreement */
-object DrawAgreement extends DrawResultReason {
-  override val toString: String = "DrawAgreement"
-}
-
-/** Draw because of repetition */
-object Repetition extends DrawResultReason {
-  override val toString: String = "Repetition"
-}
-
-/** Draw as a result of a blocked position. */
-object Blocked extends DrawResultReason {
-  override val toString: String = "BlockedPosition"
-}
-
-/** Draw by insufficient material. */
-object InsufficientMaterial extends DrawResultReason {
-  override val toString: String = "InsufficientMaterial"
-}
-
-object FiftyMovesRule extends  DrawResultReason {
-  override val toString: String = "FiftyMovesRule"
+object DrawResultReason extends ResultReason {
+  val Stalemate: DrawResultReason.Value = Value
+  val DrawAgreement: DrawResultReason.Value = Value
+  val Repetition: DrawResultReason.Value = Value
+  val Blocked: DrawResultReason.Value = Value
+  val InsufficientMaterial: DrawResultReason.Value = Value
+  val FiftyMovesRule: DrawResultReason.Value = Value
 }

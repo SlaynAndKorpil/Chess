@@ -2,7 +2,7 @@ package chess.framework
 
 import chess.framework.BoardStatus.GameResult.Win
 import chess.framework.BoardStatus.GameStatus.{Ended, GameStatus, PromoReq, StandardReq}
-import chess.framework.BoardStatus.ResultReason.Resignation
+import chess.framework.BoardStatus.ResultReason.WinResultReason.Resignation
 import chess.framework.IOEvents._
 
 import scala.language.postfixOps
@@ -11,7 +11,7 @@ import scala.language.postfixOps
   * Meta information and methods that are needed for a game.
   * @usecase this gets mixed-in in [[chess.framework.ChessBoard ChessBoard]]
   * @author Felix Lehner
-  * @version alpha 0.1
+  * @version alpha 0.2
   */
 trait BoardMeta {
   self: ChessBoard =>

@@ -6,7 +6,7 @@ import scala.xml._
   * A chess piece.
   *
   * @see [[chess.framework.Column Column]] assigns every line a piece.
-  * @version alpha 0.1
+  * @version alpha 0.2
   * @author Felix Lehner
   */
 sealed trait Piece {

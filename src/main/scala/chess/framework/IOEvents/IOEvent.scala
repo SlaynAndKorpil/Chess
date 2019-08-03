@@ -5,7 +5,7 @@ import chess.framework.Square
 
 /**
   * An event given by [[chess.framework.ChessBoard]] as reaction to specific inputs.
-  * @version alpha 0.1
+  * @version alpha 0.2
   * @author Felix Lehner
   */
 sealed trait IOEvent

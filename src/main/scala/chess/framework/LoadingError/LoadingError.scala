@@ -1,6 +1,10 @@
 package chess.framework.LoadingError
 
-/** Represents an error that occurred when loading a chess board. */
+/**
+  * Represents an error that occurred when loading a chess board.
+  * @author Felix Lehner
+  * @version alpha 0.2
+  */
 trait LoadingError {
   val description: String
 }
@@ -9,11 +13,11 @@ final case class FileNotFoundError(path: String) extends LoadingError {
   override val description: String = s"Unable to load file $path"
 }
 
-final object UnknownVersionError extends LoadingError {
+object UnknownVersionError extends LoadingError {
   override val description: String = "The file is either corrupted or from a newer version."
 }
 
-final object ParsingError extends LoadingError {
+object ParsingError extends LoadingError {
   override val description: String = "Failed to parse this file."
 }
 
