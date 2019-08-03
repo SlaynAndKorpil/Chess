@@ -2,10 +2,15 @@ package chess.framework.LoadingError
 
 /**
   * Represents an error that occurred when loading a chess board.
+  * As it is a `java.lang.Throwable` you can also use this in a
+  * convenient way in a java environment.
+  *
   * @author Felix Lehner
   * @version alpha 0.2
   */
-trait LoadingError {
+trait LoadingError extends RuntimeException {
+  override def getMessage: String = description
+
   val description: String
 }
 

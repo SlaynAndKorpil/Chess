@@ -30,7 +30,7 @@ import chess.framework.Input._
   * }}}
   *
   * @see [[chess.framework.javaInterfacing.JChessIO the java version]]
-  * @since alpha 0.1
+  * @since alpha 0.2
   * @author Felix Lehner
   */
 trait ChessIO {
@@ -96,6 +96,11 @@ trait ChessIO {
     }
   }
 
+  /**
+    * Loads a saved game from a file.
+    * @param filePath The path to the file. An `.save` extension is added when there is none.
+    * @return a [[chess.framework.LoadingError.LoadingError LoadingError]] if an error occurs in the parsing process
+    */
   protected def load(filePath: String): Option[chess.framework.LoadingError.LoadingError] =
     ChessBoard.load(filePath) match {
       case Right(loadedBoard) =>
@@ -105,5 +110,10 @@ trait ChessIO {
       case Left(error) => Some(error)
     }
 
+  /**
+    * Saves the current game to a file.
+    * @param filePath The file the game used to store the data.
+    *                 `.save` is added when there is no file extension yet.
+    */
   protected def save(filePath: String): Unit = ChessBoard.save(chessBoard, filePath)
 }

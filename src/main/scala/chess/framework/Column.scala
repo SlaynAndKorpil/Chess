@@ -52,7 +52,6 @@ final class Column(ps: Array[Piece]) extends IndexedSeq[Piece] with IndexedSeqLi
     case _ => NoPiece
   })
 
-
   /**
     * Saves this column as xml.
     */
@@ -61,18 +60,6 @@ final class Column(ps: Array[Piece]) extends IndexedSeq[Piece] with IndexedSeqLi
     pieces.indices.foreach(i => if (pieces(i).nonEmpty) result = result :+ pieces(i).toXml.copy(label = "l" + (i + 1)))
     result
   }
-
-  /**
-    * Creates a string that contains this column stored in `CSV` format
-    *
-    * @return this column as comma separated data
-    */
-  @deprecated("Not necessary anymore")
-  def asCSVLine: String =
-    pieces map (piece => {
-      val moved = if (piece.moved) piece.moved.toString else ""
-      piece.toString + moved
-    }) mkString ","
 
   /**
     * Creates a [[String]] that can be displayed in the console

@@ -2,6 +2,7 @@ package chess.framework
 
 import chess.framework.ChessBoard.{columnIndex, columnLetter}
 
+import scala.annotation.meta.beanGetter
 import scala.language.implicitConversions
 
 /**

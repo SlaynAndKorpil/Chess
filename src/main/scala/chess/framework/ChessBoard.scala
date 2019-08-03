@@ -2,7 +2,8 @@ package chess.framework
 
 import chess.framework.BoardStatus.GameResult._
 import chess.framework.BoardStatus.GameStatus._
-import chess.framework.BoardStatus.ResultReason.WinResultReason._, chess.framework.BoardStatus.ResultReason.DrawResultReason._
+import chess.framework.BoardStatus.ResultReason.WinResultReason._
+import chess.framework.BoardStatus.ResultReason.DrawResultReason._
 import chess.framework.IOEvents._
 import chess.framework.Input._
 import chess.framework.pathfinding.WaypointResult

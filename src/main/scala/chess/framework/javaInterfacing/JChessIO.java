@@ -11,6 +11,7 @@ import chess.framework.Output;
 import scala.collection.IndexedSeq;
 
 import java.util.function.Function;
+import chess.framework.LoadingError.LoadingError;
 
 /**
  * A wrapper for the scala version of this interface.
@@ -18,7 +19,7 @@ import java.util.function.Function;
  * with the same functionality and user-friendliness... Java is BS!
  *
  * @author Felix Lehner
- * @version alpha 0.1
+ * @version alpha 0.2
  */
 @SuppressWarnings("ALL")
 public abstract class JChessIO {
@@ -131,5 +132,25 @@ public abstract class JChessIO {
      */
     protected void addReaction(JReaction reaction) {
         wrappedRef.chessReactions().add(reaction);
+    }
+
+    /**
+     * Loads a saved game from a file.
+     * @param filePath The path to the file. If it does not contain a file
+     *                 extension {@code .save} is added to it.
+     * @throws LoadingError when an error occurs whilest parsing
+     */
+    protected void load(String filePath) throws RuntimeException {
+        scala.Option<LoadingError> result = wrappedRef.load(filePath);
+        if (result.isDefined()) throw (java.lang.RuntimeException) result.get();
+    }
+
+    /**
+     * Saves the current game to a file.
+     * @param filePath The file the game used to store the data.
+     *                 {@code .save} is added when there is no file extension yet.
+     */
+    protected void save(String filePath) {
+        wrappedRef.save(filePath);
     }
 }
