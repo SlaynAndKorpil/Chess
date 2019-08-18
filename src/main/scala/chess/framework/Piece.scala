@@ -36,11 +36,11 @@ sealed trait Piece {
   def !==[T <: Piece](other: T): Boolean =
     this.identifier != other.identifier || this.color != other.color
 
-  override def toString: String = " " + identifier + (color match {
-    case White => "w"
-    case Black => "b"
+  override def toString: String = " " + (color match {
+    case White => identifier.toLower
+    case Black => identifier.toUpper
     case _ => " "
-  })
+  }) + " "
 }
 
 /**
@@ -96,7 +96,7 @@ case class King(color: AnyColor, moved: Boolean = false) extends AnyPiece('K') {
 
 object Piece {
   def apply(id: Char, col: Color, moved: Boolean): Piece = col match {
-    case any: AnyColor => id match {
+    case any: AnyColor => id.toUpper match {
       case 'P' => Pawn(any, moved)
       case 'B' => Bishop(any, moved)
       case 'N' => Knight(any, moved)
