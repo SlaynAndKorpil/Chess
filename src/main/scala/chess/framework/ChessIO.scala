@@ -43,23 +43,8 @@ trait ChessIO {
   protected implicit val io: this.type = this
 
   /**
-    * The board that is used as an internal representation of the data structure.
-    * This variable is mutable because [[chess.framework.ChessBoard]] is not although
-    * mutability is needed for a program that can react to input.
-    *
-    * @see [[chess.framework.ChessBoard#classicalBoard]] for initialization
-    */
-  protected var board: ChessBoard
-
-  def chessBoard_=(board: ChessBoard): Unit = {
-    this.board = board
-    update()
-  }
-
-  def chessBoard: ChessBoard = board
-
-  /**
     * All available reactions to input.
+    *
     * @note You should not override this. Instead use the [[chess.framework.IOEvents.BoardReactions#+=]]
     *       or the [[chess.framework.IOEvents.BoardReactions#++=]] methods to add reactions.
     * @see [[chess.framework.IOEvents events]]
@@ -124,6 +109,24 @@ trait ChessIO {
         None
       case Left(error) => Some(error)
     }
+
+  /**
+    * The board with all pieces and meta data of the current game.
+    *
+    * @see [[chess.framework.ChessBoard#classicalBoard]] for initialization
+    */
+  def chessBoard: ChessBoard = board
+
+  /**
+    * The board that is used as an internal representation of the data structure.
+    * When changing it with this method the [[chess.framework.ChessIO#update update]] method is called.
+    *
+    * @see [[chess.framework.ChessBoard#classicalBoard]] for initialization
+    */
+  def chessBoard_=(board: ChessBoard): Unit = {
+    this.board = board
+    update()
+  }
 
   /**
     * Saves the current game to a file.

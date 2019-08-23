@@ -7,21 +7,25 @@ import chess.framework.FileOperationError.FileNotFoundError;
 import chess.framework.FileOperationError.FileOperationError;
 import chess.framework.IOEvents.BoardReactions;
 import chess.framework.IOEvents.IOEvent;
+import chess.framework.IOEvents.ShowCheck;
 import chess.framework.Input.Input;
-import chess.framework.javaInterfacing.Reactions.JReaction;
 import chess.framework.Output;
+import chess.framework.javaInterfacing.Reactions.JReaction;
+import scala.None$;
+import scala.Option;
+import scala.Some;
 import scala.collection.IndexedSeq;
+import scala.util.Either;
 
 import java.util.function.Function;
-import chess.framework.LoadingError.LoadingError;
 
 /**
  * A wrapper for the scala version of this interface.
- * I literally spent hours on trying to build this as a real interface
+ * I literaly spent hours on trying to build this as a real interface
  * with the same functionality and user-friendliness... Java is BS!
  *
  * @author Felix Lehner
- * @version alpha 0.2
+ * @version alpha 0.3
  */
 @SuppressWarnings("ALL")
 public abstract class JChessIO {
@@ -39,6 +43,52 @@ public abstract class JChessIO {
      */
     protected JChessIO(Function<ChessIO, ChessBoard> func) {
         wrappedRef = new ChessIO() {
+            @Override
+            public void lastSavePath_$eq(String lastSavePath) {
+                setLastSavePath(lastSavePath);
+            }
+
+            @Override
+            public Option<FileOperationError> load(String filePath) {
+                Either<chess.framework.FileOperationError.FileOperationError, ChessBoard> loadRes =
+                        ChessBoard$.MODULE$.load(filePath, io());
+                if (loadRes.isRight()) {
+                    ChessBoard loadedBoard = loadRes.right().get();
+                    setChessBoard(loadedBoard);
+                    loadedBoard.doOnCheck(
+                            pos -> {
+                                chessReactions.apply(ShowCheck.apply(pos));
+                                return "";
+                            },
+                            "",
+                            getChessBoard().turn());
+                    return None$.empty();
+                } else {
+                    return new Some(loadRes.left().get());
+                }
+            }
+
+            @Override
+            public ChessBoard chessBoard() {
+                return getChessBoard();
+            }
+
+            @Override
+            public void chessBoard_$eq(ChessBoard board) {
+                setChessBoard(board);
+            }
+
+            @Override
+            public Option<FileNotFoundError> save(String filePath) {
+                if (filePath != null && filePath != "" && getLastSavePath() != filePath) setLastSavePath(filePath);
+                return ChessBoard$.MODULE$.save(getChessBoard(), getLastSavePath());
+            }
+
+            @Override
+            public String lastSavePath() {
+                return getLastSavePath();
+            }
+
             public void board_$eq(ChessBoard board) {
                 JChessIO.this.setChessBoard(board);
             }
@@ -96,11 +146,15 @@ public abstract class JChessIO {
      * <p>
      * <code>
      * import chess.framework.ChessBoard$;
-     * ChessBoard board = ChessBoard$.MODULE$.classicalBoard(wrappedRef)
+     * ChessBoard board = ChessBoard$.MODULE$.classicalBoard(getWrappedRef())
      * setChessBoard(board);
      * </code>
      */
-    protected ChessIO wrappedRef;
+    public ChessIO getWrappedRef() {
+        return wrappedRef;
+    }
+
+    private ChessIO wrappedRef;
 
     public ChessBoard getChessBoard() {
         return chessBoard;
@@ -112,6 +166,17 @@ public abstract class JChessIO {
     }
 
     protected ChessBoard chessBoard;
+
+
+    public String getLastSavePath() {
+        return lastSavePath;
+    }
+
+    public void setLastSavePath(String lastSavePath) {
+        this.lastSavePath = lastSavePath;
+    }
+
+    protected String lastSavePath;
 
     /**
      * This method should update the output (e.g a GUI) and reload the data
@@ -137,22 +202,25 @@ public abstract class JChessIO {
     }
 
     /**
-     * Loads a saved game from a file.
-     * @param filePath The path to the file. If it does not contain a file
-     *                 extension {@code .save} is added to it.
-     * @throws LoadingError when an error occurs whilest parsing
-     */
-    protected void load(String filePath) throws RuntimeException {
-        scala.Option<LoadingError> result = wrappedRef.load(filePath);
-        if (result.isDefined()) throw (java.lang.RuntimeException) result.get();
-    }
-
-    /**
      * Saves the current game to a file.
+     *
      * @param filePath The file the game used to store the data.
      *                 {@code .save} is added when there is no file extension yet.
      */
-    protected void save(String filePath) {
-        wrappedRef.save(filePath);
+    protected void save(String filePath) throws FileNotFoundError {
+        Option<chess.framework.FileOperationError.FileNotFoundError> errorOpt = wrappedRef.save(filePath);
+        if (errorOpt.isDefined()) throw errorOpt.get();
+    }
+
+    /**
+     * Loads a saved game from a file.
+     *
+     * @param filePath The path to the file. If it does not contain a file
+     *                 extension, {@code .save} is added to it.
+     * @throws FileOperationError when an error occurs whilest parsing
+     */
+    protected void load(String filePath) throws FileOperationError {
+        scala.Option<FileOperationError> result = wrappedRef.load(filePath);
+        if (result.isDefined()) throw result.get();
     }
 }
