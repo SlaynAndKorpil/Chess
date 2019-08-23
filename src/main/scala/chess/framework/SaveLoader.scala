@@ -95,15 +95,15 @@ object SaveLoader {
                 )) toList
             )
             catch {
-              case _: Throwable => Left(HistoryError(moves.toString))
+              case _: Throwable => Left(HistoryLoadingError(moves.toString))
             }
 
-          val positions: Either[LoadingError, Positions] = {
-            val pos: Seq[Either[LoadingError, IndexedSeq[(Char, Column)]]] = (xml \ "positions" \ "pos") map loadSquaresFromXML
+          val positions: Either[FileOperationError, Positions] = {
+            val pos: Seq[Either[FileOperationError, IndexedSeq[(Char, Column)]]] = (xml \ "positions" \ "pos") map loadSquaresFromXML
             if (pos.isEmpty) Right(Positions.empty)
             else {
               val errors = pos.filter(_.isLeft)
-              if (errors.nonEmpty) errors.head.asInstanceOf[Left[LoadingError, Positions]]
+              if (errors.nonEmpty) errors.head.asInstanceOf[Left[FileOperationError, Positions]]
               else {
                 val positions = pos map (_.right.get) map (_.toMap) map (p => Position(p))
                 Right(Positions(positions.toVector))
@@ -125,8 +125,8 @@ object SaveLoader {
       }
     }
 
-    override def loadSquaresFromXML(xml: Node): Either[LoadingError, IndexedSeq[(Char, Column)]] = {
-      val loadedSquares: IndexedSeq[(Char, Either[LoadingError, Column])] = for {
+    override def loadSquaresFromXML(xml: Node): Either[FileOperationError, IndexedSeq[(Char, Column)]] = {
+      val loadedSquares: IndexedSeq[(Char, Either[FileOperationError, Column])] = for {
         x <- 1 to 8
         col = columnLetter(x)
       } yield col -> loadColumnFromXML(xml \ col.toString.toUpperCase)
