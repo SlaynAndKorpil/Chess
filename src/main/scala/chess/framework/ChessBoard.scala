@@ -20,7 +20,7 @@ import scala.xml.{Elem, NodeSeq}
   *
   * @constructor The implicit `io` param is used as an interface
   *              by/to this obj.
-  * @version alpha 0.2
+  * @version alpha 0.3
   * @author Felix Lehner
   */
 case class ChessBoard (
@@ -941,12 +941,16 @@ object ChessBoard {
     *
     * @param fileName a name for the save; technically it's possible to use a file path but this does often lead to errors (due to a lazy developer...)
     */
-  def save(board: ChessBoard, fileName: String = "save"): Unit = {
+  def save(board: ChessBoard, fileName: String = "save"): Option[FileOperationError.FileNotFoundError] = {
     val boardData = board.save
     val name = fileName + (if (fileName contains ".") "" else ".save")
-    try xml.XML.save(name, boardData)
-    catch {
-      case _: Throwable => Error error "failed to save the data!"
+    try {
+      xml.XML.save(name, boardData)
+      None
+    } catch {
+      case _: Throwable =>
+        Error error "failed to save the data!"
+        Some(FileOperationError.FileNotFoundError(fileName))
     }
   }
 
@@ -958,7 +962,7 @@ object ChessBoard {
     * @param path the file
     * @return a board or [[scala.None]] when the board was saved in a different version.
     */
-  def load(path: String)(implicit io: ChessIO): Either[LoadingError.LoadingError, ChessBoard] = {
+  def load(path: String)(implicit io: ChessIO): Either[FileOperationError.FileOperationError, ChessBoard] = {
     val fullPath = path + (if (path contains ".") "" else ".save")
     loadExactPath(fullPath)
   }
@@ -967,11 +971,11 @@ object ChessBoard {
     * Loads a board from a path without alternating it.
     * @see [[chess.framework.ChessBoard#load load]]
     */
-  def loadExactPath(path: String)(implicit io: ChessIO): Either[LoadingError.LoadingError, ChessBoard] =
+  def loadExactPath(path: String)(implicit io: ChessIO): Either[FileOperationError.FileOperationError, ChessBoard] =
     try SaveLoader.load(xml.XML.load(path))
     catch {
       case _: Throwable =>
-        Left(LoadingError.FileNotFoundError(path))
+        Left(FileOperationError.FileNotFoundError(path))
     }
    
   /**

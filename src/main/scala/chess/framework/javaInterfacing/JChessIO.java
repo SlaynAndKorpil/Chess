@@ -3,6 +3,8 @@ package chess.framework.javaInterfacing;
 import chess.framework.ChessBoard;
 import chess.framework.ChessBoard$;
 import chess.framework.ChessIO;
+import chess.framework.FileOperationError.FileNotFoundError;
+import chess.framework.FileOperationError.FileOperationError;
 import chess.framework.IOEvents.BoardReactions;
 import chess.framework.IOEvents.IOEvent;
 import chess.framework.Input.Input;

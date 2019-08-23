@@ -2,7 +2,7 @@ package chess.framework
 
 import chess.framework.BoardStatus.GameStatus.GameStatus
 import chess.framework.ChessBoard.columnLetter
-import chess.framework.LoadingError._
+import chess.framework.FileOperationError._
 
 import scala.language.postfixOps
 import scala.xml._
@@ -10,7 +10,7 @@ import scala.xml._
 /**
   * A loader for saved games.
   * @author Felix Lehner
-  * @version alpha 0.2
+  * @version alpha 0.3
   */
 object SaveLoader {
   /** the most recent loader */
@@ -22,7 +22,7 @@ object SaveLoader {
     * @param xml input toXml data
     * @return a [[ChessBoard]] or [[None]] as a failure
     */
-  def load(xml: Elem)(implicit io: ChessIO): Either[LoadingError, ChessBoard] = {
+  def load(xml: Elem)(implicit io: ChessIO): Either[FileOperationError, ChessBoard] = {
     val version =
       try { (xml \@ "version").toLong }
       catch {
@@ -51,32 +51,32 @@ object SaveLoader {
     (xml \ nodeName).text.filter(c => c != ' ' && c != '\n')
 
   trait Loader {
-    def loadSquaresFromXML(xml: Node): Either[LoadingError, IndexedSeq[(Char, Column)]]
+    def loadSquaresFromXML(xml: Node): Either[FileOperationError, IndexedSeq[(Char, Column)]]
 
     /** Loads a board from toXml */
-    def load(xml: Elem)(implicit io: ChessIO): Either[LoadingError, ChessBoard]
+    def load(xml: Elem)(implicit io: ChessIO): Either[FileOperationError, ChessBoard]
 
-    def loadColumnFromXML(xml: NodeSeq): Either[LoadingError, Column]
+    def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, Column]
 
-    def loadPieceFromXML(xml: NodeSeq): Either[LoadingError, Piece]
+    def loadPieceFromXML(xml: NodeSeq): Either[FileOperationError, Piece]
   }
 
   /**
     * Chosen when no other loader is defined for a specific version
     */
   object NoLoaderDefined extends Loader {
-    override def loadSquaresFromXML(xml: Node): Either[LoadingError, IndexedSeq[(Char, Column)]] = Left(BoardLoadingError(xml.toString))
+    override def loadSquaresFromXML(xml: Node): Either[FileOperationError, IndexedSeq[(Char, Column)]] = Left(BoardLoadingError(xml.toString))
 
-    override def load(xml: Elem)(implicit io: ChessIO): Either[LoadingError, ChessBoard] = Left(UnknownVersionError)
+    override def load(xml: Elem)(implicit io: ChessIO): Either[FileOperationError, ChessBoard] = Left(UnknownVersionError)
 
-    override def loadColumnFromXML(xml: NodeSeq): Either[LoadingError, Column] = Left(ColumnLoadingError(xml.toString))
+    override def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, Column] = Left(ColumnLoadingError(xml.toString))
 
-    override def loadPieceFromXML(xml: NodeSeq): Either[LoadingError, Piece] = Left(PieceLoadingError(xml.toString))
+    override def loadPieceFromXML(xml: NodeSeq): Either[FileOperationError, Piece] = Left(PieceLoadingError(xml.toString))
   }
 
   //TODO rewrite this chaos
   object Loader1 extends Loader {
-    override def load(xml: Elem)(implicit io: ChessIO): Either[LoadingError, ChessBoard] = {
+    override def load(xml: Elem)(implicit io: ChessIO): Either[FileOperationError, ChessBoard] = {
       val boardData = xml \ "board"
       val moves = xml \ "moves" \ "move"
       val color = Color(extractWithFilter(xml, "turn"))
@@ -148,10 +148,10 @@ object SaveLoader {
       * @param xml data formatted as toXml
       * @return the loaded column
       */
-    override def loadColumnFromXML(xml: NodeSeq): Either[LoadingError, Column] = {
+    override def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, Column] = {
       try {
         var pieces: Array[Piece] = Array.empty
-        var errors: Array[LoadingError] = Array.empty
+        var errors: Array[FileOperationError] = Array.empty
         val loadedData =
           for {
             i <- 1 to 8
@@ -172,8 +172,7 @@ object SaveLoader {
       }
     }
 
-
-    override def loadPieceFromXML(xml: NodeSeq): Either[LoadingError, Piece] = {
+    override def loadPieceFromXML(xml: NodeSeq): Either[FileOperationError, Piece] = {
       if (xml.isEmpty || xml.head.isEmpty) Left(PieceLoadingError(xml.toString))
       else {
         val data = xml.head
@@ -183,7 +182,7 @@ object SaveLoader {
   }
 
   object Loader2 extends Loader {
-    override def load(xml: Elem)(implicit io: ChessIO): Either[LoadingError, ChessBoard] = try {
+    override def load(xml: Elem)(implicit io: ChessIO): Either[FileOperationError, ChessBoard] = try {
       val boardData = xml \ "board"
       val moves = xml \ "moves" \ "move"
       val color = Color(extractWithFilter(xml, "turn"))
@@ -207,15 +206,15 @@ object SaveLoader {
               }) toList
             )
             catch {
-              case _: Throwable => Left(HistoryError(moves.toString))
+              case _: Throwable => Left(HistoryLoadingError(moves.toString))
             }
 
-          val positions: Either[LoadingError, Positions] = {
-            val pos: Seq[Either[LoadingError, IndexedSeq[(Char, Column)]]] = (xml \ "positions" \ "pos") map loadSquaresFromXML
+          val positions: Either[FileOperationError, Positions] = {
+            val pos: Seq[Either[FileOperationError, IndexedSeq[(Char, Column)]]] = (xml \ "positions" \ "pos") map loadSquaresFromXML
             if (pos.isEmpty) Right(Positions.empty)
             else {
               val errors = pos.filter(_.isLeft)
-              if (errors.nonEmpty) errors.head.asInstanceOf[Left[LoadingError, Positions]]
+              if (errors.nonEmpty) errors.head.asInstanceOf[Left[FileOperationError, Positions]]
               else {
                 val positions = pos map (_.right.get) map (_.toMap) map (p => Position(p))
                 Right(Positions(positions.toVector))
@@ -243,8 +242,8 @@ object SaveLoader {
         Left(ParsingError)
     }
 
-    override def loadSquaresFromXML(xml: Node): Either[LoadingError, IndexedSeq[(Char, Column)]] = {
-      val loadedSquares: IndexedSeq[(Char, Either[LoadingError, Column])] = for {
+    override def loadSquaresFromXML(xml: Node): Either[FileOperationError, IndexedSeq[(Char, Column)]] = {
+      val loadedSquares: IndexedSeq[(Char, Either[FileOperationError, Column])] = for {
         x <- 1 to 8
         col = columnLetter(x)
       } yield col -> loadColumnFromXML(xml \ col.toString.toUpperCase)
@@ -266,10 +265,10 @@ object SaveLoader {
       * @param xml data formatted as toXml
       * @return the loaded column
       */
-    override def loadColumnFromXML(xml: NodeSeq): Either[LoadingError, Column] = {
+    override def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, Column] = {
       try {
         var pieces: Array[Piece] = Array.empty
-        var errors: Array[LoadingError] = Array.empty
+        var errors: Array[FileOperationError] = Array.empty
         val loadedData =
           for {
             i <- 1 to 8
@@ -291,7 +290,7 @@ object SaveLoader {
     }
 
 
-    override def loadPieceFromXML(xml: NodeSeq): Either[LoadingError, Piece] = {
+    override def loadPieceFromXML(xml: NodeSeq): Either[FileOperationError, Piece] = {
       try {
         if (xml.isEmpty || xml.head.isEmpty) Left(PieceLoadingError(xml.toString))
         else {

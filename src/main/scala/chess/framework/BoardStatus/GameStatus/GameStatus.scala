@@ -1,12 +1,12 @@
 package chess.framework.BoardStatus.GameStatus
 
 import chess.framework.BoardStatus.GameResult.GameResult
-import chess.framework.LoadingError.GameStatusLoadingError
+import chess.framework.FileOperationError.GameStatusLoadingError
 import chess.framework._
 
 /**
   * The status of a [[chess.framework.ChessBoard]]
-  * @version alpha 0.2
+  * @version alpha 0.3
   * @author Felix Lehner
   */
 sealed trait GameStatus {
