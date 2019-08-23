@@ -54,7 +54,7 @@ sealed trait Active extends GameStatus {
 }
 
 /** Waiting for standard input(move, draw offer, ...). */
-object StandardReq extends Active {
+case object StandardReq extends Active {
   override def toString: String = "Waiting"
 }
 
@@ -62,11 +62,7 @@ object StandardReq extends Active {
 case class PromoReq(on: Square) extends Active
 
 /** Waiting for an answer to a draw offer. */
-object DrawAcceptanceReq extends Active {
-  override def toString: String = "Draw reaction"
-}
+case object DrawAcceptanceReq extends Active
 
 /** Waiting for an answer to a takeback request. */
-object TakebackAcceptanceReq extends Active {
-  override def toString: String = "TakebackAcceptanceReq"
-}
+case object TakebackAcceptanceReq extends Active
