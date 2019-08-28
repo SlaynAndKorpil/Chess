@@ -1,13 +1,13 @@
 package chess.framework
 
+import chess.framework.AbstractSqrCoordinate._
 import chess.framework.BoardStatus.GameResult._
 import chess.framework.BoardStatus.GameStatus._
-import chess.framework.BoardStatus.ResultReason.WinResultReason._
 import chess.framework.BoardStatus.ResultReason.DrawResultReason._
+import chess.framework.BoardStatus.ResultReason.WinResultReason._
 import chess.framework.IOEvents._
 import chess.framework.Input._
 import chess.framework.pathfinding.WaypointResult
-import chess.framework.AbstractSqrCoordinate._
 
 import scala.annotation.tailrec
 import scala.language.{implicitConversions, postfixOps}
@@ -241,32 +241,31 @@ case class ChessBoard (
         isLegalMove(from, to, movingPiece, endPiece) &&
         !movedBoard.isCheck(turn)
 
-    lazy val updatedStatus: GameStatus =
-      if (movedBoard isInsufficientMaterial) Ended(Draw by InsufficientMaterial)
-      else if (movedBoard.clone(positions = movedBoard.positions + Position(movedBoard.squares)).isFivefoldRepetition)
-        Ended(Draw by Repetition)
-      else if (movedBoard isStalemate) Ended(Draw by Stalemate)
-      else if (movedBoard isMate) Ended(turn match {
-        case White => WhiteWins by Mate
-        case Black => BlackWins by Mate
-      })
-      else if (movedBoard isBlocked) Ended(Draw by Blocked)
-      else movedBoard.gameStatus
-
-
-    lazy val endedEvent: IOEvent = updatedStatus match {
-      case res: Ended => ShowEnded(res.result)
-      case _ => NoEvent
-    }
-
-    lazy val promoEvent: IOEvent = movingPiece match {
-      case Pawn(color, _) if to.row == ClassicalValues.piecesStartLine(color.opposite) => ShowPromotion(to)
-      case _ => NoEvent
-    }
-
-    val checkEvents: IndexedSeq[IOEvent] = movedBoard.doOnCheck(pos => ShowCheck(pos), NoEvent)
-
     if (isValid) {
+      val updatedStatus: GameStatus =
+        if (movedBoard isInsufficientMaterial) Ended(Draw by InsufficientMaterial)
+        else if (movedBoard.clone(positions = movedBoard.positions + Position(movedBoard.squares)).isFivefoldRepetition)
+          Ended(Draw by Repetition)
+        else if (movedBoard isStalemate) Ended(Draw by Stalemate)
+        else if (movedBoard isMate) Ended(turn match {
+          case White => WhiteWins by Mate
+          case Black => BlackWins by Mate
+        })
+        else if (movedBoard isBlocked) Ended(Draw by Blocked)
+        else movedBoard.gameStatus
+
+      val endedEvent: IOEvent = updatedStatus match {
+        case res: Ended => ShowEnded(res.result)
+        case _ => NoEvent
+      }
+
+      val promoEvent: IOEvent = movingPiece match {
+        case Pawn(color, _) if to.row == ClassicalValues.piecesStartLine(color.opposite) => ShowPromotion(to)
+        case _ => NoEvent
+      }
+
+      val checkEvents: IndexedSeq[IOEvent] = movedBoard.doOnCheck(pos => ShowCheck(pos), NoEvent)
+
       val resBoard = movedBoard.clone(gameStatus = updatedStatus)
       val events = checkEvents ++ Array(endedEvent, promoEvent)
       Output(resBoard, events) asSome
@@ -323,7 +322,6 @@ case class ChessBoard (
     * Whether [[chess.framework.ChessBoard#turn turn]]'s king is checked.
     * Use this instead of `isCheck()` or `isCheck(turn)` to improve performance.
     */
-  @inline
   lazy val isCheck: Boolean = isCheck()
 
   /**
@@ -681,38 +679,40 @@ case class ChessBoard (
   def isMate: Boolean =
     allPieces
       .filter (_._2 === King(turn)) // filters for kings of the right color
-      .exists { testedKing =>
-        val kingColor = turn
-        val kingSq = testedKing._1
-        val alliedPieces = allPieces.filter(piece => {
-          piece._2.color == kingColor && (piece._2 !== King(kingColor))
-        })
+      .exists (kingIsMate)
 
-        //tests if any piece can move to a specific position (-> block or capture)
-        def piecesCanMoveTo(sqr: Square): Boolean = {
-          val endPiece = apply(sqr)
-          alliedPieces exists (sp => !isPinnedPiece(sp._1) && isLegalMove(sp._1, sqr, sp._2, endPiece))
+  private def kingIsMate(testedKing: (Square, AnyPiece)): Boolean = {
+    lazy val kingColor = turn
+    val kingSq = testedKing._1
+    lazy val alliedPieces = allPieces.filter(piece => {
+      piece._2.color == kingColor && (piece._2 !== King(kingColor))
+    })
+
+    //tests if any piece can move to a specific position (-> block or capture)
+    def piecesCanMoveTo(sqr: Square): Boolean = {
+      val endPiece = apply(sqr)
+      alliedPieces exists (sp => !isPinnedPiece(sp._1) && isLegalMove(sp._1, sqr, sp._2, endPiece))
+    }
+
+    def adjacents = kingSq.validAdjacents
+
+    def kingCanMove = adjacents exists (a => {
+      val adjacentPiece = apply(a)
+      !isAttacked(a, kingColor, withKing = true) && adjacentPiece.color != kingColor && !doMove(kingSq, a, testedKing._2, kingColor, adjacentPiece.color).isCheck(kingColor)
+    })
+
+    def canBlock: Boolean =
+      attackingPieces(kingSq, kingColor, withKing = false) <= 1 && {
+        // it can be safely assumed here that the amount of attacking pieces is exactly 1
+        val attacker = attackingSquares(kingSq, kingColor, withKing = false).head
+        attacker._2 match {
+          case Knight(_, _) => piecesCanMoveTo(attacker._1)
+          case _ => (attacker._1 until kingSq) exists piecesCanMoveTo
         }
-
-        def adjacents = kingSq.validAdjacents
-
-        def kingCanMove = adjacents exists (a => {
-          val adjacentPiece = apply(a)
-          !isAttacked(a, kingColor, withKing = true) && adjacentPiece.color != kingColor && !doMove(kingSq, a, testedKing._2, kingColor, adjacentPiece.color).isCheck(kingColor)
-        })
-
-        def canBlock: Boolean =
-          attackingPieces(kingSq, kingColor, withKing = false) <= 1 && {
-            // it can be safely assumed here that the amount of attacking pieces is exactly 1
-            val attacker = attackingSquares(kingSq, kingColor, withKing = false).head
-            attacker._2 match {
-              case Knight(_, _) => piecesCanMoveTo(attacker._1)
-              case _ => (attacker._1 until kingSq) exists piecesCanMoveTo
-            }
-          }
-
-        isAttacked(kingSq, withKing = false) && !kingCanMove && !canBlock
       }
+
+    isAttacked(kingSq, withKing = false) && !kingCanMove && !canBlock
+  }
 
   /**
     * Tests for stalemate (when a player is not checked but cannot move

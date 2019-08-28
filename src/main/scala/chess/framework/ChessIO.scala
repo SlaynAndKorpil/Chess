@@ -56,7 +56,7 @@ trait ChessIO {
     * The path to the directory where this game was saved the last time.
     * Used to override the last save without searching for the file.
     */
-  var lastSavePath: String = "save"
+  protected var lastSavePath: String = "save"
 
   /**
     * The board that is used as an internal representation of the data structure.
@@ -89,7 +89,12 @@ trait ChessIO {
     val res = board.receive(input)
     res match {
       case Some(data) =>
-        chessBoard = data.board
+        input match {
+          case DrawReject | DrawOffer | DrawAcceptance | TakebackReject | TakebackProposal | Resign =>
+            board = data.board
+          case _ =>
+            chessBoard = data.board
+        }
         data.events foreach (event => chessReactions(event))
       case None =>
     }
