@@ -9,6 +9,7 @@ import scala.xml._
 
 /**
   * A loader for saved games.
+  *
   * @author Felix Lehner
   * @version alpha 0.3
   */
@@ -24,7 +25,9 @@ object SaveLoader {
     */
   def load(xml: Elem)(implicit io: ChessIO): Either[FileOperationError, ChessBoard] = {
     val version =
-      try { (xml \@ "version").toLong }
+      try {
+        (xml \@ "version").toLong
+      }
       catch {
         case _: Throwable => -1
       }
@@ -41,6 +44,7 @@ object SaveLoader {
     * @return a loader
     */
   def loaderForVersion(version: Long): Loader = version match {
+    case 2 => Loader3
     case 1 => Loader2
     case 0 => Loader1
     case -1 => NoLoaderDefined //reservation for fallback loader
@@ -74,7 +78,6 @@ object SaveLoader {
     override def loadPieceFromXML(xml: NodeSeq): Either[FileOperationError, Piece] = Left(PieceLoadingError(xml.toString))
   }
 
-  //TODO rewrite this chaos
   object Loader1 extends Loader {
     override def load(xml: Elem)(implicit io: ChessIO): Either[FileOperationError, ChessBoard] = {
       val boardData = xml \ "board"
@@ -299,6 +302,136 @@ object SaveLoader {
         }
       } catch {
         case _: Throwable => Left(PieceLoadingError(xml.toString))
+      }
+    }
+  }
+
+  object Loader3 extends Loader {
+    override def load(xml: Elem)(implicit io: ChessIO): Either[FileOperationError, ChessBoard] = try {
+      val boardData = xml \ "board"
+      val moves = xml \ "moves" \ "move"
+      val color = Color(extractWithFilter(xml, "turn"))
+      color match {
+        case col: AnyColor =>
+          val squares = loadSquaresFromXML(boardData.head)
+
+          val history =
+            try Right(
+              moves map (move => {
+                val start = move \@ "start"
+                val pieceId = (move \@ "piece").head
+                val end = move \@ "end"
+                val captured = move \@ "capture"
+                val color = if (pieceId.isLower) White else Black
+                MoveData(
+                  Square(start.head, start.last.asDigit),
+                  Piece(pieceId, color, moved = true),
+                  Square(end.head, end.last.asDigit),
+                  captured.toBoolean
+                )
+              }) toList
+            )
+            catch {
+              case _: Throwable => Left(HistoryLoadingError(moves.toString))
+            }
+
+          val positions: Either[FileOperationError, Positions] = {
+            val pos: Seq[Either[FileOperationError, IndexedSeq[(Char, Column)]]] = (xml \ "positions" \ "pos") map loadSquaresFromXML
+            if (pos.isEmpty) Right(Positions.empty)
+            else {
+              val errors = pos.filter(_.isLeft)
+              if (errors.nonEmpty) errors.head.asInstanceOf[Left[FileOperationError, Positions]]
+              else {
+                val positions = pos map (_.right.get) map (_.toMap) map (p => Position(p))
+                Right(Positions(positions.toVector))
+              }
+            }
+          }
+
+          val color = col
+
+          val gameStatus = GameStatus(extractWithFilter(xml, "boardStatus"))
+
+          if (squares.isLeft) Left(squares.left.get)
+          else if (history.isLeft) Left(history.left.get)
+          else if (positions.isLeft) Left(positions.left.get)
+          else if (gameStatus.isLeft) Left(gameStatus.left.get)
+          else {
+            Right(new ChessBoard(squares = squares.right.get.toMap, history = history.right.get, positions = positions.right.get, turn = color, gameStatus = gameStatus.right.get))
+          }
+        case _ => Left(ParsingError)
+      }
+    }
+    catch {
+      case e: Throwable =>
+        e.printStackTrace()
+        Left(ParsingError)
+    }
+
+    override def loadSquaresFromXML(xml: Node): Either[FileOperationError, IndexedSeq[(Char, Column)]] = {
+      val loadedSquares: IndexedSeq[(Char, Either[FileOperationError, Column])] = for {
+        x <- 1 to 8
+        col = columnLetter(x)
+      } yield col -> loadColumnFromXML(xml \ col.toString.toUpperCase)
+      val possibleError = loadedSquares find (_._2.isLeft) map (_._2.left)
+      possibleError match {
+        case None =>
+          val res = loadedSquares.map { tup =>
+            (tup._1, tup._2.right.get)
+          }
+          Right(res)
+        case Some(error) =>
+          Left(error.get)
+      }
+    }
+
+    /**
+      * Loads a [[chess.framework.Column]] from toXml data.
+      *
+      * @param xml data formatted as toXml
+      * @return the loaded column
+      */
+    override def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, Column] = {
+      try {
+        var pieces: Array[Piece] = Array.empty
+        var errors: Array[FileOperationError] = Array.empty
+        val loadedData =
+          for {
+            i <- 1 to 8
+            label = "l" + i
+            data = xml \ label
+          } yield if (data.isEmpty) Right(NoPiece) else loadPieceFromXML(data)
+        loadedData foreach {
+          case Right(piece) =>
+            pieces :+= piece
+          case Left(error) =>
+            errors :+= error
+        }
+        if (pieces.length >= 8) Right(new Column(pieces))
+        else Left(errors.head)
+      }
+      catch {
+        case _: Throwable => Left(ColumnLoadingError(xml.toString))
+      }
+    }
+
+
+    override def loadPieceFromXML(xml: NodeSeq): Either[FileOperationError, Piece] = {
+      val error = Left(PieceLoadingError(xml.toString))
+      try {
+        if (xml.isEmpty || xml.head.isEmpty) error
+        else {
+          val data = xml.head
+          val id = (data \@ "id").head
+          val color = if (id.isLower) White else Black
+          val moved = (data \@ "moved").toBoolean
+          id.toUpper match {
+            case 'P' | 'R' | 'N' | 'B' | 'Q' | 'K' => Right(Piece(id, color, moved))
+            case _ => error
+          }
+        }
+      } catch {
+        case _: Throwable => error
       }
     }
   }

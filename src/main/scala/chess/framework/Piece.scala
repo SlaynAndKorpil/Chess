@@ -21,7 +21,7 @@ sealed trait Piece {
   val value: Int
 
   /** Saves this piece as XML. */
-  def toXml: Elem = <piece id={identifier.toString} color={color.toString} moved={moved.toString}/>
+  def toXml: Elem = <piece id={toString} moved={moved.toString}/>
 
   /** Indicates if this is an empty square. */
   def isEmpty: Boolean
@@ -36,11 +36,11 @@ sealed trait Piece {
   def !==[T <: Piece](other: T): Boolean =
     this.identifier != other.identifier || this.color != other.color
 
-  override def toString: String = " " + (color match {
-    case White => identifier.toLower
-    case Black => identifier.toUpper
+  override def toString: String = color match {
+    case White => identifier.toLower.toString
+    case Black => identifier.toUpper.toString
     case _ => " "
-  }) + " "
+  }
 }
 
 /**

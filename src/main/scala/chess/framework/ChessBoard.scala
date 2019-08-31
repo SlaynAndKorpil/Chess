@@ -175,7 +175,7 @@ case class ChessBoard (
         {saveSquares(squares)}
       </board>
       <moves>
-        {history map (m => <move start={m.startPos.column.toString + m.startPos.row.toString} end={m.endPos.column.toString + m.endPos.row.toString} capture={m.captured.toString} piece={m.piece.toString}/>)}
+        {history map (m => <move start={m.startPos.toString} end={m.endPos.column.toString} capture={m.captured.toString} piece={m.piece.toString}/>)}
       </moves>
       <turn>
         {turn}
@@ -845,7 +845,7 @@ object ChessBoard {
     * @note this constant will be updated with every update changing the way of saving [[chess.framework.ChessBoard ChessBoard]]s.
     * @version alpha 0.1
     */
-  val Version = 1L
+  val Version = 2L
 
   /**
     * @return An empty chess board
