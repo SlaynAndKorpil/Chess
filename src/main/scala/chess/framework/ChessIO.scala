@@ -142,7 +142,7 @@ trait ChessIO {
     *                 When empty, the last save path is used.
     */
   protected def save(filePath: String): Option[chess.framework.FileOperationError.FileNotFoundError] = {
-    if (filePath.nonEmpty && filePath != "" && lastSavePath != filePath) lastSavePath = filePath
+    if (filePath.nonEmpty && lastSavePath != filePath) lastSavePath = filePath
     ChessBoard.save(chessBoard, lastSavePath)
   }
 }

@@ -38,10 +38,10 @@ class InputInterpreter extends ChessIO with CommandRegistrator {
     def gameLoop(): Unit = {
       val input = scala.io.StdIn.readLine
 
-      if (awaitsApproval)
+      if (awaitsApproval) // FIXME promotion counts as approval too!
         input.toLowerCase match {
-          case "y" => receiveInput(approval)
-          case "n" => receiveInput(reject)
+          case "y" | "yes" | "yep" => receiveInput(approval)
+          case "n" | "no" | "nope" => receiveInput(reject)
           case _ => print("This is not an answer to a yes/no question. Please type either \"y\" or \"n\".")
         }
       else parseInput(input) match {

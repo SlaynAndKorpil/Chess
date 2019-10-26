@@ -3,7 +3,6 @@ package chess.framework
 import chess.framework.ChessBoard.columnLetter
 
 import scala.language.postfixOps
-import scala.xml._
 
 /**
   * Saves all former positions of [[chess.framework.ChessBoard]]
@@ -46,18 +45,6 @@ class Positions(val positions: IndexedSeq[Position], val maxRepetition: Int) {
     * @return All but the last position.
     */
   def tail: Positions = Positions(positions.tail)
-
-  /**
-    * Converts this object to xml.
-    *
-    * @see [[chess.framework.ChessBoard#save]]
-    * @see [[chess.framework.SaveLoader]]
-    * @return an xml object
-    */
-  def toXML: NodeSeq = {
-    val data = positions map { p => <pos>{ChessBoard.saveSquares(p.pos)}</pos>}
-    NodeSeq.fromSeq(data)
-  }
 }
 
 object Positions {
@@ -89,12 +76,10 @@ object NoPositions extends Positions(Vector(), 0) {
   override def +(pos: Position): Positions = Positions(Vector(pos), 0)
 
   override def -- : Positions = this
-
-  override def toXML: NodeSeq = NodeSeq.Empty
 }
 
 /** Stores a position. */
-case class Position(pos: Map[Char, Column]) extends AnyVal {
+case class Position(pos: BoardMap) extends AnyVal {
   /**
     * Compares this position with another only taking the piece type and its color into account.
     *

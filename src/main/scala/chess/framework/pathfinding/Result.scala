@@ -1,7 +1,7 @@
 package chess.framework.pathfinding
 
 /** Result of a pathfinder. */
-sealed abstract class Result[@specialized(Boolean) +T] {
+sealed trait Result[@specialized(Boolean) +T] {
   def content: T
 
   def isSuccess: Boolean

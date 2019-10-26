@@ -62,37 +62,23 @@ case object NoPiece extends Piece {
 /**
   * A non-empty square.
   */
-sealed abstract class AnyPiece(override val identifier: Char) extends Piece {
+sealed abstract class AnyPiece(override val identifier: Char, override val value: Int) extends Piece {
   val color: AnyColor
 
   override def isEmpty = false
 }
 
-case class Pawn(color: AnyColor, moved: Boolean = false) extends AnyPiece('P') {
-  val value = 1
-}
+case class Pawn(color: AnyColor, moved: Boolean = false) extends AnyPiece('P', 1)
 
-case class Bishop(color: AnyColor, moved: Boolean = false) extends AnyPiece('B') {
-  val value = 3
-}
+case class Bishop(color: AnyColor, moved: Boolean = false) extends AnyPiece('B', 3)
 
-case class Knight(color: AnyColor, moved: Boolean = false) extends AnyPiece('N') {
-  val value = 3
-}
+case class Knight(color: AnyColor, moved: Boolean = false) extends AnyPiece('N', 3)
 
-case class Rook(color: AnyColor, moved: Boolean = false) extends AnyPiece('R') {
-  val value = 5
-}
+case class Rook(color: AnyColor, moved: Boolean = false) extends AnyPiece('R', 5)
 
-case class Queen(color: AnyColor, moved: Boolean = false) extends AnyPiece('Q') {
-  val value = 9
-}
+case class Queen(color: AnyColor, moved: Boolean = false) extends AnyPiece('Q', 9)
 
-case class King(color: AnyColor, moved: Boolean = false) extends AnyPiece('K') {
-  //evaluation according to Dr. Emanual Lasker
-  val value: Int = 4
-}
-
+case class King(color: AnyColor, moved: Boolean = false) extends AnyPiece('K', 4 /*evaluation according to Dr. Emanual Lasker*/)
 
 object Piece {
   def apply(id: Char, col: Color, moved: Boolean): Piece = col match {

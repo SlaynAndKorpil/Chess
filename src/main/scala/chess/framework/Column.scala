@@ -42,7 +42,7 @@ final class Column(ps: Array[Piece]) extends IndexedSeq[Piece] with IndexedSeqLi
   def updated(line: Int, piece: Piece): Column =
     new Column(pieces.updated(line - 1, piece))
 
-  def updated(line: Int, piece: Char, color: AnyColor): Column = updated(line, piece match {
+  def updated(line: Int, piece: Char, color: AnyColor): Column = updated(line, piece.toUpper match {
     case 'P' => Pawn(color)
     case 'R' => Rook(color)
     case 'N' => Knight(color)
@@ -66,7 +66,7 @@ final class Column(ps: Array[Piece]) extends IndexedSeq[Piece] with IndexedSeqLi
     *
     * @see [[chess.console.InputInterpreter]]
     */
-  override def toString: String = pieces.mkString("|", "|", "|")
+  override def toString: String = pieces.mkString("| ", " | ", " |")
 
   override def newBuilder: mutable.Builder[Piece, Column] = Column.newBuilder
 }
