@@ -178,9 +178,6 @@ case class ChessBoard(
     */
   def save: Elem =
     <chessboard version={Version.toString}>
-      <board>
-        {saveSquares(squares)}
-      </board>
       <startPosition>
         {startPos.xml}
       </startPosition>

@@ -314,8 +314,6 @@ object SaveLoader {
       val color = Color(extractWithFilter(xml, "turn"))
       color match {
         case col: AnyColor =>
-          val squares = loadSquaresFromXML(boardData.head)
-
           val startPos: Either[FileOperationError, StartPosition] = loadSquaresFromXML(startPosition.head) match {
             case Right(value) => Right(ArbitraryPosition(value))
             case Left(value) =>
@@ -351,31 +349,43 @@ object SaveLoader {
               case _: Throwable => Left(HistoryLoadingError(moves.toString))
             }
 
+          def getNextPositionAfterMove(before: BoardMap, move: MoveData): BoardMap = {
+            val lastPos = before.movePiece(move.startPos, move.endPos, move.piece)
+            move match {
+              case PromotionMove(_, _, to, _, promoPiece) => lastPos.updated(to, promoPiece)
+              case _ => lastPos
+            }
+          }
+
           // generates position history from move history
-          // assumes that it is approved that history does is correct
+          // assumes that it is approved that history and startPos exist and are correct
           lazy val positionHistory: Positions = {
-            val boards: IndexedSeq[BoardMap] = history.right.get.tail.foldRight(Array(startPos.right.get.squares)) { (move, positions) => {
-              val lastPos = BoardMap(positions.head).movePiece(move.startPos, move.endPos, move.piece)
-              val newPos = move match {
-                case PromotionMove(_, _, to, _, promoPiece) => lastPos.updated(to, promoPiece)
-                case _ => lastPos
+            val moveHistory = history.right.get
+            if (moveHistory.isEmpty) Positions.empty
+            else {
+              val boards: IndexedSeq[BoardMap] = moveHistory.tail.foldRight(Array(startPos.right.get.squares)) {
+                (move, positions) => getNextPositionAfterMove(BoardMap(positions.head), move) +: positions
               }
-              newPos +: positions
-            }}
-            val ps = boards map Position
-            Positions(ps)
+              Positions(boards map Position)
+            }
           }
 
           val color = col
 
           val gameStatus = GameStatus(extractWithFilter(xml, "boardStatus"))
 
-          if (squares.isLeft) Left(squares.left.get)
-          else if (history.isLeft) Left(history.left.get)
+          // assumes that it is approved that history and positions exist and are correct
+          lazy val board = {
+            val moveHistory = history.right.get
+            if (moveHistory.isEmpty) startPos.right.get.squares
+            else getNextPositionAfterMove(positionHistory.head.pos, moveHistory.head)
+          }
+
+          if (history.isLeft) Left(history.left.get)
           else if (gameStatus.isLeft) Left(gameStatus.left.get)
           else if (startPos.isLeft) Left(startPos.left.get)
           else Right(new ChessBoard(
-            squares = BoardMap(squares.right.get),
+            squares = board,
             history = history.right.get,
             positions = positionHistory,
             turn = color,
