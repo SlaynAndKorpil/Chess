@@ -185,7 +185,7 @@ case class ChessBoard(
         {startPos.xml}
       </startPosition>
       <moves>
-        {history map (m => <move start={m.startPos.toString} end={m.endPos.toString} capture={m.captured.toString} piece={m.piece.toString}/>)}
+        {history map (_.xml)}
       </moves>
       <turn>
         {turn}

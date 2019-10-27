@@ -69,7 +69,8 @@ trait BoardMeta {
     if (promoPiece != NoPiece) {
       gameStatus match {
         case PromoReq(sqr: Square) =>
-          val result = updated(sqr, promoPiece).clone(gameStatus = StandardReq)
+          val updatedHistory = PromotionMove(history.head.startPos, history.head.piece, sqr, history.head.captured, promoPiece) :: this.history.tail
+          val result = updated(sqr, promoPiece).clone(gameStatus = StandardReq, history = updatedHistory)
           val promoCheckEvents: IndexedSeq[IOEvent] = result.doOnCheck[Array[IOEvent]](pos => Array(ShowCheck(pos)), Array()).flatten
           Output(result, RemovePromotion +: promoCheckEvents) asSome
         case _ => None

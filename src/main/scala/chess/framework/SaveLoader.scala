@@ -331,12 +331,20 @@ object SaveLoader {
                 val end = move \@ "end"
                 val captured = move \@ "capture"
                 val color = if (pieceId.isLower) White else Black
-                MoveData(
+                if (move.attributes.exists(_.key == "promoPiece")) {
+                  val promoPieceId = (move \@ "promoPiece").head
+                  PromotionMove(
+                    Square(start.head, start.last.asDigit),
+                    Piece(pieceId, color, moved = true),
+                    Square(end.head, end.last.asDigit),
+                    captured.toBoolean,
+                    Piece(promoPieceId, color, moved = false))
+                }
+                else MoveData(
                   Square(start.head, start.last.asDigit),
                   Piece(pieceId, color, moved = true),
                   Square(end.head, end.last.asDigit),
-                  captured.toBoolean
-                )
+                  captured.toBoolean)
               }) toList
             )
             catch {
@@ -346,13 +354,12 @@ object SaveLoader {
           // generates position history from move history
           // assumes that it is approved that history does is correct
           lazy val positionHistory: Positions = {
-            val boards: IndexedSeq[BoardMap] = history.right.get.tail.foldRight(Array(startPos.right.get.squares)) {(move, positions) => {
-              val lastPos = BoardMap(positions.head)
-              val from = move.startPos
-              val to = move.endPos
-              val piece = move.piece
-              val newPos = lastPos.movePiece(from, to, piece)
-              Debugger debug s"from: $from, to: $to, piece: $piece"
+            val boards: IndexedSeq[BoardMap] = history.right.get.tail.foldRight(Array(startPos.right.get.squares)) { (move, positions) => {
+              val lastPos = BoardMap(positions.head).movePiece(move.startPos, move.endPos, move.piece)
+              val newPos = move match {
+                case PromotionMove(_, _, to, _, promoPiece) => lastPos.updated(to, promoPiece)
+                case _ => lastPos
+              }
               newPos +: positions
             }}
             val ps = boards map Position
