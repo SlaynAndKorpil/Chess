@@ -311,14 +311,17 @@ object SaveLoader {
       val startPosition = xml \ "startPosition"
       val moves = xml \ "moves" \ "move"
       val color = Color(extractWithFilter(xml, "turn"))
+
       color match {
         case col: AnyColor =>
-          val startPos: Either[FileOperationError, StartPosition] = loadSquaresFromXML(startPosition.head) match {
-            case Right(value) => Right(ArbitraryPosition(value))
-            case Left(value) =>
-              if (startPosition.head == ClassicPosition.xml) Right(ClassicPosition)
-              else Left(value)
-          }
+          val startPos: Either[FileOperationError, StartPosition] =
+            if (startPosition.head.child contains ClassicPosition.xml) Right(ClassicPosition)
+            else loadSquaresFromXML(startPosition.head) match {
+              case Right(value) => Right(ArbitraryPosition(value))
+              case Left(value) =>
+                if (startPosition.head == ClassicPosition.xml) Right(ClassicPosition)
+                else Left(value)
+            }
 
           val history =
             try Right(

@@ -890,7 +890,7 @@ object ChessBoard {
     *
     * @return a chess board with the standard start position
     */
-  def classicalBoard(implicit io: ChessIO): ChessBoard = ChessBoard(classicalPosition, Nil, Positions.empty, White, StandardReq)
+  def classicalBoard(implicit io: ChessIO): ChessBoard = ChessBoard(classicalPosition, Nil, Positions.empty, White, StandardReq)(io, ClassicPosition)
 
   /**
     * Generator for chessboards.
