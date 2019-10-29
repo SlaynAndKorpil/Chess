@@ -308,7 +308,6 @@ object SaveLoader {
 
   object Loader3 extends Loader {
     override def load(xml: Elem)(implicit io: ChessIO): Either[FileOperationError, ChessBoard] = try {
-      val boardData = xml \ "board"
       val startPosition = xml \ "startPosition"
       val moves = xml \ "moves" \ "move"
       val color = Color(extractWithFilter(xml, "turn"))
@@ -350,7 +349,8 @@ object SaveLoader {
             }
 
           def getNextPositionAfterMove(before: BoardMap, move: MoveData): BoardMap = {
-            val lastPos = before.movePiece(move.startPos, move.endPos, move.piece)
+            val piece = before(move.startPos)
+            val lastPos = before.movePiece(move.startPos, move.endPos, piece)
             move match {
               case PromotionMove(_, _, to, _, promoPiece) => lastPos.updated(to, promoPiece)
               case _ => lastPos

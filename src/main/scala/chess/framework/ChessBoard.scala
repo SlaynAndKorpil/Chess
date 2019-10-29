@@ -350,11 +350,9 @@ case class ChessBoard(
       case King(color, _) =>
         (columnDif <= 1 && columnDif >= -1 && lineDif <= 1 && lineDif >= -1) ||
           //castle
-          (!startPiece.moved && (end._1 == 'c' || end._1 == 'g') && {
-            val rookSquare =
-              if (startCIndex < endCIndex) AbstractSqrCoordinate.sqr2indxSqr(end) + (1, 0)
-              else AbstractSqrCoordinate.sqr2indxSqr(end) - (2, 0)
-            val rook = apply(rookSquare)
+          (!startPiece.moved && (end.column == 'c' || end.column == 'g') && {
+            val rookCol = if (end.column == 'c') 'd' else 'f'
+            val rook = apply(Square(rookCol, 0))
             val squaresToTest: List[NumericSquare] = sqr2indxSqr(Square(if (startCIndex < endCIndex) 'g' else 'c', start.row)) to start
 
             def isSqrAttacked(sqr: AbstractSqrCoordinate[_]): Boolean = sqr match {
@@ -362,7 +360,7 @@ case class ChessBoard(
               case square: NumericSquare => isAttacked(square, turn, withKing = true)
             }
 
-            rook == Rook(color) && squaresToTest.forall(sqr => !isSqrAttacked(sqr)) && isEmptyOrthogonal(start, end)
+            rook == Rook(color, false) && squaresToTest.forall(sqr => !isSqrAttacked(sqr)) && isEmptyOrthogonal(start, end)
           })
       case NoPiece => false
     }

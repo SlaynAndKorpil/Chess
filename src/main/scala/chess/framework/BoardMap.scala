@@ -127,14 +127,11 @@ final case class BoardMap(key1: Char, value1: Column,
     piece match {
       case Pawn(_, _) if apply(to).isEmpty && from.column != to.column =>
         result = result.emptySquare(Square(to.column, from.row))
-      case King(color, moved)
-        if !moved && from == ChessBoard.ClassicalValues.kingStartSquare(color) &&
-          (to.column == 'c' || to.column == 'g') =>
-        val row = if (color == White) 1 else 8
+      case King(color, moved) if !moved && (to.column == 'c' || to.column == 'g') =>
+        val row = ChessBoard.ClassicalValues.piecesStartLine(color)
         val col = if (to.column == 'c') 'd' else 'f'
         val emptyCol = if (to.column == 'c') 'a' else 'h'
-        val res = result.updated(Square(col, row), Rook(color)).emptySquare(Square(emptyCol, row))
-        result = res
+        result = result.updated(Square(col, row), Rook(color)).emptySquare(Square(emptyCol, row))
       case _ =>
     }
 
