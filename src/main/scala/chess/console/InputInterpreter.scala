@@ -225,7 +225,7 @@ class InputInterpreter extends ChessIO with CommandRegistrator {
     object ExitCommand extends ConsoleCommand {
       override val help: String = "End your life."
       override val description: String = "Stop this BS."
-      override val names: Array[String] = Array("exit", "halt", "stop", "die", "end", "shutdown")
+      override val names: Array[String] = Array("exit", "halt", "stop", "die", "end", "shutdown", "quit")
       override val paramInfo: String = noParams
 
       override def apply(params: String): Quit = Quit("CYA...")
