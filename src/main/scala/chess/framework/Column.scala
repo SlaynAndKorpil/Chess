@@ -30,17 +30,9 @@ final class Column(ps: Array[Piece]) extends IndexedSeq[Piece] with IndexedSeqLi
     this(Array.fill(8)(piece))
 
   /** @return the piece at a specific position in the array */
-  def apply(idx: Int): Piece = pieces(idx - 1)
+  def pieceAt(row: Int): Piece = pieces(row - 1)
 
-  /**
-    * Replaces a piece at a specific position in [[pieces]].
-    *
-    * @note the line parameter gets subtracted by 1 so you can access the array
-    *       with the classical chess notation system.
-    * @return an updated column
-    */
-  def updated(line: Int, piece: Piece): Column =
-    new Column(pieces.updated(line - 1, piece))
+  def apply(idx: Int): Piece = pieces(idx)
 
   def updated(line: Int, piece: Char, color: AnyColor): Column = updated(line, piece.toUpper match {
     case 'P' => Pawn(color)
@@ -51,6 +43,16 @@ final class Column(ps: Array[Piece]) extends IndexedSeq[Piece] with IndexedSeqLi
     case 'Q' => Queen(color)
     case _ => NoPiece
   })
+
+  /**
+    * Replaces a piece at a specific position in [[pieces]].
+    *
+    * @note the line parameter gets subtracted by 1 so you can access the array
+    *       with the classical chess notation system.
+    * @return an updated column
+    */
+  def updated(line: Int, piece: Piece): Column =
+    new Column(pieces.updated(line - 1, piece))
 
   /**
     * Saves this column as xml.
@@ -72,9 +74,10 @@ final class Column(ps: Array[Piece]) extends IndexedSeq[Piece] with IndexedSeqLi
 }
 
 object Column {
-  def fromSeq(buf: Seq[Piece]): Column = new Column(buf.toArray)
 
   def apply(pieces: Piece*): Column = fromSeq(pieces)
+
+  def fromSeq(buf: Seq[Piece]): Column = new Column(buf.toArray)
 
   def newBuilder: mutable.Builder[Piece, Column] = new ArrayBuffer mapResult fromSeq
 

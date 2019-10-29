@@ -77,7 +77,7 @@ final case class BoardMap(key1: Char, value1: Column,
     * @return the chess square at a specific position on the board, [[scala.None]] if the sqr does not exist
     */
   def getPiece(sqr: Square): Option[Piece] =
-    if (sqr.isValid) Some(apply(sqr._1)(sqr._2))
+    if (sqr.isValid) Some(apply(sqr._1).pieceAt(sqr._2))
     else None
 
   /**

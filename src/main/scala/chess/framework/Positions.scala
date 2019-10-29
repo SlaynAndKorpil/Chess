@@ -93,8 +93,8 @@ case class Position(pos: BoardMap) extends AnyVal {
         column = columnLetter(col)
         row <- 1 to 8
         square = Square(column, row)
-        otherPiece = other.pos(column)(row)
-        piece = this.pos(column)(row)
+        otherPiece = other.pos(square)
+        piece = this.pos(square)
       } yield {
         val bool = piece match {
           case p: Pawn => p == otherPiece
