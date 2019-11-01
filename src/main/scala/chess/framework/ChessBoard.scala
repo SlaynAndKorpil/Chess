@@ -833,7 +833,7 @@ object ChessBoard {
     *
     * @return a fully filled [[chess.framework.ChessBoard ChessBoard]]
     */
-  def fill(piece: Piece)(implicit io: ChessIO): ChessBoard = this (Array.fill(8)(Column(piece)), Nil, Positions.empty, White).get
+  def fill(piece: Piece)(implicit io: ChessIO): ChessBoard = this(Array.fill(8)(Column(piece)), Nil, Positions.empty, White).get
 
   val classicalPosition: BoardMap = BoardMap(
     'a' -> new Column(Map(
