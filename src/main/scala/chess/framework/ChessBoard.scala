@@ -350,9 +350,9 @@ case class ChessBoard(
       case King(color, _) =>
         (columnDif <= 1 && columnDif >= -1 && lineDif <= 1 && lineDif >= -1) ||
           //castle
-          (!startPiece.moved && (end.column == 'c' || end.column == 'g') && {
-            val rookCol = if (end.column == 'c') 'd' else 'f'
-            val rook = apply(Square(rookCol, 0))
+        (!startPiece.moved && (end.column == 'c' || end.column == 'g') && {
+            val rookCol = if (end.column == 'c') 'a' else 'h'
+            val rook = apply(Square(rookCol, ClassicalValues.piecesStartLine(color)))
             val squaresToTest: List[NumericSquare] = sqr2indxSqr(Square(if (startCIndex < endCIndex) 'g' else 'c', start.row)) to start
 
             def isSqrAttacked(sqr: AbstractSqrCoordinate[_]): Boolean = sqr match {
