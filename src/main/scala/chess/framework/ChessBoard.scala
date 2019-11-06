@@ -657,16 +657,17 @@ case class ChessBoard(
 
     def existsMajorPiece = pieces.exists(p => p === Rook(color) || p === Queen(color))
 
-    (value == 0) || {
-      !existsMajorPiece && !existsPawn && {
-        val bishops = piecesOfColor filter (_._2 === Bishop(color))
-        val knights = pieces filter (_ === Knight(color))
+    value == 0 || (!existsMajorPiece && !existsPawn && {
+      val bishops = piecesOfColor filter (_._2 === Bishop(color))
+      val knights = pieces filter (_ === Knight(color))
 
-        def bishopsOfSameColor = bishops.exists(_._1 == White) != bishops.exists(_._1 == Black)
+      def bishopsOfSameColor = bishops.exists(_._1 == White) != bishops.exists(_._1 == Black)
 
-        (knights.isEmpty && bishopsOfSameColor) || (bishops.isEmpty && knights.length == 1)
-      }
-    }
+      def existsEnemyPiece(piece: (AnyColor, Boolean) => AnyPiece) = allPieces.exists(_._2 === piece(color.opposite, false))
+
+      if (knights.isEmpty) bishopsOfSameColor || (bishops.length == 1 && !existsEnemyPiece(Knight))
+      else bishops.isEmpty && knights.length == 1 && !existsEnemyPiece(Bishop)
+    })
   }
 
   /** Tests for a 5x repetition of the same position. */

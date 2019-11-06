@@ -11,7 +11,7 @@ import scala.xml.{Elem, NodeSeq}
 trait StartPosition {
   def xml: NodeSeq
 
-  val squares: BoardMap
+  def squares: BoardMap
 }
 
 /**
