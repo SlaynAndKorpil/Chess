@@ -11,7 +11,7 @@ import scala.xml.{Elem, NodeSeq}
 trait StartPosition {
   def xml: NodeSeq
 
-  def squares: BoardMap
+  val squares: BoardMap
 }
 
 /**
@@ -20,7 +20,7 @@ trait StartPosition {
 object ClassicPosition extends StartPosition {
   val xml: Elem = <ClassicPosition/>
 
-  def squares: BoardMap = ChessBoard.classicalPosition
+  val squares: BoardMap = ChessBoard.classicalPosition
 }
 
 /**
