@@ -32,3 +32,7 @@ case class Question(override val message: String, approval: Input[_], reject: In
   * A message that expects the app to quit.
   */
 case class Quit(override val message: String) extends CommandResult
+
+case object NoMessage extends CommandResult {
+  override val message: String = ""
+}
