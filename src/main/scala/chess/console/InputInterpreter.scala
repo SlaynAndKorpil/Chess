@@ -45,6 +45,7 @@ class InputInterpreter extends ChessIO with CommandRegistrator {
           case _ => print("This is not an answer to a yes/no question. Please type either \"y\" or \"n\".")
         }
       else parseInput(input) match {
+        case NoMessage =>
         case Message(message) =>
           println(message)
         case Question(message, approval, reject) =>
@@ -82,7 +83,8 @@ class InputInterpreter extends ChessIO with CommandRegistrator {
     val words = input.split(" ")
     val commandName = words.head.trim.toLowerCase
 
-    if (existsCommand(commandName)) {
+    if (input.isEmpty) NoMessage
+    else if (existsCommand(commandName)) {
       val command = allCommandBindings(commandName)
       command(words.filterNot(_.isEmpty).tail.mkString(" "))
     }
