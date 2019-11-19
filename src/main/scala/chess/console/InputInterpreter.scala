@@ -47,7 +47,7 @@ class InputInterpreter extends ChessIO with CommandRegistrator {
       else parseInput(input) match {
         case NoMessage =>
         case Message(message) =>
-          println(message)
+          println("\n" + message + "\n")
         case Question(message, approval, reject) =>
           this.approval = approval
           this.reject = reject
