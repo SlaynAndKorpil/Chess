@@ -426,7 +426,7 @@ case class ChessBoard(
       Array(Queen(opponent), Rook(opponent)) ^ Array(partNxtPiece(1, 0), partNxtPiece(-1, 0), partNxtPiece(0, -1), partNxtPiece(0, 1))
 
     val attackedByPawn: Int = {
-      val dir = ClassicalValues.pawnDir(opponent.opposite)
+      val dir = ClassicalValues.pawnDir(attacked)
 
       def pieceAtOffset(colD: Int, rowD: Int): Piece = apply(NumericSquare(colI, row) + (colD, rowD))
 
@@ -519,15 +519,8 @@ case class ChessBoard(
         }
         !capturing && !moving && !enPassant
       case King(color, _) =>
-        val moves = Array(
-          0 -> 1, 0 -> -1,
-          1 -> 0, 1 -> -1, 1 -> 1,
-          -1 -> 0, -1 -> 1, -1 -> -1
-        )
-        !moves.exists(d => !isAttacked(atOffset(d), color, withKing = false)
-          && offsetPiece(d)
-          .flatMap(offPiece => Option(offPiece.color != color))
-          .getOrElse(false))
+        val adjacents = square.adjacents.filter(_.isValid)
+        !adjacents.exists(sq => !isAttacked(sq, color, withKing = true) && apply(sq).color != color)
       case other if other.isInstanceOf[AnyPiece] =>
         val offsets = other match {
           case Knight(_, _) =>
@@ -618,12 +611,12 @@ case class ChessBoard(
     * Tests for stalemate (when a player is not checked but cannot move
     * because every possible move would result in him being checked).
     */
-  def isStalemate: Boolean = !isCheck && {
-    allPieces
-      .filter(p => p._2.color == turn)
-      .map(_._1)
-      .forall(isBlockedSquare)
-  }
+  def isStalemate: Boolean =
+    !isCheck &&
+      allPieces
+        .filter(_._2.color == turn)
+        .map(_._1)
+        .forall(isBlockedSquare)
 
   /**
     * Tests for insufficient material of any color.
