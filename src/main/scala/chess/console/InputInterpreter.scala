@@ -47,7 +47,7 @@ class InputInterpreter extends ChessIO with CommandRegistrator {
       else parseInput(input) match {
         case NoMessage =>
         case Message(message) =>
-          println(message)
+          println('\n' + message + '\n')
         case Question(message, approval, reject) =>
           this.approval = approval
           this.reject = reject
@@ -236,7 +236,7 @@ class InputInterpreter extends ChessIO with CommandRegistrator {
     object MoveCommand extends ConsoleCommand {
       override val help: String = "Try to move from the square defined by the first two characters to the one indicated by the two last ones."
       override val description: String = "Move a piece from one square to another."
-      override val names: Array[String] = Array("move", "m")
+      override val names: Array[String] = Array("move", "mv", "m")
       override val paramInfo: String = "<letter><digit><letter><digit>"
 
       override def apply(params: String): CommandResult =
