@@ -12,13 +12,13 @@ trait CMenuBar {
 
   menuBar = Menu
 
-  //TODO find better solution for self-reference when opening a FileChooser
   private val reference: CWindow = this
 
   object Menu extends MenuBar {
     contents += new Menu("File") {
       mnemonic = event.Key.F
       contents += save
+      contents += saveAs
       contents += load
     }
 
@@ -56,17 +56,9 @@ trait CMenuBar {
       gameFrame.receiveInput(DrawOffer)
     })
 
-    object save extends CMenuItem("Save", KeyEvent.VK_S, Shortcut.save, _ => {
-      val fileChooser = new SaveFileChooser()
-      val result = fileChooser.show(reference)
-      result match {
-        case f: FileChooser.Result.Value if f == FileChooser.Result.Approve =>
-          import gameFrame._
-          val path = fileChooser.filePath
-          ChessBoard.save(chessBoard, path)
-        case _ =>
-      }
-    })
+    object save extends CMenuItem("Save", KeyEvent.VK_S, Shortcut.save, _ => gameFrame.save())
+
+    object saveAs extends CMenuItem("Save as", KeyEvent.VK_A, Shortcut.saveAs, _ => gameFrame.saveAs())
 
     object load extends CMenuItem("Load", KeyEvent.VK_L, Shortcut.load, _ => {
       val fileChooser = new LoadFileChooser()
