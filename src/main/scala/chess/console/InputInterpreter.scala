@@ -236,7 +236,7 @@ class InputInterpreter extends ChessIO with CommandRegistrator {
     object MoveCommand extends ConsoleCommand {
       override val help: String = "Try to move from the square defined by the first two characters to the one indicated by the two last ones."
       override val description: String = "Move a piece from one square to another."
-      override val names: Array[String] = Array("move", "m")
+      override val names: Array[String] = Array("move", "mv", "m")
       override val paramInfo: String = "<letter><digit><letter><digit>"
 
       override def apply(params: String): CommandResult =
