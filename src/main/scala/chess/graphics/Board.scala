@@ -4,13 +4,13 @@ import chess.framework.BoardStatus.GameResult._
 import chess.framework.BoardStatus.ResultReason.DrawResultReason.InsufficientMaterial
 import chess.framework.IOEvents._
 import chess.framework.Input._
-import chess.framework.FileOperationError.FileOperationError
+import chess.framework.FileOperationError.{FileNotFoundError, FileOperationError}
 import chess.framework._
 import chess.graphics.BoardColors._
 
 import scala.swing._
 
-class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
+class Board(val window: CWindow) extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
   //TODO maybe use a real popup for this?
   val promoMenu = new PromotionChooser(400, 100)
   listenTo(promoMenu)
@@ -127,5 +127,21 @@ class Board extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
 
   override def receiveInput(input: Input[_]): Unit = super.receiveInput(input)
 
-  override def load(filePath: String): Option[FileOperationError] = super.load(filePath)
+  override def load(filePath: String): Option[FileOperationError] =
+    if (filePath.nonEmpty) {
+      lastSavePath = filePath
+      super.load(filePath)
+    } else Some(FileNotFoundError(filePath))
+
+  def save(): Unit = super.save("")
+
+  def saveAs(): Unit = {
+    val fileChooser = new SaveFileChooser()
+    val result = fileChooser.show(window)
+    result match {
+      case f: FileChooser.Result.Value if f == FileChooser.Result.Approve =>
+        super.save(fileChooser.filePath)
+      case _ =>
+    }
+  }
 }
