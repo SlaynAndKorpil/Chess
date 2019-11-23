@@ -38,36 +38,38 @@ class InputInterpreter extends ChessIO with CommandRegistrator {
     def gameLoop(): Unit = {
       val input = scala.io.StdIn.readLine
 
-      if (awaitsApproval) // FIXME promotion counts as approval too!
-        input.toLowerCase match {
-          case "y" | "yes" | "yep" => receiveInput(approval)
-          case "n" | "no" | "nope" => receiveInput(reject)
-          case _ => print("This is not an answer to a yes/no question. Please type either \"y\" or \"n\".")
-        }
-      else parseInput(input) match {
-        case NoMessage =>
-        case Message(message) =>
-          println('\n' + message + '\n')
-        case Question(message, approval, reject) =>
-          this.approval = approval
-          this.reject = reject
-          print(message)
-        case Quit(message) =>
-          println(message)
-          return
+      chessBoard.gameStatus match {
+        case DrawAcceptanceReq | TakebackAcceptanceReq =>
+          input.toLowerCase match {
+            case "y" | "yes" | "yep" => receiveInput(approval)
+            case "n" | "no" | "nope" => receiveInput(reject)
+            case _ => print("This is not an answer to a yes/no question. Please type either \"y\" or \"n\".")
+          }
+        case PromoReq(_) =>
+          input.toLowerCase match {
+            case "q" => receiveInput(Promotion(Queen))
+            case "r" => receiveInput(Promotion(Rook))
+            case "k" => receiveInput(Promotion(Knight))
+            case "b" => receiveInput(Promotion(Bishop))
+            case _ => print("This is not a valid piece identifier. Please type on of the following: Q R K B")
+          }
+        case _ =>
+          parseInput(input) match {
+            case NoMessage =>
+            case Message(message) =>
+              println('\n' + message + '\n')
+            case Question(message, approval, reject) =>
+              this.approval = approval
+              this.reject = reject
+              print(message)
+            case Quit(message) =>
+              println(message)
+              return
+          }
       }
 
       gameLoop()
     }
-  }
-
-  /**
-    * Checks if a specific requirement for input is currently needed by the board.
-    * Otherwise returns `false`.
-    */
-  def awaitsApproval: Boolean = chessBoard.gameStatus match {
-    case PromoReq(_) | DrawAcceptanceReq | TakebackAcceptanceReq => true
-    case _ => false
   }
 
   /**
@@ -256,14 +258,12 @@ class InputInterpreter extends ChessIO with CommandRegistrator {
       /**
         * Parses a move command.
         */
-      // TODO improve behavior
-      def parseMove(move: String): Message = {
+      def parseMove(move: String): CommandResult = {
         val from = Square(move.head, move(1).asDigit)
         val to = Square(move(2), move(3).asDigit)
         val moveInput = MoveParams(from, to)
-        val moveMessage = s"Moved ${chessBoard(from)} from $from to $to."
         receiveInput(moveInput)
-        Message(moveMessage)
+        NoMessage
       }
     }
 
@@ -291,8 +291,7 @@ class InputInterpreter extends ChessIO with CommandRegistrator {
         case rr: ResultReason => rr.toString
       }
       println(s"$resultDescription due to $reason.")
-    case ShowPromotion(on) => println(s"To what piece do you want the pawn on $on to promote to? (Q|R|M|B)")
-    case _ =>
+    case ShowPromotion(on) => print(s"To what piece do you want the pawn on $on to promote to? (Q|R|M|B)")
   }
 }
 
