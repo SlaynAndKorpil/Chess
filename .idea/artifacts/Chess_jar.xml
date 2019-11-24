@@ -8,7 +8,7 @@
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/scala-library-2.12.4.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/scala-library-2.12.41.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/scala-swing_2.12-2.0.3.jar" path-in-jar="/" />
-      <element id="library" level="application" name="org.scala-lang.modules:scala-xml_2.12:1.1.0" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/scala-xml_2.12-1.1.0.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

@@ -3,11 +3,10 @@
     <option name="MAIN_CLASS_NAME" value="chess.Main" />
     <module name="Chess" />
     <method v="2">
-      <option name="BuildArtifacts" enabled="true">
-        <artifact name="ChessFramework:jar" />
-      </option>
+      <option name="Make" enabled="true" />
       <option name="BuildArtifacts" enabled="true">
         <artifact name="Chess:jar" />
+        <artifact name="ChessFramework:jar" />
       </option>
     </method>
   </configuration>
