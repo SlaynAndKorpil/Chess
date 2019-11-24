@@ -1,7 +1,7 @@
 package chess.graphics
 
-import chess.framework.Input._
-import chess.framework._
+import framework.Input._
+import framework._
 
 trait BoardEventHandler {
   self: Board =>

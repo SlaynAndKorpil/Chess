@@ -1,6 +1,6 @@
 package chess.graphics
 
-import chess.framework.{AnyColor, AnyPiece, Piece}
+import framework.{AnyColor, AnyPiece, Piece}
 import chess.graphics.BoardColors.BoardColor
 
 import scala.swing._

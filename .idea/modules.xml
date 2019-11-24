@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/Chess.iml" filepath="$PROJECT_DIR$/.idea/modules/Chess.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/Chess-build.iml" filepath="$PROJECT_DIR$/.idea/modules/Chess-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ChessFramework/ChessFramework.iml" filepath="$PROJECT_DIR$/ChessFramework/ChessFramework.iml" />
     </modules>
   </component>
 </project>

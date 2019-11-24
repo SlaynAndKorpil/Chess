@@ -1,11 +1,11 @@
 package chess.graphics
 
-import chess.framework.BoardStatus.GameResult._
-import chess.framework.BoardStatus.ResultReason.DrawResultReason.InsufficientMaterial
-import chess.framework.IOEvents._
-import chess.framework.Input._
-import chess.framework.FileOperationError.{FileNotFoundError, FileOperationError}
-import chess.framework._
+import framework.BoardStatus.GameResult._
+import framework.BoardStatus.ResultReason.DrawResultReason.InsufficientMaterial
+import framework.IOEvents._
+import framework.Input._
+import framework.FileOperationError.{FileNotFoundError, FileOperationError}
+import framework._
 import chess.graphics.BoardColors._
 
 import scala.swing._
@@ -22,7 +22,7 @@ class Board(val window: CWindow) extends GridPanel(0, 9) with BoardEventHandler 
   def setup(): Unit = {
     contents ++= {
       for (i <- 1 to 9; j <- 0 to 8;
-           row = 9 - i; col = chess.framework.ChessBoard.columnLetter(j)) yield
+           row = 9 - i; col = framework.ChessBoard.columnLetter(j)) yield
         if (i == 9 && j == 0) new CTextField()
         else if (i == 9) new CTextField(col.toString)
         else if (j == 0) new CTextField(row.toString)

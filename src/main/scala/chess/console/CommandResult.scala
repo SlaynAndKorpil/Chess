@@ -1,6 +1,6 @@
 package chess.console
 
-import chess.framework.Input.Input
+import framework.Input.Input
 
 /**
   * A result returned by an executed command.

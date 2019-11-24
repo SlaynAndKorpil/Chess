@@ -1,6 +1,6 @@
 package chess.graphics
 
-import chess.framework.Square
+import framework.Square
 import chess.graphics.BoardColors._
 
 import scala.swing.event.ActionEvent
@@ -9,7 +9,7 @@ import scala.swing.{Graphics2D, Image, Insets, ToggleButton}
 class SquareButton(
                     override var color: BoardColor,
                     val pos: Square,
-                    override var piece: chess.framework.Piece)
+                    override var piece: framework.Piece)
   extends ToggleButton with PieceButton {
 
   override val eventType: SquareButton.this.type => ActionEvent = SquarePressed

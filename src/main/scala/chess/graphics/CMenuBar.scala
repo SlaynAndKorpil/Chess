@@ -2,8 +2,8 @@ package chess.graphics
 
 import java.awt.event.KeyEvent
 
-import chess.framework.Input.{DrawOffer, Resign, TakebackProposal}
-import chess.framework._
+import framework.Input.{DrawOffer, Resign, TakebackProposal}
+import framework._
 
 import scala.swing._
 
@@ -47,7 +47,7 @@ trait CMenuBar {
       gameFrame.receiveInput(Resign))
 
     object restart extends CMenuItem("Restart", KeyEvent.VK_S, _ => {
-      gameFrame.chessBoard = chess.framework.ChessBoard.classicalBoard(gameFrame)
+      gameFrame.chessBoard = framework.ChessBoard.classicalBoard(gameFrame)
       gameFrame.repaint()
       gameFrame.unselectAll()
     })

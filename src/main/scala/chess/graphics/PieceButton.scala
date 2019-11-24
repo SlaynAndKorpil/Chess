@@ -2,7 +2,7 @@ package chess.graphics
 
 import java.awt.image.BufferedImage
 
-import chess.framework.{AnyPiece, NoPiece, Piece}
+import framework.{AnyPiece, NoPiece, Piece}
 
 import scala.swing._
 import scala.swing.event._

@@ -2,7 +2,7 @@ package chess.graphics
 
 import java.awt.image.BufferedImage
 import java.io.File
-import chess.framework._
+import framework._
 import javax.imageio.ImageIO
 import scala.xml.Elem
 

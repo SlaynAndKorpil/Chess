@@ -1,6 +1,6 @@
 package chess.graphics
 
-import chess.framework._
+import framework._
 import javax.swing.Box
 
 import scala.swing._
