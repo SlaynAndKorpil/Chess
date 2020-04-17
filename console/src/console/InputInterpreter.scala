@@ -1,5 +1,12 @@
 package console
 
+import framework.BoardStatus.GameResult._
+import framework.BoardStatus.ResultReason.WinResultReason._
+import framework.BoardStatus.ResultReason.DrawResultReason._
+import framework.BoardStatus.ResultReason.ResultReason
+import framework.BoardStatus.GameStatus._
+import framework.IOEvents.{ShowEnded, ShowPromotion}
+import framework.Input._
 import framework._
 
 import scala.language.postfixOps
@@ -12,6 +19,8 @@ import scala.language.postfixOps
   * @version alpha 0.3
   */
 class InputInterpreter extends ChessIO with CommandRegistrator {
+  import InputInterpreter._
+
   var board: ChessBoard = ChessBoard.classicalBoard
 
   // registers all commands

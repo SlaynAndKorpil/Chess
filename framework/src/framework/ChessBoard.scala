@@ -1,6 +1,16 @@
 package framework
 
-import framework.BoardStatus.GameStatus.GameStatus
+import framework.BoardStatus.GameStatus.{GameStatus, PromoReq, StandardReq}
+import framework.pathfinding.WaypointResult
+import framework.Input._
+import framework.BoardStatus.GameResult._
+import framework.BoardStatus.GameStatus._
+import framework.BoardStatus.ResultReason.WinResultReason._
+import framework.BoardStatus.ResultReason.DrawResultReason._
+import framework.IOEvents._
+
+import scala.language.postfixOps
+import scala.xml._
 
 /**
   * Defines a classical 1 vs 1 chess board
@@ -19,6 +29,8 @@ case class ChessBoard(
                        turn: AnyColor,
                        gameStatus: GameStatus
                      )(implicit val io: ChessIO, val startPos: StartPosition = ArbitraryPosition(squares)) extends BoardMeta {
+
+  import ChessBoard._
 
   /** All pieces (excluding [[framework.NoPiece NoPiece]]s) and their position */
   lazy val allPieces: Array[(Square, AnyPiece)] = {
@@ -339,7 +351,7 @@ case class ChessBoard(
         (!startPiece.moved && (end.column == 'c' || end.column == 'g') && {
             val rookCol = if (end.column == 'c') 'a' else 'h'
             val rook = apply(Square(rookCol, ClassicalValues.piecesStartLine(color)))
-            val squaresToTest: List[NumericSquare] = sqr2indxSqr(Square(if (startCIndex < endCIndex) 'g' else 'c', start.row)) to start
+            val squaresToTest: List[NumericSquare] = AbstractSqrCoordinate.sqr2indxSqr(Square(if (startCIndex < endCIndex) 'g' else 'c', start.row)) to start
 
             def isSqrAttacked(sqr: AbstractSqrCoordinate[_]): Boolean = sqr match {
               case square: Square => isAttacked(square, turn, withKing = true)
@@ -558,7 +570,9 @@ case class ChessBoard(
       val kings: Array[(Square, AnyPiece)] = allPieces filter (_._2.isInstanceOf[King]) reverse
 
       def kingIsBlocked(kingOnSq: (Square, AnyPiece)): Boolean = {
-        import pathfinding.KingMovementPathfinder
+        import framework.pathfinding.KingMovementPathfinder
+        import framework.pathfinding.WaypointResult._
+
         val pos = kingOnSq._1
         val king = kingOnSq._2
 
@@ -789,4 +803,219 @@ case class ChessBoard(
     else if (apply(incremented).isEmpty) isEmptyConnection(incremented, to)
     else false
   }
+}
+
+object ChessBoard {
+  /**
+    * The data-version; used to verify `.save` files (stored games/ boards).
+    *
+    * @note this constant will be updated with every update changing the way of saving [[framework.ChessBoard ChessBoard]]s.
+    * @version alpha 0.1
+    */
+  val Version = 2L
+
+  /**
+    * @return An empty chess board
+    */
+  @inline
+  def empty(implicit io: ChessIO): ChessBoard = fill(NoPiece)
+
+  /**
+    * Fills a 8 * 8 board with a specific piece.
+    *
+    * @return a fully filled [[framework.ChessBoard ChessBoard]]
+    */
+  def fill(piece: Piece)(implicit io: ChessIO): ChessBoard = this(Array.fill(8)(Column(piece)), Nil, Positions.empty, White).get
+
+  val classicalPosition: BoardMap = BoardMap(
+    'a' -> new Column(Map(
+      1 -> Rook(White),
+      2 -> Pawn(White),
+      7 -> Pawn(Black),
+      8 -> Rook(Black)
+    )),
+    'b' -> new Column(Map(
+      1 -> Knight(White),
+      2 -> Pawn(White),
+      7 -> Pawn(Black),
+      8 -> Knight(Black)
+    )),
+    'c' -> new Column(Map(
+      1 -> Bishop(White),
+      2 -> Pawn(White),
+      7 -> Pawn(Black),
+      8 -> Bishop(Black)
+    )),
+    'd' -> new Column(Map(
+      1 -> Queen(White),
+      2 -> Pawn(White),
+      7 -> Pawn(Black),
+      8 -> Queen(Black)
+    )),
+    'e' -> new Column(Map(
+      1 -> King(White),
+      2 -> Pawn(White),
+      7 -> Pawn(Black),
+      8 -> King(Black)
+    )),
+    'f' -> new Column(Map(
+      1 -> Bishop(White),
+      2 -> Pawn(White),
+      7 -> Pawn(Black),
+      8 -> Bishop(Black)
+    )),
+    'g' -> new Column(Map(
+      1 -> Knight(White),
+      2 -> Pawn(White),
+      7 -> Pawn(Black),
+      8 -> Knight(Black)
+    )),
+    'h' -> new Column(Map(
+      1 -> Rook(White),
+      2 -> Pawn(White),
+      7 -> Pawn(Black),
+      8 -> Rook(Black)
+    )))
+
+  /**
+    * Defines the classical chess standard board
+    *
+    * @return a chess board with the standard start position
+    */
+  def classicalBoard(implicit io: ChessIO): ChessBoard = ChessBoard(classicalPosition, Nil, Positions.empty, White, StandardReq)(io, ClassicPosition)
+
+  /**
+    * Generator for chessboards.
+    */
+  def apply(columns: Array[Column], history: List[MoveData], positions: Positions, turn: AnyColor)(implicit io: ChessIO): Option[ChessBoard] =
+    if (columns.length >= 8) {
+      val board = BoardMap(
+        'a' -> columns(0),
+        'b' -> columns(1),
+        'c' -> columns(2),
+        'd' -> columns(3),
+        'e' -> columns(4),
+        'f' -> columns(5),
+        'g' -> columns(6),
+        'h' -> columns(7)
+      )
+      Some(new ChessBoard(board, history, positions, turn, StandardReq)(io, ArbitraryPosition(board)))
+    } else None
+
+  /**
+    * Saves a [[framework.ChessBoard]] to a file using the xml format.
+    *
+    * @param fileName a name for the save; technically it's possible to use a file path but this does often lead to errors (due to a lazy developer...)
+    */
+  def save(board: ChessBoard, fileName: String = "save"): Option[FileOperationError.FileNotFoundError] = {
+    val boardData = board.save
+    val name = fileName + (if (fileName contains ".") "" else ".save")
+    try {
+      xml.XML.save(name, boardData)
+      None
+    } catch {
+      case _: Throwable =>
+        Error error "failed to save the data!"
+        Some(FileOperationError.FileNotFoundError(fileName))
+    }
+  }
+
+  /**
+    * Loads a [[framework.ChessBoard]] from a file and adds `.save`
+    * if the path does not contain any file extension.
+    *
+    * @see [[framework.ChessBoard#loadExactPath loadExactPath]]
+    * @param path the file
+    * @return a board or [[scala.None]] when the board was saved in a different version.
+    */
+  def load(path: String)(implicit io: ChessIO): Either[FileOperationError.FileOperationError, ChessBoard] = {
+    val fullPath = path + (if (path contains ".") "" else ".save")
+    loadExactPath(fullPath)
+  }
+
+  /**
+    * Loads a board from a path without alternating it.
+    *
+    * @see [[framework.ChessBoard#load load]]
+    */
+  def loadExactPath(path: String)(implicit io: ChessIO): Either[FileOperationError.FileOperationError, ChessBoard] =
+    try SaveLoader.load(xml.XML.load(path))
+    catch {
+      case _: Throwable =>
+        Left(FileOperationError.FileNotFoundError(path))
+    }
+
+  /**
+    * Saves a board as XML
+    */
+  def saveSquares(squares: Map[Char, Column]): NodeSeq =
+    for (x <- 1 to 8; col = columnLetter(x)) yield <col>{squares(col).saveData}</col> copy (label = col.toUpper toString)
+
+  /**
+    * Converts a column index to it's corresponding character.
+    */
+  def columnLetter(column: Int): Char = column match {
+    case 1 => 'a'
+    case 2 => 'b'
+    case 3 => 'c'
+    case 4 => 'd'
+    case 5 => 'e'
+    case 6 => 'f'
+    case 7 => 'g'
+    case 8 => 'h'
+    case _ => ' '
+  }
+
+  /** @return `true` if a column with this identifier does exist, else `false`*/
+  def isValidColumn(column: Char): Boolean =
+    columnIndex(column) <= 8 && columnIndex(column) >= 1
+
+  /**
+    * Matches a one-letter identifier of a column to its corresponding index.
+    */
+  def columnIndex(column: Char): Int = 1 + (column match {
+    case 'a' => 0
+    case 'A' => 0
+    case 'b' => 1
+    case 'B' => 1
+    case 'c' => 2
+    case 'C' => 2
+    case 'd' => 3
+    case 'D' => 3
+    case 'e' => 4
+    case 'E' => 4
+    case 'f' => 5
+    case 'F' => 5
+    case 'g' => 6
+    case 'G' => 6
+    case 'h' => 7
+    case 'H' => 7
+    case _ => -1
+  })
+
+  /**
+    * Standard values for a classical chess game.
+    */
+  object ClassicalValues {
+    /** @return the row where all pawns of this color are placed. */
+    def pawnStartLine(color: AnyColor): Int =
+      piecesStartLine(color) + pawnDir(color)
+
+    /** @return the row where all pieces of this color are generated. */
+    def piecesStartLine(color: AnyColor): Int =
+      if (color == White) 1 else 8
+
+    /**
+      * The moving-direction of pawns of this color (i.e. the line difference they are taking in every normal move)
+      *
+      * @return `1` for [[framework.White]] and `-1` for [[framework.Black]]
+      */
+    def pawnDir(color: AnyColor): Int =
+      if (color == White) 1 else -1
+
+    /** @return the [[framework.Square]] where the king of this color is placed. */
+    def kingStartSquare(color: AnyColor): Square =
+      Square('e', piecesStartLine(color))
+  }
+
 }

@@ -1,8 +1,9 @@
 package graphics
 
-import graphics.BoardColors._
-import graphics.{PieceButton, SquarePressed}
+import BoardColors._
+import framework.Square
 
+import scala.swing.event.ActionEvent
 import scala.swing.{Graphics2D, Image, Insets, ToggleButton}
 
 class SquareButton(

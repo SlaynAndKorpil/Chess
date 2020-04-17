@@ -1,8 +1,9 @@
 package graphics
 
+import graphics.{assetsDir, piecesIconDir}
 import java.awt.image.BufferedImage
 
-import graphics.{assetsDir, piecesIconDir}
+import framework.{AnyPiece, Bishop, Black, King, Knight, Pawn, Queen, Rook, White}
 import javax.imageio.ImageIO
 
 /**
@@ -10,7 +11,7 @@ import javax.imageio.ImageIO
   */
 //TODO exception-handling!!!
 object Icons {
-  val dirs: Elem = xml.XML.load(getClass.getResourceAsStream(piecesIconDir))
+  val dirs: scala.xml.Elem = xml.XML.load(getClass.getResourceAsStream(piecesIconDir))
 
   /**
     * Splits an image horizontally into 6 equally sized parts.

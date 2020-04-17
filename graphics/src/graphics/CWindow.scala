@@ -1,7 +1,5 @@
 package graphics
 
-import chess.graphics.CMenuBar
-
 import scala.swing._
 
 class CWindow(width: Int = 1080, height: Int = 1080) extends MainFrame with CMenuBar {

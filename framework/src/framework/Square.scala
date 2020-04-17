@@ -2,6 +2,8 @@ package framework
 
 import scala.language.implicitConversions
 
+import ChessBoard.{columnLetter, columnIndex}
+
 /**
   * A coordinate of a square.
   * @version alpha 0.1

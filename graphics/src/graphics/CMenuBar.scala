@@ -2,14 +2,11 @@ package graphics
 
 import java.awt.event.KeyEvent
 
-import chess.graphics._
+import framework.Input.{DrawOffer, Resign, TakebackProposal}
 
-/**
-  * [Description]
-  *
-  * @author Felix Lehner
-  * @version
-  */
+import scala.swing.{FileChooser, Menu, MenuBar}
+import scala.swing.event
+
 trait CMenuBar {
   self: CWindow =>
 

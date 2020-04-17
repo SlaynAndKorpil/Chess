@@ -1,5 +1,8 @@
 package graphics
 
+import scala.swing.FileChooser.Result
+import scala.swing.{FileChooser, MainFrame}
+
 /**
   * [Description]
   *

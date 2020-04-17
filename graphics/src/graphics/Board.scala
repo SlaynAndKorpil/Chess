@@ -1,11 +1,13 @@
 package graphics
 
-import chess.graphics.BoardColors.BoardColor
-import framework.BoardStatus.GameResult.{BlackWins, Draw, WhiteWins}
-import framework.IOEvents.{ShowEnded, ShowTakeback}
-import framework.{ChessBoard, ChessIO, Square}
+import framework.BoardStatus.GameResult._
+import framework.BoardStatus.ResultReason.DrawResultReason.InsufficientMaterial
+import framework.IOEvents._
+import framework.{ChessBoard, ChessIO, Square, AnyColor}
 import framework.FileOperationError._
 import framework.Input._
+
+import BoardColors._
 
 import scala.swing._
 

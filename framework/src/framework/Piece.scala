@@ -3,7 +3,7 @@ package framework
 /**
   * A chess piece.
   *
-  * @see [[framework.framework.Column framework.Column]] assigns every line a piece.
+  * @see [[framework.Column framework.Column]] assigns every line a piece.
   * @version alpha 0.2
   * @author Felix Lehner
   */
@@ -19,7 +19,7 @@ sealed trait Piece {
   val value: Int
 
   /** Saves this piece as XML. */
-  def toXml: Elem = <piece id={toString} moved={moved.toString}/>
+  def toXml: scala.xml.Elem = <piece id={toString} moved={moved.toString}/>
 
   /** Indicates if this is an empty square. */
   def isEmpty: Boolean

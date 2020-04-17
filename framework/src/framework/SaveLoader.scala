@@ -1,5 +1,11 @@
 package framework
 
+import FileOperationError._
+import BoardStatus.GameStatus._
+import ChessBoard.columnLetter
+
+import scala.xml._
+
 /**
   * A loader for saved games.
   *

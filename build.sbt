@@ -10,7 +10,7 @@ ThisBuild / mainClass := Some("chess/Main")
 
 ThisBuild / exportJars := true
 
-libraryDependencies ++= Seq(
+ThisBuild / libraryDependencies ++= Seq(
   "org.scala-lang.modules" %% "scala-swing" % "2.0.3",
   "org.scala-lang.modules" %% "scala-xml" % "1.1.0"
 )

@@ -1,6 +1,7 @@
 package graphics
 
-import chess.graphics.{PromotionEvent, SquarePressed}
+import framework.Input.{MoveParams, Promotion}
+import framework.{AnyColor, AnyPiece, Square}
 
 /**
   * [Description]
@@ -38,7 +39,7 @@ trait BoardEventHandler {
       promote(piece.pieceType)
   }
 
-  def saveBoard(file: String): Unit = ChessBoard.save(board, file)
+  def saveBoard(file: String): Unit = framework.ChessBoard.save(board, file)
 
   private def move(from: Square, to: Square): Unit =
     receiveInput(MoveParams(from, to))

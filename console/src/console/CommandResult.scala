@@ -1,6 +1,6 @@
 package console
 
-
+import framework.Input.Input
 
 /**
   * A result returned by an executed command.

@@ -1,6 +1,6 @@
 package graphics
 
-import chess.graphics.{BoardColors, PromoOptionButton, PromotionEvent}
+import framework.{AnyColor, Bishop, Knight, Queen, Rook, White}
 import javax.swing.Box
 
 import scala.swing._

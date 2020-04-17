@@ -1,9 +1,10 @@
 package graphics
 
-import chess.graphics.BoardColors.BoardColor
-import chess.graphics.{PieceButton, PromotionEvent}
+import framework.{AnyColor, AnyPiece, Piece}
+import BoardColors.BoardColor
 
 import scala.swing._
+import scala.swing.event.ActionEvent
 
 class PromoOptionButton(val pieceColor: AnyColor, val pieceType: (AnyColor, Boolean) => AnyPiece, val backgroundCol: BoardColor)
   extends Button with PieceButton {

@@ -1,5 +1,9 @@
 package framework
 
+import scala.collection.IndexedSeqLike
+import scala.collection.generic.CanBuildFrom
+import scala.collection.mutable.ArrayBuffer
+
 /**
   * A column that contains 8 pieces.
   *
@@ -51,8 +55,8 @@ final class Column(ps: Array[Piece]) extends IndexedSeq[Piece] with IndexedSeqLi
   /**
     * Saves this column as xml.
     */
-  def saveData: IndexedSeq[Elem] = {
-    var result: IndexedSeq[Elem] = IndexedSeq()
+  def saveData: IndexedSeq[scala.xml.Elem] = {
+    var result: IndexedSeq[scala.xml.Elem] = IndexedSeq()
     pieces.indices.foreach(i => if (pieces(i).nonEmpty) result = result :+ pieces(i).toXml.copy(label = "l" + (i + 1)))
     result
   }
@@ -62,5 +66,20 @@ final class Column(ps: Array[Piece]) extends IndexedSeq[Piece] with IndexedSeqLi
     */
   override def toString: String = pieces.mkString("| ", " | ", " |")
 
-  override def newBuilder: mutable.Builder[Piece, Column] = Column.newBuilder
+  override def newBuilder: scala.collection.mutable.Builder[Piece, Column] = Column.newBuilder
+}
+
+object Column {
+
+  def apply(pieces: Piece*): Column = fromSeq(pieces)
+
+  def fromSeq(buf: Seq[Piece]): Column = new Column(buf.toArray)
+
+  def newBuilder: scala.collection.mutable.Builder[Piece, Column] = new ArrayBuffer mapResult fromSeq
+
+  implicit def canBuildFrom: CanBuildFrom[Column, Piece, Column] = new CanBuildFrom[Column, Piece, Column] {
+    def apply(): scala.collection.mutable.Builder[Piece, Column] = newBuilder
+
+    def apply(from: Column): scala.collection.mutable.Builder[Piece, Column] = newBuilder
+  }
 }

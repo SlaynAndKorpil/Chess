@@ -2,7 +2,10 @@ package graphics
 
 import java.awt.image.BufferedImage
 
-import chess.graphics.{BoardColors, Icons}
+import framework.{AnyPiece, NoPiece, Piece}
+
+import scala.swing.{AbstractButton, Graphics2D, Image}
+import scala.swing.event.{ActionEvent, ButtonClicked, Event}
 
 /**
   * An abstract definition of a button that publishes a special event
@@ -15,14 +18,14 @@ trait PieceButton extends AbstractButton {
   val eventType: this.type => ActionEvent
   var piece: Piece
 
-  background = color
-
   /** The color used for the background */
   var color: BoardColors.BoardColor
 
+  background = color
+
   /**
     * Publishes every event it receives after replacing every [[scala.swing.event.ButtonClicked]] event
-    * with an event of the [[chess.graphics.PieceButton#eventType eventType]] containing the same square.
+    * with an event of the [[PieceButton#eventType eventType]] containing the same square.
     *
     * @param e any event
     */

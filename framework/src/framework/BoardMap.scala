@@ -1,5 +1,7 @@
 package framework
 
+import scala.collection.AbstractMap
+
 /**
   * A chess board. Stores pieces in a 2 dimensional system (columns and rows).
   *
@@ -148,4 +150,21 @@ final case class BoardMap(key1: Char, value1: Column,
     val lines = for (x <- 1 to 8; c = ChessBoard.columnLetter(x)) yield c + " " + apply(c)
     lines mkString("    1   2   3   4   5   6   7   8\n" + separationLine, "\n" + separationLine, "\n" + separationLine)
   }
+}
+
+
+object BoardMap {
+  def apply(from: Map[Char, Column]): BoardMap =
+    if (from.size >= 8) {
+      val seq = from.toSeq
+      BoardMap(seq(0), seq(1), seq(2), seq(3), seq(4), seq(5), seq(6), seq(7))
+    }
+    else throw new UnsupportedOperationException("size of this map has to be 8")
+
+  def apply(from: scala.IndexedSeq[(Char, Column)]): BoardMap =
+    if (from.size >= 8) BoardMap(from(0), from(1), from(2), from(3), from(4), from(5), from(6), from(7))
+    else throw new UnsupportedOperationException("size of this map has to be 8")
+
+  def apply(kv1: (Char, Column), kv2: (Char, Column), kv3: (Char, Column), kv4: (Char, Column), kv5: (Char, Column), kv6: (Char, Column), kv7: (Char, Column), kv8: (Char, Column)): BoardMap =
+    new BoardMap(kv1._1, kv1._2, kv2._1, kv2._2, kv3._1, kv3._2, kv4._1, kv4._2, kv5._1, kv5._2, kv6._1, kv6._2, kv7._1, kv7._2, kv8._1, kv8._2)
 }

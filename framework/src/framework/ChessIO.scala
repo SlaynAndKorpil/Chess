@@ -1,5 +1,8 @@
 package framework
 
+import IOEvents.BoardReactions
+import framework.Input._
+
 /**
   * An interface to an [[framework.ChessBoard]] for any I/O implementation.
   * This interface contains some convenience methods for easier interaction with

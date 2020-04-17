@@ -1,5 +1,10 @@
 package framework
 
+import BoardStatus.GameStatus._
+import IOEvents._
+import BoardStatus.ResultReason.WinResultReason._
+import BoardStatus.GameResult.Win
+
 /**
   * Meta information and methods that are needed for a game.
  *

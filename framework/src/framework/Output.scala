@@ -7,7 +7,7 @@ package framework
   * @author Felix Lehner
   * @version alpha 0.1
   */
-case class Output(board: ChessBoard, events: IndexedSeq[IOEvent]) {
+case class Output(board: ChessBoard, events: IndexedSeq[IOEvents.IOEvent]) {
   /**
     *  An utility method that is used to wrap this in a [[scala.Some]] because
     *  most often methods will return an optional output.

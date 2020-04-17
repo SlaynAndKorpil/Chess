@@ -1,5 +1,7 @@
 package framework
 
+import scala.xml._
+
 /**
   * Information about the position the game started with.
   *

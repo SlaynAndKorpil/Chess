@@ -88,7 +88,7 @@ case class Position(pos: BoardMap) extends AnyVal {
     val compared: IndexedSeq[Boolean] =
       for {
         col <- 1 to 8
-        column = columnLetter(col)
+        column = ChessBoard.columnLetter(col)
         row <- 1 to 8
         square = Square(column, row)
         otherPiece = other.pos(square)
