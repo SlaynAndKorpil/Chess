@@ -28,7 +28,8 @@ case class ChessBoard(
                        positions: Positions,
                        turn: AnyColor,
                        gameStatus: GameStatus
-                     )(implicit val io: ChessIO, val startPos: StartPosition = ArbitraryPosition(squares)) extends BoardMeta {
+                     )(implicit val io: ChessIO, val startPos: StartPosition = ArbitraryPosition(squares))
+  extends BoardMeta {
 
   import ChessBoard._
 
@@ -351,7 +352,8 @@ case class ChessBoard(
         (!startPiece.moved && (end.column == 'c' || end.column == 'g') && {
             val rookCol = if (end.column == 'c') 'a' else 'h'
             val rook = apply(Square(rookCol, ClassicalValues.piecesStartLine(color)))
-            val squaresToTest: List[NumericSquare] = AbstractSqrCoordinate.sqr2indxSqr(Square(if (startCIndex < endCIndex) 'g' else 'c', start.row)) to start
+            val squaresToTest: List[NumericSquare] =
+              AbstractSqrCoordinate.sqr2indxSqr(Square(if (startCIndex < endCIndex) 'g' else 'c', start.row)) to start
 
             def isSqrAttacked(sqr: AbstractSqrCoordinate[_]): Boolean = sqr match {
               case square: Square => isAttacked(square, turn, withKing = true)
@@ -411,17 +413,21 @@ case class ChessBoard(
     def partApply(inc: (Int, Int)) = apply(NumericSquare(colI, row) + inc)
 
     val attackedByKnight: Int =
-      Array(partApply(1, 2), partApply(2, 1), partApply(2, -1), partApply(1, -2), partApply(-1, 2), partApply(-2, 1), partApply(-2, -1), partApply(-1, -2)) count (Knight(opponent) === _)
+      Array(partApply(1, 2), partApply(2, 1), partApply(2, -1), partApply(1, -2), partApply(-1, 2),
+        partApply(-2, 1), partApply(-2, -1), partApply(-1, -2)) count (Knight(opponent) === _)
 
     val attackedByKing: Int =
-      if (withKing) Array.apply(partApply(1, 1), partApply(-1, 1), partApply(1, -1), partApply(-1, -1), partApply(0, 0), partApply(-1, 0), partApply(1, 0), partApply(0, -1), partApply(0, 1)) count (King(opponent) === _)
+      if (withKing) Array.apply(partApply(1, 1), partApply(-1, 1), partApply(1, -1), partApply(-1, -1), partApply(0, 0),
+        partApply(-1, 0), partApply(1, 0), partApply(0, -1), partApply(0, 1)) count (King(opponent) === _)
       else 0
 
     val attackedDiagonally: Int =
-      Array(Queen(opponent), Bishop(opponent)) ^ Array(partNxtPiece(1, 1), partNxtPiece(-1, -1), partNxtPiece(1, -1), partNxtPiece(-1, 1))
+      Array(Queen(opponent), Bishop(opponent)) ^ Array(partNxtPiece(1, 1), partNxtPiece(-1, -1),
+        partNxtPiece(1, -1), partNxtPiece(-1, 1))
 
     val attackedOrthogonally: Int =
-      Array(Queen(opponent), Rook(opponent)) ^ Array(partNxtPiece(1, 0), partNxtPiece(-1, 0), partNxtPiece(0, -1), partNxtPiece(0, 1))
+      Array(Queen(opponent), Rook(opponent)) ^ Array(partNxtPiece(1, 0), partNxtPiece(-1, 0),
+        partNxtPiece(0, -1), partNxtPiece(0, 1))
 
     val attackedByPawn: Int = {
       val dir = ClassicalValues.pawnDir(attacked)
@@ -637,7 +643,8 @@ case class ChessBoard(
   def isInsufficientMaterial(color: AnyColor): Boolean = {
     val piecesOfColor = // pieces of specified color without kings
       allPieces
-        .map { tup => /*replace square with square color*/ (if (tup._1.colIndx % 2 == tup._1.row % 2) Black else White, tup._2) }
+        .map { tup => /*replace square with square color*/
+          (if (tup._1.colIndx % 2 == tup._1.row % 2) Black else White, tup._2) }
         .filter(_._2.color == color)
         .filterNot(_._2 === King(color))
 
@@ -655,7 +662,8 @@ case class ChessBoard(
 
       def bishopsOfSameColor = bishops.exists(_._1 == White) != bishops.exists(_._1 == Black)
 
-      def existsEnemyPiece(piece: (AnyColor, Boolean) => AnyPiece) = allPieces.exists(_._2 === piece(color.opposite, false))
+      def existsEnemyPiece(piece: (AnyColor, Boolean) => AnyPiece) =
+        allPieces.exists(_._2 === piece(color.opposite, false))
 
       if (knights.isEmpty) bishopsOfSameColor || (bishops.length == 1 && !existsEnemyPiece(Knight))
       else bishops.isEmpty && knights.length == 1 && !existsEnemyPiece(Bishop)
@@ -696,7 +704,8 @@ case class ChessBoard(
   }
 
   /**
-    * Tests if two squares are located on the same diagonal and the next piece on this diagonal is the piece on the end-square.
+    * Tests if two squares are located on the same diagonal
+    * and the next piece on this diagonal is the piece on the end-square.
     *
     * @see [[framework.ChessBoard#isEmptyOrthogonal isEmptyOrthogonal]]
     */
@@ -740,7 +749,10 @@ case class ChessBoard(
     //adds the currently evaluated move to the history
     val updatedHistory: List[MoveData] = MoveData(from, piece, to, startColor.opposite == endColor) :: history
 
-    clone(squares = squares.movePiece(from, to, piece), history = updatedHistory, turn = turn.opposite, gameStatus = updatedStatus)
+    clone(squares = squares.movePiece(from, to, piece),
+      history = updatedHistory,
+      turn = turn.opposite,
+      gameStatus = updatedStatus)
   }
 
   /**
@@ -778,7 +790,9 @@ case class ChessBoard(
 
     def kingCanMove = adjacents exists (a => {
       val adjacentPiece = apply(a)
-      !isAttacked(a, kingColor, withKing = true) && adjacentPiece.color != kingColor && !doMove(kingSq, a, testedKing._2, kingColor, adjacentPiece.color).isCheck(kingColor)
+      !isAttacked(a, kingColor, withKing = true) &&
+        adjacentPiece.color != kingColor &&
+        !doMove(kingSq, a, testedKing._2, kingColor, adjacentPiece.color).isCheck(kingColor)
     })
 
     def canBlock: Boolean =
@@ -825,7 +839,8 @@ object ChessBoard {
     *
     * @return a fully filled [[framework.ChessBoard ChessBoard]]
     */
-  def fill(piece: Piece)(implicit io: ChessIO): ChessBoard = this(Array.fill(8)(Column(piece)), Nil, Positions.empty, White).get
+  def fill(piece: Piece)(implicit io: ChessIO): ChessBoard =
+    this(Array.fill(8)(Column(piece)), Nil, Positions.empty, White).get
 
   val classicalPosition: BoardMap = BoardMap(
     'a' -> new Column(Map(
@@ -882,12 +897,14 @@ object ChessBoard {
     *
     * @return a chess board with the standard start position
     */
-  def classicalBoard(implicit io: ChessIO): ChessBoard = ChessBoard(classicalPosition, Nil, Positions.empty, White, StandardReq)(io, ClassicPosition)
+  def classicalBoard(implicit io: ChessIO): ChessBoard =
+    ChessBoard(classicalPosition, Nil, Positions.empty, White, StandardReq)(io, ClassicPosition)
 
   /**
     * Generator for chessboards.
     */
-  def apply(columns: Array[Column], history: List[MoveData], positions: Positions, turn: AnyColor)(implicit io: ChessIO): Option[ChessBoard] =
+  def apply(columns: Array[Column], history: List[MoveData], positions: Positions, turn: AnyColor)
+           (implicit io: ChessIO): Option[ChessBoard] =
     if (columns.length >= 8) {
       val board = BoardMap(
         'a' -> columns(0),
@@ -905,7 +922,8 @@ object ChessBoard {
   /**
     * Saves a [[framework.ChessBoard]] to a file using the xml format.
     *
-    * @param fileName a name for the save; technically it's possible to use a file path but this does often lead to errors (due to a lazy developer...)
+    * @param fileName a name for the save; technically it's possible to use a file path
+    *                 but this does often lead to errors (due to a lazy developer...)
     */
   def save(board: ChessBoard, fileName: String = "save"): Option[FileOperationError.FileNotFoundError] = {
     val boardData = board.save

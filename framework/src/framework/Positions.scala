@@ -62,7 +62,8 @@ object Positions {
     Positions(positions, currentMax)
   }
 
-  def apply(positions: IndexedSeq[Position], maxRepetitionCount: Int): Positions = new Positions(positions, maxRepetitionCount)
+  def apply(positions: IndexedSeq[Position], maxRepetitionCount: Int): Positions =
+    new Positions(positions, maxRepetitionCount)
 }
 
 /**

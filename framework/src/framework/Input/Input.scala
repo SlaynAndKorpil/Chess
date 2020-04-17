@@ -3,7 +3,7 @@ package framework.Input
 import framework.{AnyColor, AnyPiece, Square}
 
 /**
-  * Inputs for [[framework.framework.ChessBoard#receive framework.ChessBoard]] or [[framework.framework.ChessIO#receiveInput framework.ChessIO]]
+  * Inputs for [[framework.ChessBoard#receive framework.ChessBoard]] or [[framework.ChessIO#receiveInput framework.ChessIO]]
   *
   * @version alpha 0.2
   * @author Felix Lehner

@@ -38,7 +38,7 @@ trait CommandRegistrator {
 
   /**
     * Returns the command with the given name.
-    * **WARNING: Does not check if the name does exist! Use [[chess.console.CommandRegistrator#existsCommand existsCommand]]**
+    * **WARNING: Does not check if the name does exist! Use [[console.CommandRegistrator#existsCommand existsCommand]]**
     */
   def getCommand(name: String): ConsoleCommand =
     registeredCommandsByName(name.toLowerCase)

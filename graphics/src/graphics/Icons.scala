@@ -23,8 +23,10 @@ object Icons {
     for (i <- 0 until 6) yield image.getSubimage(i*image.getWidth/6, 0, image.getWidth/6, image.getHeight)
 
   // TODO unnecessary mem alloc, sequences should be deleted after loading => put in method scope
-  private val blackImages: Seq[BufferedImage] = splitImg(ImageIO.read(getClass.getResourceAsStream(assetsDir + (dirs \ "BlackPieces" \@ "dir"))))
-  private val whiteImages: Seq[BufferedImage] = splitImg(ImageIO.read(getClass.getResourceAsStream(assetsDir + (dirs \ "WhitePieces" \@ "dir"))))
+  private val blackImages: Seq[BufferedImage] =
+    splitImg(ImageIO.read(getClass.getResourceAsStream(assetsDir + (dirs \ "BlackPieces" \@ "dir"))))
+  private val whiteImages: Seq[BufferedImage] =
+    splitImg(ImageIO.read(getClass.getResourceAsStream(assetsDir + (dirs \ "WhitePieces" \@ "dir"))))
 
   val PawnBlack: BufferedImage = blackImages(5)
   val PawnWhite: BufferedImage = whiteImages(5)

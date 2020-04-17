@@ -2,7 +2,9 @@ package framework.pathfinding
 
 import framework.Square
 
-abstract class TripleDirectionalPathfinder[@specialized(Boolean) ResultType](override val vector: (Int, Int)) extends VectorPathfinder[ResultType](vector) {
+abstract class TripleDirectionalPathfinder[@specialized(Boolean) ResultType](override val vector: (Int, Int))
+  extends VectorPathfinder[ResultType](vector) {
+
   override def continue(from: Square): Result[ResultType] = {
     val resMain = this.apply(from + vector)
 

@@ -3,7 +3,7 @@ package graphics
 import scala.swing.event.ActionEvent
 
 /**
-  * An event-sth. for [[SquareButton]]s
+  * An event-sth. for [[graphics.SquareButton]]s
   *
   * @param source the clicked square
   */

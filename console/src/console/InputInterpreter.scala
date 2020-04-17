@@ -134,7 +134,8 @@ class InputInterpreter extends ChessIO with CommandRegistrator {
     }
 
     object SaveCommand extends ConsoleCommand {
-      override val help: String = "Saves the current game to a file. When no path is given as a parameter, the last used save directory is chosen."
+      override val help: String =
+        "Saves the current game to a file. When no path is given as a parameter, the last used save directory is chosen."
       override val description: String = "Save this game."
       override val names: Array[String] = Array("save", "s", "write", "w")
       override val paramInfo: String = "<file path>"
@@ -146,7 +147,8 @@ class InputInterpreter extends ChessIO with CommandRegistrator {
     }
 
     object TakebackCommand extends ConsoleCommand {
-      override val help: String = "Ask your opponent for allowance to take the last move back. Answers can either be y(es) or n(o)."
+      override val help: String =
+        "Ask your opponent for allowance to take the last move back. Answers can either be y(es) or n(o)."
       override val description: String = "Take the last move back."
       override val names: Array[String] = Array("takeback", "t")
       override val paramInfo: String = noParams
@@ -158,7 +160,8 @@ class InputInterpreter extends ChessIO with CommandRegistrator {
     }
 
     object DrawCommand extends ConsoleCommand {
-      override val help: String = "Asks for a draw. When the same position was reached three times or the fifty moves rule applies, a draw by repetition is caused automatically."
+      override val help: String =
+        "Asks for a draw. When the same position was reached three times or the fifty moves rule applies, a draw by repetition is caused automatically."
       override val description: String = "Propose a draw."
       override val names: Array[String] = Array("draw")
       override val paramInfo: String = noParams
@@ -194,7 +197,8 @@ class InputInterpreter extends ChessIO with CommandRegistrator {
     }
 
     object HelpCommand extends ConsoleCommand {
-      override val help: String = "Prints either an overview of all available commands or, when a command name is given as parameter, a more detailed and in-depth description of a command."
+      override val help: String =
+        "Prints either an overview of all available commands or, when a command name is given as parameter, a more detailed and in-depth description of a command."
       override val description: String = "Get help."
       override val names: Array[String] = Array("help")
       override val paramInfo: String = "[command name]"
@@ -239,7 +243,8 @@ class InputInterpreter extends ChessIO with CommandRegistrator {
     }
 
     object MoveCommand extends ConsoleCommand {
-      override val help: String = "Try to move from the square defined by the first two characters to the one indicated by the two last ones."
+      override val help: String =
+        "Try to move from the square defined by the first two characters to the one indicated by the two last ones."
       override val description: String = "Move a piece from one square to another."
       override val names: Array[String] = Array("move", "mv", "m")
       override val paramInfo: String = "<letter><digit><letter><digit>"

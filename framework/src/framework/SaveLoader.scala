@@ -121,7 +121,8 @@ object SaveLoader {
           else if (history.isLeft) Left(history.left.get)
           else if (positions.isLeft) Left(positions.left.get)
           else {
-            Right(new ChessBoard(squares = squares.right.get, history = history.right.get, positions = positions.right.get, turn = color, gameStatus = gameStatus.right.get))
+            Right(new ChessBoard(squares = squares.right.get, history = history.right.get,
+              positions = positions.right.get, turn = color, gameStatus = gameStatus.right.get))
           }
         case _ => Left(ParsingError)
       }
@@ -178,7 +179,8 @@ object SaveLoader {
       if (xml.isEmpty || xml.head.isEmpty) Left(PieceLoadingError(xml.toString))
       else {
         val data = xml.head
-        Right(Piece(extractWithFilter(data, "id").head, Color(extractWithFilter(data, "color")), extractWithFilter(data, "moved").toBoolean))
+        Right(Piece(extractWithFilter(data, "id").head, Color(extractWithFilter(data, "color")),
+          extractWithFilter(data, "moved").toBoolean))
       }
     }
   }
@@ -233,7 +235,8 @@ object SaveLoader {
           else if (positions.isLeft) Left(positions.left.get)
           else if (gameStatus.isLeft) Left(gameStatus.left.get)
           else {
-            Right(new ChessBoard(squares = squares.right.get, history = history.right.get, positions = positions.right.get, turn = color, gameStatus = gameStatus.right.get))
+            Right(new ChessBoard(squares = squares.right.get, history = history.right.get,
+              positions = positions.right.get, turn = color, gameStatus = gameStatus.right.get))
           }
         case _ => Left(ParsingError)
       }

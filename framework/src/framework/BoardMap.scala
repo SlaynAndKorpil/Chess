@@ -15,7 +15,8 @@ final case class BoardMap(key1: Char, value1: Column,
                           key5: Char, value5: Column,
                           key6: Char, value6: Column,
                           key7: Char, value7: Column,
-                          key8: Char, value8: Column) extends AbstractMap[Char, Column] with Map[Char, Column] with Serializable {
+                          key8: Char, value8: Column)
+  extends AbstractMap[Char, Column] with Map[Char, Column] with Serializable {
 
   override def size = 8
 
@@ -165,6 +166,8 @@ object BoardMap {
     if (from.size >= 8) BoardMap(from(0), from(1), from(2), from(3), from(4), from(5), from(6), from(7))
     else throw new UnsupportedOperationException("size of this map has to be 8")
 
-  def apply(kv1: (Char, Column), kv2: (Char, Column), kv3: (Char, Column), kv4: (Char, Column), kv5: (Char, Column), kv6: (Char, Column), kv7: (Char, Column), kv8: (Char, Column)): BoardMap =
-    new BoardMap(kv1._1, kv1._2, kv2._1, kv2._2, kv3._1, kv3._2, kv4._1, kv4._2, kv5._1, kv5._2, kv6._1, kv6._2, kv7._1, kv7._2, kv8._1, kv8._2)
+  def apply(kv1: (Char, Column), kv2: (Char, Column), kv3: (Char, Column), kv4: (Char, Column), kv5: (Char, Column),
+            kv6: (Char, Column), kv7: (Char, Column), kv8: (Char, Column)): BoardMap =
+    new BoardMap(kv1._1, kv1._2, kv2._1, kv2._2, kv3._1, kv3._2, kv4._1, kv4._2,
+      kv5._1, kv5._2, kv6._1, kv6._2, kv7._1, kv7._2, kv8._1, kv8._2)
 }

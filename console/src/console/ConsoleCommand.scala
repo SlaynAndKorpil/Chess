@@ -1,7 +1,7 @@
 package console
 
 /**
-  * This is a command for the [[chess.console.InputInterpreter]].
+  * This is a command for the [[console.InputInterpreter]].
   *
   * @author Felix Lehner
   * @version alpha 0.3

@@ -7,7 +7,9 @@ import framework.Square
   * @version alpha 0.1
   * @author Felix Lehner
   */
-case class TerminableOnce[@specialized(Boolean) ResultType](pathfinder: VectorPathfinder[ResultType]) extends Pathfinder[ResultType] {
+case class TerminableOnce[@specialized(Boolean) ResultType](pathfinder: VectorPathfinder[ResultType])
+  extends Pathfinder[ResultType] {
+
   val pF = new TripleDirectionalPathfinder[ResultType](pathfinder.vector) {
     override def success(on: Square): Result[ResultType] = pathfinder.success(on)
 
@@ -34,7 +36,9 @@ case class TerminableOnce[@specialized(Boolean) ResultType](pathfinder: VectorPa
     }
   }
 
-  private case class TerminatedPathfinder(override val vector: (Int, Int)) extends TripleDirectionalPathfinder[ResultType](vector) {
+  private case class TerminatedPathfinder(override val vector: (Int, Int))
+    extends TripleDirectionalPathfinder[ResultType](vector) {
+
     override def terminate(on: Square): Result[ResultType] = pathfinder.terminate(on)
 
     override def success(on: Square): Result[ResultType] = pathfinder.success(on)
