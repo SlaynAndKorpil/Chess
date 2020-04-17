@@ -1,16 +1,24 @@
+// https://www.scala-sbt.org/release/docs/Multi-Project.html
+
 name := "Chess"
 
-version := "0.1"
+version := "0.3"
 
-scalaVersion := "2.12.8"
+ThisBuild / scalaVersion := "2.12.8"
 
-mainClass := Some("chess/Main")
+ThisBuild / mainClass := Some("chess/Main")
+
+ThisBuild / exportJars := true
 
 libraryDependencies ++= Seq(
   "org.scala-lang.modules" %% "scala-swing" % "2.0.3",
   "org.scala-lang.modules" %% "scala-xml" % "1.1.0"
 )
 
-lazy val framework = project in file("ChessFramework")
+lazy val root = (project in file(".")) dependsOn (console, graphics)
 
-lazy val root = (project in file(".")) dependsOn framework
+lazy val framework = project
+
+lazy val console = project dependsOn framework
+
+lazy val graphics = project dependsOn framework

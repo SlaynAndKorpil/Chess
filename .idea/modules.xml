@@ -4,7 +4,9 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/Chess.iml" filepath="$PROJECT_DIR$/.idea/modules/Chess.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/Chess-build.iml" filepath="$PROJECT_DIR$/.idea/modules/Chess-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/console/console.iml" filepath="$PROJECT_DIR$/console/console.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/framework.iml" filepath="$PROJECT_DIR$/.idea/modules/framework.iml" />
+      <module fileurl="file://$PROJECT_DIR$/graphics/graphics.iml" filepath="$PROJECT_DIR$/graphics/graphics.iml" />
     </modules>
   </component>
 </project>
