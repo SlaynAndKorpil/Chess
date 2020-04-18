@@ -1,6 +1,5 @@
 package graphics
 
-import graphics.{assetsDir, piecesIconDir}
 import java.awt.image.BufferedImage
 
 import framework.{AnyPiece, Bishop, Black, King, Knight, Pawn, Queen, Rook, White}
@@ -11,6 +10,10 @@ import javax.imageio.ImageIO
   */
 //TODO exception-handling!!!
 object Icons {
+  val graphicsDir = "/graphics/"
+  val assetsDir: String = graphicsDir+ "Assets/"
+  val piecesIconDir: String = assetsDir + "iconLib.xml"
+
   val dirs: scala.xml.Elem = xml.XML.load(getClass.getResourceAsStream(piecesIconDir))
 
   /**

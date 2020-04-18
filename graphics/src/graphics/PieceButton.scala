@@ -25,7 +25,7 @@ trait PieceButton extends AbstractButton {
 
   /**
     * Publishes every event it receives after replacing every [[scala.swing.event.ButtonClicked]] event
-    * with an event of the [[PieceButton#eventType eventType]] containing the same square.
+    * with an event of the [[graphics.PieceButton#eventType eventType]] containing the same square.
     *
     * @param e any event
     */
