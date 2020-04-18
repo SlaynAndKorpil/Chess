@@ -69,7 +69,7 @@ trait CMenuBar {
           val loaded = gameFrame.load(path)
           loaded match {
             case Some(errorMessage) =>
-              Error error errorMessage.description
+              Error write errorMessage.description
             case _ =>
           }
         case _ =>

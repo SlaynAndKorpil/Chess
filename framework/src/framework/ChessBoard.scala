@@ -933,7 +933,7 @@ object ChessBoard {
       None
     } catch {
       case _: Throwable =>
-        Error error "failed to save the data!"
+        Error write "failed to save the data!"
         Some(FileOperationError.FileNotFoundError(fileName))
     }
   }
