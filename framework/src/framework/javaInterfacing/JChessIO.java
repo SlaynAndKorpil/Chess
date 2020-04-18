@@ -11,9 +11,8 @@ import framework.IOEvents.ShowCheck;
 import framework.Input.Input;
 import framework.Output;
 import framework.javaInterfacing.Reactions.JReaction;
-import scala.None$;
+
 import scala.Option;
-import scala.Some;
 import scala.collection.IndexedSeq;
 import scala.util.Either;
 
@@ -49,23 +48,8 @@ public abstract class JChessIO {
             }
 
             @Override
-            public Option<FileOperationError> load(String filePath) {
-                Either<framework.FileOperationError.FileOperationError, ChessBoard> loadRes =
-                        ChessBoard$.MODULE$.load(filePath, io());
-                if (loadRes.isRight()) {
-                    ChessBoard loadedBoard = loadRes.right().get();
-                    setChessBoard(loadedBoard);
-                    loadedBoard.doOnCheck(
-                            pos -> {
-                                chessReactions.apply(ShowCheck.apply(pos));
-                                return "";
-                            },
-                            "",
-                            getChessBoard().turn());
-                    return None$.empty();
-                } else {
-                    return new Some(loadRes.left().get());
-                }
+            public Option<FileOperationError> load(String filePath) throws UnsupportedOperationException {
+                throw new UnsupportedOperationException();
             }
 
             @Override
@@ -220,7 +204,20 @@ public abstract class JChessIO {
      * @throws FileOperationError when an error occurs whilest parsing
      */
     protected void load(String filePath) throws FileOperationError {
-        scala.Option<FileOperationError> result = wrappedRef.load(filePath);
-        if (result.isDefined()) throw result.get();
+        Either<framework.FileOperationError.FileOperationError, ChessBoard> loadRes =
+                ChessBoard$.MODULE$.load(filePath, wrappedRef.io());
+        if (loadRes.isRight()) {
+            ChessBoard loadedBoard = loadRes.right().get();
+            setChessBoard(loadedBoard);
+            loadedBoard.doOnCheck(
+                    pos -> {
+                        wrappedRef.chessReactions().apply(ShowCheck.apply(pos));
+                        return "";
+                    },
+                    "",
+                    getChessBoard().turn());
+        } else {
+            throw loadRes.left().get();
+        }
     }
 }

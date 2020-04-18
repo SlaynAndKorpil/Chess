@@ -4,8 +4,6 @@
     <profile name="sbt 1" modules="ChessFramework,chess">
       <option name="postfixOps" value="true" />
     </profile>
-    <profile name="sbt 2" modules="Chess,console,framework,graphics">
-      <option name="postfixOps" value="true" />
-    </profile>
+    <profile name="sbt 3" modules="Chess,console,framework,graphics" />
   </component>
 </project>
