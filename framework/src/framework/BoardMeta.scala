@@ -3,7 +3,9 @@ package framework
 import BoardStatus.GameStatus._
 import IOEvents._
 import BoardStatus.ResultReason.WinResultReason._
-import BoardStatus.GameResult.Win
+import BoardStatus.GameResult.{BlackWins, WhiteWins, Win}
+
+import scala.language.postfixOps
 
 /**
   * Meta information and methods that are needed for a game.
@@ -73,7 +75,16 @@ trait BoardMeta {
           val result = updated(sqr, promoPiece).clone(gameStatus = StandardReq, history = updatedHistory)
           val promoCheckEvents: IndexedSeq[IOEvent] =
             result.doOnCheck[Array[IOEvent]](pos => Array(ShowCheck(pos)), Array()).flatten
-          Output(result, RemovePromotion +: promoCheckEvents) asSome
+
+          // checkmate
+          if (promoCheckEvents.nonEmpty && result.isMate) {
+            val status = Ended(turn match {
+              case White => WhiteWins by Mate
+              case Black => BlackWins by Mate
+            })
+
+            Output(result.clone(gameStatus = status), Array(RemovePromotion, ShowEnded(status.result))) asSome
+          } else Output(result, RemovePromotion +: promoCheckEvents) asSome
         case _ => None
       }
     }
