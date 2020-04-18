@@ -9,7 +9,7 @@ import scala.language.postfixOps
 
 /**
   * Meta information and methods that are needed for a game.
- *
+  *
   * @usecase this gets mixed-in in [[framework.ChessBoard ChessBoard]]
   * @author Felix Lehner
   * @version alpha 0.2
