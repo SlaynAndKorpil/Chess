@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="artifacts" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="main.chess.Main" />
+    <module name="Chess" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+      <option name="BuildArtifacts" enabled="true">
+        <artifact name="Chess:jar" />
+      </option>
+    </method>
+  </configuration>
+</component>

@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ScalaCompilerConfiguration">
-    <profile name="sbt 1" modules="Chess,chess" />
+    <profile name="sbt 1" modules="ChessFramework,chess">
+      <option name="postfixOps" value="true" />
+    </profile>
+    <profile name="sbt 3" modules="Chess,console,framework,graphics" />
   </component>
 </project>

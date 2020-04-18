@@ -9,7 +9,7 @@ Don't take it too seriously.
 
 ## [Backend](https://github.com/SlaynAndKorpil/Chess/tree/master/src/main/scala/chess/framework)
 A Framework used to simulate a chess game and capable of storing and computing positions, moves, loading and saving.
-When using scala, you can interact with it using the [ChessIO](https://github.com/SlaynAndKorpil/Chess/blob/master/src/main/scala/chess/framework/ChessIO.scala) trait as a pipe for in&output or [JChessIO](
+When using scala, you can interact with it using the [framework.ChessIO](https://github.com/SlaynAndKorpil/Chess/blob/master/src/main/scala/chess/framework/ChessIO.scala) trait as a pipe for in&output or [JChessIO](
 https://github.com/SlaynAndKorpil/Chess/blob/master/src/main/scala/chess/framework/javaInterfacing/JChessIO.java) when you are using java.
 
 ## [GUI Application](https://github.com/SlaynAndKorpil/Chess/tree/master/src/main/scala/chess/graphics)
