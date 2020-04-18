@@ -200,7 +200,7 @@ class InputInterpreter extends ChessIO with CommandRegistrator {
       override val help: String =
         "Prints either an overview of all available commands or, when a command name is given as parameter, a more detailed and in-depth description of a command."
       override val description: String = "Get help."
-      override val names: Array[String] = Array("help")
+      override val names: Array[String] = Array("help", "h", "?", "man", "manual")
       override val paramInfo: String = "[command name]"
 
       override def apply(params: String): Message = {
@@ -236,7 +236,7 @@ class InputInterpreter extends ChessIO with CommandRegistrator {
     object ExitCommand extends ConsoleCommand {
       override val help: String = "End your life."
       override val description: String = "Stop this BS."
-      override val names: Array[String] = Array("exit", "halt", "stop", "die", "end", "shutdown", "quit")
+      override val names: Array[String] = Array("exit", "halt", "stop", "die", "end", "shutdown", "quit", "kill")
       override val paramInfo: String = noParams
 
       override def apply(params: String): Quit = Quit("CYA...")

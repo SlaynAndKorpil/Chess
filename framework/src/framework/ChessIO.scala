@@ -1,6 +1,6 @@
 package framework
 
-import IOEvents.BoardReactions
+import IOEvents.BoardReactionHandler
 import framework.Input._
 
 /**
@@ -45,12 +45,12 @@ trait ChessIO {
   /**
     * All available reactions to input.
     *
-    * @note You should not override this. Instead use the [[framework.IOEvents.BoardReactions#+=]]
-    *       or the [[framework.IOEvents.BoardReactions#++=]] methods to add reactions.
+    * @note You should not override this. Instead use the [[framework.IOEvents.BoardReactionHandler#+=]]
+    *       or the [[framework.IOEvents.BoardReactionHandler#++=]] methods to add reactions.
     * @see [[framework.IOEvents events]]
     * @usecase Used by the `receiveInput` method to find reactions to any event occurring.
     */
-  protected val chessReactions: BoardReactions = new BoardReactions()
+  protected val chessReactions: BoardReactionHandler = new BoardReactionHandler()
 
   /**
     * The path to the directory where this game was saved the last time.

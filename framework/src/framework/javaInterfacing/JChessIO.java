@@ -5,7 +5,7 @@ import framework.ChessBoard$;
 import framework.ChessIO;
 import framework.FileOperationError.FileNotFoundError;
 import framework.FileOperationError.FileOperationError;
-import framework.IOEvents.BoardReactions;
+import framework.IOEvents.BoardReactionHandler;
 import framework.IOEvents.IOEvent;
 import framework.IOEvents.ShowCheck;
 import framework.Input.Input;
@@ -78,7 +78,7 @@ public abstract class JChessIO {
             }
 
             //no idea why the compiler doesn't get these are vals?!?
-            public void framework$ChessIO$_setter_$chessReactions_$eq(BoardReactions reactions) {
+            public void framework$ChessIO$_setter_$chessReactions_$eq(BoardReactionHandler reactions) {
                 chessReactions = reactions;
             }
 
@@ -100,7 +100,7 @@ public abstract class JChessIO {
                 }
             }
 
-            protected BoardReactions chessReactions = new BoardReactions();
+            protected BoardReactionHandler chessReactions = new BoardReactionHandler();
 
             public void receiveInput(Input<?> input) {
                 Output res = (Output) board().receive(input).getOrElse(null);
@@ -110,7 +110,7 @@ public abstract class JChessIO {
                 }
             }
 
-            public BoardReactions chessReactions() {
+            public BoardReactionHandler chessReactions() {
                 return chessReactions;
             }
 
