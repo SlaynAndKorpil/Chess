@@ -200,7 +200,7 @@ class InputInterpreter extends ChessIO with CommandRegistrator {
       override val help: String =
         "Prints either an overview of all available commands or, when a command name is given as parameter, a more detailed and in-depth description of a command."
       override val description: String = "Get help."
-      override val names: Array[String] = Array("help")
+      override val names: Array[String] = Array("help", "h", "?", "man", "manual")
       override val paramInfo: String = "[command name]"
 
       override def apply(params: String): Message = {
