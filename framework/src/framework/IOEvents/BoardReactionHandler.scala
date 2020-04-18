@@ -9,7 +9,7 @@ import framework.javaInterfacing.Reactions.JReaction
   * @author Felix Lehner
   * @version alpha 0.2
   */
-class BoardReactions {
+class BoardReactionHandler {
   private var reactions = Vector.empty[PartialFunction[IOEvent, Unit]]
 
   /**
