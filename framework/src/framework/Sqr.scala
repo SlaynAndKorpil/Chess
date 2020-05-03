@@ -17,7 +17,7 @@ import scala.language.implicitConversions
   * @version alpha 0.1
   * @author Felix Lehner
   */
-private case class Sqr(column: Int, row: Int) {
+case class Sqr(column: Int, row: Int) {
   @inline
   def _1: Int = column
 
@@ -81,4 +81,6 @@ object Sqr {
     else None
 
   def apply(column: Char, row: Int): Sqr = Sqr(ChessBoard.columnIndex(column), row)
+
+  def apply(sqr: (Int, Int)): Sqr = Sqr(sqr._1, sqr._2)
 }

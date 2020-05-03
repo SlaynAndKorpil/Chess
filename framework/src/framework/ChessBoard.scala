@@ -56,14 +56,6 @@ case class ChessBoard(
   val turnCounter: Int = history.length / 2
 
   /**
-    * @param column the one-letter identifier of a column of squares on the board
-    * @return a column of the board, [[scala.None]] if no column with this identifier exists
-    */
-  def getColumn(column: Char): Option[Column] =
-    if (isValidColumn(column)) Some(squares(column))
-    else None
-
-  /**
     * Handles different input types depending on the [[framework.ChessBoard#gameStatus gameStatus]].
     *
     * @param input some [[framework.Input Input]]
@@ -144,10 +136,9 @@ case class ChessBoard(
 
   /**
     * Filters for all pieces that match a predicate.
-    *
     */
-  def filterPieces(func: Piece => Boolean): Map[Char, Column] =
-    squares map { tup => tup._1 -> tup._2.filter(func) }
+  def filterPieces(func: Piece => Boolean): BoardMap =
+    squares map { tup => tup.filter(func) }
 
   /**
     * Generates a new [[framework.ChessBoard ChessBoard]] which shares all attributes with this one
@@ -316,8 +307,8 @@ case class ChessBoard(
     * @return `true` if the move is legal, otherwise `false`
     */
   def isLegalMove(start: Sqr, end: Sqr, startPiece: Piece, endPiece: Piece): Boolean = {
-    val startCIndex = start.colIndx
-    val endCIndex = end.colIndx
+    val startCIndex = start.column
+    val endCIndex = end.column
     val columnDif = endCIndex - startCIndex
     val lineDif = end._2 - start._2
 
@@ -352,13 +343,10 @@ case class ChessBoard(
         (!startPiece.moved && (end.column == 'c' || end.column == 'g') && {
             val rookCol = if (end.column == 'c') 'a' else 'h'
             val rook = apply(Sqr(rookCol, ClassicalValues.piecesStartLine(color)))
-            val squaresToTest: List[NumericSquare] =
-              AbstractSqrCoordinate.sqr2indxSqr(Sqr(if (startCIndex < endCIndex) 'g' else 'c', start.row)) to start
+            val squaresToTest: List[Sqr] =
+              Sqr(if (startCIndex < endCIndex) 'g' else 'c', start.row) to start
 
-            def isSqrAttacked(sqr: AbstractSqrCoordinate[_]): Boolean = sqr match {
-              case square: Sqr => isAttacked(square, turn, withKing = true)
-              case square: NumericSquare => isAttacked(square, turn, withKing = true)
-            }
+            def isSqrAttacked(sqr: Sqr): Boolean = isAttacked(sqr, turn, withKing = true)
 
             rook == Rook(color, false) && squaresToTest.forall(sqr => !isSqrAttacked(sqr)) && isEmptyOrthogonal(start, end)
           })
@@ -405,12 +393,12 @@ case class ChessBoard(
     }
 
     val opponent = attacked.opposite
-    val colI = sqr.colIndx
+    val colI = sqr.column
     val row = sqr.row
 
-    def partNxtPiece(inc: (Int, Int)): Piece = nextPiece(NumericSquare(colI, sqr.row), NumericSquare(inc))
+    def partNxtPiece(inc: (Int, Int)): Piece = nextPiece(sqr, Sqr(inc))
 
-    def partApply(inc: (Int, Int)) = apply(NumericSquare(colI, row) + inc)
+    def partApply(inc: (Int, Int)) = apply(sqr + inc)
 
     val attackedByKnight: Int =
       Array(partApply(1, 2), partApply(2, 1), partApply(2, -1), partApply(1, -2), partApply(-1, 2),
@@ -432,7 +420,7 @@ case class ChessBoard(
     val attackedByPawn: Int = {
       val dir = ClassicalValues.pawnDir(attacked)
 
-      def pieceAtOffset(colD: Int, rowD: Int): Piece = apply(NumericSquare(colI, row) + (colD, rowD))
+      def pieceAtOffset(colD: Int, rowD: Int): Piece = apply(sqr + (colD, rowD))
 
       val arr = Array(pieceAtOffset(1, dir), pieceAtOffset(-1, dir))
 
@@ -462,7 +450,7 @@ case class ChessBoard(
         case anyPiece: AnyPiece =>
           val kings = allPieces filter (_._2 === King(anyPiece.color))
           kings exists { king =>
-            val negVec = NumericSquare((square.colIndx - king._1.colIndx).signum, (square.row - king._1.row).signum)
+            val negVec = Sqr((square.column - king._1.column).signum, (square.row - king._1.row).signum)
 
             val possiblePinner = nextPiece(square, negVec)
 
@@ -644,7 +632,7 @@ case class ChessBoard(
     val piecesOfColor = // pieces of specified color without kings
       allPieces
         .map { tup => /*replace square with square color*/
-          (if (tup._1.colIndx % 2 == tup._1.row % 2) Black else White, tup._2) }
+          (if (tup._1.column % 2 == tup._1.row % 2) Black else White, tup._2) }
         .filter(_._2.color == color)
         .filterNot(_._2 === King(color))
 
@@ -684,7 +672,7 @@ case class ChessBoard(
     * @return the first piece on a line
     */
   @scala.annotation.tailrec
-  final def nextPiece(start: NumericSquare, increment: NumericSquare): Piece = {
+  final def nextPiece(start: Sqr, increment: Sqr): Piece = {
     val incremented = start + increment
     if (incremented.isValid) apply(incremented) match {
       case NoPiece => nextPiece(incremented, increment)
@@ -710,8 +698,8 @@ case class ChessBoard(
     * @see [[framework.ChessBoard#isEmptyOrthogonal isEmptyOrthogonal]]
     */
   def isEmptyDiagonal(from: Sqr, to: Sqr): Boolean = {
-    val startColIndex = from.colIndx
-    val endColIndex = to.colIndx
+    val startColIndex = from.column
+    val endColIndex = to.column
     val diagonal = startColIndex - endColIndex == from._2 - to._2 || startColIndex - to._2 == endColIndex - from._2
     diagonal && isEmptyConnection(from, to)
   }
@@ -810,9 +798,9 @@ case class ChessBoard(
 
   @scala.annotation.tailrec
   private def isEmptyConnection(from: Sqr, to: Sqr): Boolean = {
-    val startColIndex = from.colIndx
-    val endColIndex = to.colIndx
-    val incremented: Sqr = NumericSquare((endColIndex - startColIndex).signum, (to._2 - from._2).signum) + from
+    val startColIndex = from.column
+    val endColIndex = to.column
+    val incremented: Sqr = Sqr((endColIndex - startColIndex).signum, (to._2 - from._2).signum) + from
     if (incremented == to) true
     else if (apply(incremented).isEmpty) isEmptyConnection(incremented, to)
     else false
@@ -840,57 +828,19 @@ object ChessBoard {
     * @return a fully filled [[framework.ChessBoard ChessBoard]]
     */
   def fill(piece: Piece)(implicit io: ChessIO): ChessBoard =
-    this(Array.fill(8)(Column(piece)), Nil, Positions.empty, White).get
+    this(BoardMap.fill(piece), Nil, Positions.empty, White, StandardReq)
 
   val classicalPosition: BoardMap = BoardMap(
-    'a' -> new Column(Map(
-      1 -> Rook(White),
-      2 -> Pawn(White),
-      7 -> Pawn(Black),
-      8 -> Rook(Black)
-    )),
-    'b' -> new Column(Map(
-      1 -> Knight(White),
-      2 -> Pawn(White),
-      7 -> Pawn(Black),
-      8 -> Knight(Black)
-    )),
-    'c' -> new Column(Map(
-      1 -> Bishop(White),
-      2 -> Pawn(White),
-      7 -> Pawn(Black),
-      8 -> Bishop(Black)
-    )),
-    'd' -> new Column(Map(
-      1 -> Queen(White),
-      2 -> Pawn(White),
-      7 -> Pawn(Black),
-      8 -> Queen(Black)
-    )),
-    'e' -> new Column(Map(
-      1 -> King(White),
-      2 -> Pawn(White),
-      7 -> Pawn(Black),
-      8 -> King(Black)
-    )),
-    'f' -> new Column(Map(
-      1 -> Bishop(White),
-      2 -> Pawn(White),
-      7 -> Pawn(Black),
-      8 -> Bishop(Black)
-    )),
-    'g' -> new Column(Map(
-      1 -> Knight(White),
-      2 -> Pawn(White),
-      7 -> Pawn(Black),
-      8 -> Knight(Black)
-    )),
-    'h' -> new Column(Map(
-      1 -> Rook(White),
-      2 -> Pawn(White),
-      7 -> Pawn(Black),
-      8 -> Rook(Black)
-    )))
+    Array(Rook(White), Knight(White), Bishop(White), Queen(White), King(White), Bishop(White), Knight(White), Rook(White)),
+    Array.fill(8)(Pawn(White)),
+    Array.fill(8)(NoPiece),
+    Array.fill(8)(NoPiece),
+    Array.fill(8)(NoPiece),
+    Array.fill(8)(NoPiece),
+    Array.fill(8)(NoPiece),
+    Array.fill(8)(NoPiece),
+    Array.fill(8)(Pawn(Black)),
+    Array(Rook(Black), Knight(Black), Bishop(Black), Queen(Black), King(Black), Bishop(Black), Knight(Black), Rook(Black)))
 
   /**
     * Defines the classical chess standard board
@@ -899,25 +849,6 @@ object ChessBoard {
     */
   def classicalBoard(implicit io: ChessIO): ChessBoard =
     ChessBoard(classicalPosition, Nil, Positions.empty, White, StandardReq)(io, ClassicPosition)
-
-  /**
-    * Generator for chessboards.
-    */
-  def apply(columns: Array[Column], history: List[MoveData], positions: Positions, turn: AnyColor)
-           (implicit io: ChessIO): Option[ChessBoard] =
-    if (columns.length >= 8) {
-      val board = BoardMap(
-        'a' -> columns(0),
-        'b' -> columns(1),
-        'c' -> columns(2),
-        'd' -> columns(3),
-        'e' -> columns(4),
-        'f' -> columns(5),
-        'g' -> columns(6),
-        'h' -> columns(7)
-      )
-      Some(new ChessBoard(board, history, positions, turn, StandardReq)(io, ArbitraryPosition(board)))
-    } else None
 
   /**
     * Saves a [[framework.ChessBoard]] to a file using the xml format.

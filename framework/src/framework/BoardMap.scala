@@ -13,21 +13,23 @@ import scala.xml._
   * @author Felix Lehner
   * @version
   */
-final case class BoardMap(ps: Array[Array[Piece]])
+final case class BoardMap(ps: Array[IndexedSeq[Piece]])
   extends IndexedSeq[IndexedSeq[Piece]] with IndexedSeqLike[IndexedSeq[Piece], BoardMap] {
 
   override val length = 8
 
   override def size = 8
 
-  val pieces: Array[Array[Piece]] = if (ps.length == 8 && ps.forall(_.length == 8)) ps else Array.fill(8)(Array.fill(8)(NoPiece))
+  val pieces: Array[IndexedSeq[Piece]] = if (ps.length == 8 && ps.forall(_.length == 8)) ps else Array.fill(8)(Array.fill(8)(NoPiece))
+
+  def apply(idx: Int): IndexedSeq[Piece] = pieces(idx)
 
   /**
     * @param sqr coordinates of the wanted piece
     * @return the chess square at a specific position on the board, [[scala.None]] if the sqr does not exist
     */
   def getPiece(sqr: Sqr): Option[Piece] =
-    if (sqr.isValid) Some(apply(sqr._1)(sqr._2))
+    if (sqr.isValid) Some(apply(sqr._1 - 1)(sqr._2 - 1))
     else None
 
   /**
@@ -49,8 +51,8 @@ final case class BoardMap(ps: Array[Array[Piece]])
     */
   def updated(square: Sqr, piece: Piece): BoardMap = {
     if (square.isValid) {
-      val updated = this(square._1).updated(square._2, piece)
-      this.updated(square._1, updated)
+      val updated = this(square._1 - 1).updated(square._2 - 1, piece)
+      this.updated(square._1 - 1, updated)
     } else this
   }
 
@@ -59,9 +61,7 @@ final case class BoardMap(ps: Array[Array[Piece]])
     *
     * @param sqr the square to be emptied
     */
-  def emptySquare(sqr: Sqr): BoardMap =
-    if (sqr.isValid) updated(sqr, NoPiece)
-    else this
+  def emptySquare(sqr: Sqr): BoardMap = updated(sqr, NoPiece)
 
   /**
     * Makes a chess move.
@@ -92,17 +92,13 @@ final case class BoardMap(ps: Array[Array[Piece]])
   }
 
   def toXml: NodeSeq = {
-    for (x <- 1 to 8; col = columnLetter(x)) yield <col>{squares(col).saveData}</col> copy (label = col.toUpper toString)
-
-    // in Column:
-    /**
-      * Saves this column as xml.
-      */
-    def saveData: IndexedSeq[scala.xml.Elem] = {
-      var result: IndexedSeq[scala.xml.Elem] = IndexedSeq()
-      pieces.indices.foreach(i => if (pieces(i).nonEmpty) result = result :+ pieces(i).toXml.copy(label = "l" + (i + 1)))
-      result
-    }
+    for (x <- 0 to 7; col = columnLetter(x + 1)) yield
+      <col>{
+        var result: IndexedSeq[scala.xml.Elem] = IndexedSeq()
+        pieces(x).indices.foreach(i =>
+          if (pieces(x)(i).nonEmpty) result = result :+ pieces(x)(i).toXml.copy(label = "l" + (i + 1)))
+        result
+        }</col> copy (label = col.toUpper.toString)
   }
 
   /**
@@ -113,16 +109,18 @@ final case class BoardMap(ps: Array[Array[Piece]])
     */
   override def toString: String = {
     val separationLine: String = "  +---+---+---+---+---+---+---+---+\n"
-    val lines = for (x <- 1 to 8; c = ChessBoard.columnLetter(x)) yield c + " " + apply(c)
+    val lines = for (x <- 0 to 7; c = ChessBoard.columnLetter(x + 1)) yield c + " " + apply(x)
     lines mkString("    1   2   3   4   5   6   7   8\n" + separationLine, "\n" + separationLine, "\n" + separationLine)
   }
 }
 
 
 object BoardMap {
+  def fill(piece: Piece): BoardMap = BoardMap.fromSeq(Array.fill(8)(IndexedSeq.fill(8)(piece)))
+
   def apply(pieces: Seq[Piece]*): BoardMap = fromSeq(pieces)
 
-  def fromSeq(buf: Seq[Seq[Piece]]): BoardMap = new BoardMap(buf.toArray.map(_.toArray))
+  def fromSeq(buf: Seq[Seq[Piece]]): BoardMap = new BoardMap(buf.toArray.map(_.toIndexedSeq))
 
   def newBuilder: scala.collection.mutable.Builder[Seq[Piece], BoardMap] = new ArrayBuffer mapResult fromSeq
 
