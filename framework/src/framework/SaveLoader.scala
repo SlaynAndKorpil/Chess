@@ -90,9 +90,9 @@ object SaveLoader {
             try Right(
               moves map (move =>
                 MoveData(
-                  Square(extractWithFilter(move, "start").head, extractWithFilter(move, "start").last.asDigit),
+                  Sqr(extractWithFilter(move, "start").head, extractWithFilter(move, "start").last.asDigit),
                   Piece(extractWithFilter(move, "movedPiece").head, Color(extractWithFilter(move, "movedPiece").last), moved = true),
-                  Square(extractWithFilter(move, "end").head, extractWithFilter(move, "end").last.asDigit),
+                  Sqr(extractWithFilter(move, "end").head, extractWithFilter(move, "end").last.asDigit),
                   extractWithFilter(move, "capture").toBoolean
                 )) toList
             )
@@ -202,9 +202,9 @@ object SaveLoader {
                 val end = move \@ "end"
                 val captured = move \@ "capture"
                 MoveData(
-                  Square(start.head, start.last.asDigit),
+                  Sqr(start.head, start.last.asDigit),
                   Piece(movedPiece.head, Color(movedPiece.last), moved = true),
-                  Square(end.head, end.last.asDigit),
+                  Sqr(end.head, end.last.asDigit),
                   captured.toBoolean
                 )
               }) toList
@@ -336,16 +336,16 @@ object SaveLoader {
                 if (move.attributes.exists(_.key == "promoPiece")) {
                   val promoPieceId = (move \@ "promoPiece").head
                   PromotionMove(
-                    Square(start.head, start.last.asDigit),
+                    Sqr(start.head, start.last.asDigit),
                     Piece(pieceId, color, moved = true),
-                    Square(end.head, end.last.asDigit),
+                    Sqr(end.head, end.last.asDigit),
                     captured.toBoolean,
                     Piece(promoPieceId, color, moved = false))
                 }
                 else MoveData(
-                  Square(start.head, start.last.asDigit),
+                  Sqr(start.head, start.last.asDigit),
                   Piece(pieceId, color, moved = true),
-                  Square(end.head, end.last.asDigit),
+                  Sqr(end.head, end.last.asDigit),
                   captured.toBoolean)
               }) toList
             )

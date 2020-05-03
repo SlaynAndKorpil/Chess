@@ -1,7 +1,7 @@
 package graphics
 
 import BoardColors._
-import framework.Square
+import framework.Sqr
 
 import scala.swing.event.ActionEvent
 import scala.swing.{Graphics2D, Image, Insets, ToggleButton}

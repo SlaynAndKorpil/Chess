@@ -267,8 +267,8 @@ class InputInterpreter extends ChessIO with CommandRegistrator {
         * Parses a move command.
         */
       def parseMove(move: String): CommandResult = {
-        val from = Square(move.head, move(1).asDigit)
-        val to = Square(move(2), move(3).asDigit)
+        val from = Sqr(move.head, move(1).asDigit)
+        val to = Sqr(move(2), move(3).asDigit)
         val moveInput = MoveParams(from, to)
         receiveInput(moveInput)
         NoMessage

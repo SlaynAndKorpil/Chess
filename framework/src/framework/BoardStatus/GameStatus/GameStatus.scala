@@ -32,7 +32,7 @@ object GameStatus {
     else if (state == StandardReq.toString) Right(StandardReq)
     else if (contains(state, "PromoReq(", ")")) {
       val sqr = state.substring(9, last)
-      val result = Square(sqr)
+      val result = Sqr(sqr)
       result match {
         case Some(square) => Right(PromoReq(square))
         case _ => failMessage
@@ -60,7 +60,7 @@ case object StandardReq extends Active {
 }
 
 /** Waiting for a promotion */
-case class PromoReq(on: Square) extends Active
+case class PromoReq(on: Sqr) extends Active
 
 /** Waiting for an answer to a draw offer. */
 case object DrawAcceptanceReq extends Active

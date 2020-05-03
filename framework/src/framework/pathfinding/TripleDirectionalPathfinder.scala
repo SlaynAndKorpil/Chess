@@ -1,11 +1,11 @@
 package framework.pathfinding
 
-import framework.Square
+import framework.Sqr
 
 abstract class TripleDirectionalPathfinder[@specialized(Boolean) ResultType](override val vector: (Int, Int))
   extends VectorPathfinder[ResultType](vector) {
 
-  override def continue(from: Square): Result[ResultType] = {
+  override def continue(from: Sqr): Result[ResultType] = {
     val resMain = this.apply(from + vector)
 
     val sideVectors: Array[(Int, Int)] =
@@ -15,11 +15,11 @@ abstract class TripleDirectionalPathfinder[@specialized(Boolean) ResultType](ove
 
     val resSide = sideVectors map { v =>
       new MonoDirectionalPathfinder[ResultType](v) {
-        override def terminate(on: Square): Result[ResultType] = TripleDirectionalPathfinder.this.terminate(on)
+        override def terminate(on: Sqr): Result[ResultType] = TripleDirectionalPathfinder.this.terminate(on)
 
-        override def success(on: Square): Result[ResultType] = TripleDirectionalPathfinder.this.terminate(on)
+        override def success(on: Sqr): Result[ResultType] = TripleDirectionalPathfinder.this.terminate(on)
 
-        override def decision(pos: Square): WaypointResult.Value = TripleDirectionalPathfinder.this.decision(pos)
+        override def decision(pos: Sqr): WaypointResult.Value = TripleDirectionalPathfinder.this.decision(pos)
       } apply (from + v)
     }
 

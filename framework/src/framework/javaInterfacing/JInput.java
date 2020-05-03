@@ -1,7 +1,7 @@
 package framework.javaInterfacing;
 
 import framework.Input.*;
-import framework.Square;
+import framework.Sqr;
 
 /**
  * Contains wrapper for inputs for more intuitive use with java.
@@ -9,7 +9,7 @@ import framework.Square;
  * @version alpha 0.1
  */
 public class JInput {
-    public static MoveParams MoveParams(Square from, Square to) {
+    public static MoveParams MoveParams(Sqr from, Sqr to) {
         return new MoveParams(from, to);
     }
 

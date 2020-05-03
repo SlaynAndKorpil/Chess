@@ -1,6 +1,11 @@
 package framework
 
-import scala.collection.AbstractMap
+import framework.ChessBoard.columnLetter
+
+import scala.collection.IndexedSeqLike
+import scala.collection.generic.CanBuildFrom
+import scala.collection.mutable.ArrayBuffer
+import scala.xml._
 
 /**
   * A chess board. Stores pieces in a 2 dimensional system (columns and rows).
@@ -8,77 +13,21 @@ import scala.collection.AbstractMap
   * @author Felix Lehner
   * @version
   */
-final case class BoardMap(key1: Char, value1: Column,
-                          key2: Char, value2: Column,
-                          key3: Char, value3: Column,
-                          key4: Char, value4: Column,
-                          key5: Char, value5: Column,
-                          key6: Char, value6: Column,
-                          key7: Char, value7: Column,
-                          key8: Char, value8: Column)
-  extends AbstractMap[Char, Column] with Map[Char, Column] with Serializable {
+final case class BoardMap(ps: Array[Array[Piece]])
+  extends IndexedSeq[IndexedSeq[Piece]] with IndexedSeqLike[IndexedSeq[Piece], BoardMap] {
+
+  override val length = 8
 
   override def size = 8
 
-  override def apply(key: Char): Column =
-    if (key == key1) value1
-    else if (key == key2) value2
-    else if (key == key3) value3
-    else if (key == key4) value4
-    else if (key == key5) value5
-    else if (key == key6) value6
-    else if (key == key7) value7
-    else if (key == key8) value8
-    else throw new NoSuchElementException("key not found: " + key)
-
-  override def contains(key: Char): Boolean =
-    (key == key1) || (key == key2) || (key == key3) || (key == key4) || (key == key5) || (key == key6) || (key == key7) || (key == key7) || (key == key8)
-
-  def get(key: Char): Option[Column] =
-    if (key == key1) Some(value1)
-    else if (key == key2) Some(value2)
-    else if (key == key3) Some(value3)
-    else if (key == key4) Some(value4)
-    else if (key == key5) Some(value5)
-    else if (key == key6) Some(value6)
-    else if (key == key7) Some(value7)
-    else if (key == key8) Some(value8)
-    else None
-
-  def iterator = Iterator((key1, value1), (key2, value2), (key3, value3), (key4, value4), (key5, value5), (key6, value6), (key7, value7), (key8, value8))
-
-  def +[V1 >: Column](kv: (Char, V1)): Map[Char, V1] = throw new UnsupportedOperationException("size of this map limited to 8")
-
-  def updated(key: Char, value: Column): BoardMap =
-    if (key == key1) new BoardMap(key1, value, key2, value2, key3, value3, key4, value4, key5, value5, key6, value6, key7, value7, key8, value8)
-    else if (key == key2) new BoardMap(key1, value1, key2, value, key3, value3, key4, value4, key5, value5, key6, value6, key7, value7, key8, value8)
-    else if (key == key3) new BoardMap(key1, value1, key2, value2, key3, value, key4, value4, key5, value5, key6, value6, key7, value7, key8, value8)
-    else if (key == key4) new BoardMap(key1, value1, key2, value2, key3, value3, key4, value, key5, value5, key6, value6, key7, value7, key8, value8)
-    else if (key == key5) new BoardMap(key1, value1, key2, value2, key3, value3, key4, value4, key5, value, key6, value6, key7, value7, key8, value8)
-    else if (key == key6) new BoardMap(key1, value1, key2, value2, key3, value3, key4, value4, key5, value5, key6, value, key7, value7, key8, value8)
-    else if (key == key7) new BoardMap(key1, value1, key2, value2, key3, value3, key4, value4, key5, value5, key6, value6, key7, value, key8, value8)
-    else if (key == key8) new BoardMap(key1, value1, key2, value2, key3, value3, key4, value4, key5, value5, key6, value6, key7, value7, key8, value)
-    else throw new NoSuchElementException("key not found: " + key)
-
-  def -(key: Char): Map[Char, Column] = throw new UnsupportedOperationException("size of this map has to be 8")
-
-  override def foreach[U](f: ((Char, Column)) => U): Unit = {
-    f((key1, value1))
-    f((key2, value2))
-    f((key3, value3))
-    f((key4, value4))
-    f((key5, value5))
-    f((key6, value6))
-    f((key7, value7))
-    f((key8, value8))
-  }
+  val pieces: Array[Array[Piece]] = if (ps.length == 8 && ps.forall(_.length == 8)) ps else Array.fill(8)(Array.fill(8)(NoPiece))
 
   /**
     * @param sqr coordinates of the wanted piece
     * @return the chess square at a specific position on the board, [[scala.None]] if the sqr does not exist
     */
-  def getPiece(sqr: Square): Option[Piece] =
-    if (sqr.isValid) Some(apply(sqr._1).pieceAt(sqr._2))
+  def getPiece(sqr: Sqr): Option[Piece] =
+    if (sqr.isValid) Some(apply(sqr._1)(sqr._2))
     else None
 
   /**
@@ -89,7 +38,7 @@ final case class BoardMap(key1: Char, value1: Column,
     * @return the piece at some specified position
     */
   @inline
-  def apply(sqr: Square): Piece = getPiece(sqr) getOrElse NoPiece
+  def apply(sqr: Sqr): Piece = getPiece(sqr) getOrElse NoPiece
 
   /**
     * Updates the board.
@@ -98,9 +47,11 @@ final case class BoardMap(key1: Char, value1: Column,
     * @param piece  the piece the square shall be updated to
     * @return a ChessBoard with updated squares.
     */
-  def updated(square: Square, piece: Piece): BoardMap = {
-    val updated = this(square._1).updated(square._2, piece)
-    this.updated(square._1, updated)
+  def updated(square: Sqr, piece: Piece): BoardMap = {
+    if (square.isValid) {
+      val updated = this(square._1).updated(square._2, piece)
+      this.updated(square._1, updated)
+    } else this
   }
 
   /**
@@ -108,7 +59,7 @@ final case class BoardMap(key1: Char, value1: Column,
     *
     * @param sqr the square to be emptied
     */
-  def emptySquare(sqr: Square): BoardMap =
+  def emptySquare(sqr: Sqr): BoardMap =
     if (sqr.isValid) updated(sqr, NoPiece)
     else this
 
@@ -121,23 +72,37 @@ final case class BoardMap(key1: Char, value1: Column,
     * @param piece      the moving piece
     * @return the board after the move
     */
-  def movePiece(from: Square, to: Square, piece: Piece): BoardMap = {
+  def movePiece(from: Sqr, to: Sqr, piece: Piece): BoardMap = {
     var result = this
 
     //testing for en passant and castling
     piece match {
       case Pawn(_, _) if apply(to).isEmpty && from.column != to.column =>
-        result = result.emptySquare(Square(to.column, from.row))
+        result = result.emptySquare(Sqr(to.column, from.row))
       case King(color, moved) if !moved && (to.column == 'c' || to.column == 'g') =>
         val row = ChessBoard.ClassicalValues.piecesStartLine(color)
         val col = if (to.column == 'c') 'd' else 'f'
         val emptyCol = if (to.column == 'c') 'a' else 'h'
-        result = result.updated(Square(col, row), Rook(color)).emptySquare(Square(emptyCol, row))
+        result = result.updated(Sqr(col, row), Rook(color)).emptySquare(Sqr(emptyCol, row))
       case _ =>
     }
 
     val resPiece = Piece(piece.identifier, piece.color, moved = true)
     result.updated(to, resPiece).emptySquare(from)
+  }
+
+  def toXml: NodeSeq = {
+    for (x <- 1 to 8; col = columnLetter(x)) yield <col>{squares(col).saveData}</col> copy (label = col.toUpper toString)
+
+    // in Column:
+    /**
+      * Saves this column as xml.
+      */
+    def saveData: IndexedSeq[scala.xml.Elem] = {
+      var result: IndexedSeq[scala.xml.Elem] = IndexedSeq()
+      pieces.indices.foreach(i => if (pieces(i).nonEmpty) result = result :+ pieces(i).toXml.copy(label = "l" + (i + 1)))
+      result
+    }
   }
 
   /**
@@ -155,19 +120,17 @@ final case class BoardMap(key1: Char, value1: Column,
 
 
 object BoardMap {
-  def apply(from: Map[Char, Column]): BoardMap =
-    if (from.size >= 8) {
-      val seq = from.toSeq
-      BoardMap(seq(0), seq(1), seq(2), seq(3), seq(4), seq(5), seq(6), seq(7))
+  def apply(pieces: Seq[Piece]*): BoardMap = fromSeq(pieces)
+
+  def fromSeq(buf: Seq[Seq[Piece]]): BoardMap = new BoardMap(buf.toArray.map(_.toArray))
+
+  def newBuilder: scala.collection.mutable.Builder[Seq[Piece], BoardMap] = new ArrayBuffer mapResult fromSeq
+
+  implicit def canBuildFrom: CanBuildFrom[BoardMap, Seq[Piece], BoardMap] =
+    new CanBuildFrom[BoardMap, Seq[Piece], BoardMap] {
+
+      def apply(): scala.collection.mutable.Builder[Seq[Piece], BoardMap] = newBuilder
+
+      def apply(from: BoardMap): scala.collection.mutable.Builder[Seq[Piece], BoardMap] = newBuilder
     }
-    else throw new UnsupportedOperationException("size of this map has to be 8")
-
-  def apply(from: scala.IndexedSeq[(Char, Column)]): BoardMap =
-    if (from.size >= 8) BoardMap(from(0), from(1), from(2), from(3), from(4), from(5), from(6), from(7))
-    else throw new UnsupportedOperationException("size of this map has to be 8")
-
-  def apply(kv1: (Char, Column), kv2: (Char, Column), kv3: (Char, Column), kv4: (Char, Column), kv5: (Char, Column),
-            kv6: (Char, Column), kv7: (Char, Column), kv8: (Char, Column)): BoardMap =
-    new BoardMap(kv1._1, kv1._2, kv2._1, kv2._2, kv3._1, kv3._2, kv4._1, kv4._2,
-      kv5._1, kv5._2, kv6._1, kv6._2, kv7._1, kv7._2, kv8._1, kv8._2)
 }

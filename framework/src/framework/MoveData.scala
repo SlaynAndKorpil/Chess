@@ -6,21 +6,21 @@ package framework
   * @author Felix Lehner
   * @version alpha 0.2
   */
-sealed class MoveData(val startPos: Square, val piece: Piece, val endPos: Square, val captured: Boolean) {
+sealed class MoveData(val startPos: Sqr, val piece: Piece, val endPos: Sqr, val captured: Boolean) {
   def xml: scala.xml.Elem =
       <move start={startPos.toString} end={endPos.toString} capture={captured.toString} piece={piece.toString}/>
 }
 
 object MoveData {
-  def apply(startPos: Square, piece: Piece, endPos: Square, captured: Boolean): MoveData =
+  def apply(startPos: Sqr, piece: Piece, endPos: Sqr, captured: Boolean): MoveData =
     new MoveData(startPos, piece, endPos, captured)
 
-  def unapply(md: MoveData): Option[(Square, Piece, Square, Boolean)] = Some(md.startPos, md.piece, md.endPos, md.captured)
+  def unapply(md: MoveData): Option[(Sqr, Piece, Sqr, Boolean)] = Some(md.startPos, md.piece, md.endPos, md.captured)
 }
 
-case class PromotionMove(override val startPos: Square,
+case class PromotionMove(override val startPos: Sqr,
                          override val piece: Piece,
-                         override val endPos: Square,
+                         override val endPos: Sqr,
                          override val captured: Boolean,
                          promoPiece: Piece) extends MoveData(startPos, piece, endPos, captured) {
   override def xml: scala.xml.Elem =

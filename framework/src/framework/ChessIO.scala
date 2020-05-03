@@ -26,7 +26,7 @@ import framework.Input._
   *
   *   test receiveInput DrawOffer
   *   test receiveInput DrawReject
-  *   test receiveInput MoveParams(from = Square('d', 2), to = Square('d', 4))
+  *   test receiveInput MoveParams(from = Sqr('d', 2), to = Sqr('d', 4))
   * }}}
   *
   * @see [[framework.javaInterfacing.JChessIO the java variant]]

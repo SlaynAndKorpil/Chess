@@ -1,7 +1,7 @@
 package graphics
 
 import framework.Input.{MoveParams, Promotion}
-import framework.{AnyColor, AnyPiece, Square}
+import framework.{AnyColor, AnyPiece, Sqr}
 
 /**
   * [Description]
