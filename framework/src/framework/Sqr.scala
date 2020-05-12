@@ -49,7 +49,7 @@ case class Sqr(column: Int, row: Int) {
 
   def toTuple: (Int, Int) = (column, row)
 
-  override def toString: String = s"$column$row"
+  override def toString: String = s"${ChessBoard.columnLetter(column)}$row"
 }
 
 object Sqr {

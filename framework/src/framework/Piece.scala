@@ -3,7 +3,6 @@ package framework
 /**
   * A chess piece.
   *
-  * @see [[framework.Column framework.Column]] assigns every line a piece.
   * @version alpha 0.2
   * @author Felix Lehner
   */

@@ -835,8 +835,6 @@ object ChessBoard {
     Array.fill(8)(NoPiece),
     Array.fill(8)(NoPiece),
     Array.fill(8)(NoPiece),
-    Array.fill(8)(NoPiece),
-    Array.fill(8)(NoPiece),
     Array.fill(8)(Pawn(Black)),
     Array(Rook(Black), Knight(Black), Bishop(Black), Queen(Black), King(Black), Bishop(Black), Knight(Black), Rook(Black))))
 

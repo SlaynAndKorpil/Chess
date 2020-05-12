@@ -16,7 +16,7 @@ final case class BoardMap(pieces: Array[Array[Piece]]) {
     * @return the chess square at a specific position on the board, [[scala.None]] if the sqr does not exist
     */
   def getPiece(sqr: Sqr): Option[Piece] =
-    if (isValid(sqr)) Some(pieces(sqr._1 - 1)(sqr._2 - 1))
+    if (isValid(sqr)) Some(pieces(sqr._2 - 1)(sqr._1 - 1))
     else None
 
   /**
@@ -39,8 +39,8 @@ final case class BoardMap(pieces: Array[Array[Piece]]) {
     */
   def updated(square: Sqr, piece: Piece): BoardMap = {
     if (isValid(square)) {
-      val updated = pieces(square._1 - 1).updated(square._2 - 1, piece)
-      BoardMap(pieces.updated(square._1 - 1, updated))
+      val updated = pieces(square._2 - 1).updated(square._1 - 1, piece)
+      BoardMap(pieces.updated(square._2 - 1, updated))
     } else this
   }
 
@@ -57,7 +57,7 @@ final case class BoardMap(pieces: Array[Array[Piece]]) {
     lazy val innerLen = pieces(0).length
 
     outerLen > 0 && innerLen > 0 &&
-      0 < sqr.column && sqr.column <= pieces.length && 0 < sqr.row && sqr.row <= pieces(0).length
+      0 < sqr.column && sqr.column <= pieces(0).length && 0 < sqr.row && sqr.row <= pieces.length
   }
 
   /**
@@ -112,12 +112,12 @@ final case class BoardMap(pieces: Array[Array[Piece]]) {
     * Formats the board as a [[String]].
     *
     * @usecase Used in consoleUI to show the board in console
-    * @return a formatted representation of the board
+    * @return a fancy formatted representation of the board
     */
   override def toString: String = {
     val separationLine: String = "  +---+---+---+---+---+---+---+---+\n"
-    val lines = for (x <- 0 to 7; c = ChessBoard.columnLetter(x + 1)) yield c + " " + pieces(x)
-    lines mkString("    1   2   3   4   5   6   7   8\n" + separationLine, "\n" + separationLine, "\n" + separationLine)
+    val lines = for (x <- (0 to 7).reverse) yield (x+1) + pieces(x).mkString(" | ", " | ", " |")
+    lines mkString("    a   b   c   d   e   f   g   h\n" + separationLine, "\n" + separationLine, "\n" + separationLine)
   }
 }
 
