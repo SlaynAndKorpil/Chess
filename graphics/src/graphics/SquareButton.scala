@@ -8,7 +8,7 @@ import scala.swing.{Graphics2D, Image, Insets, ToggleButton}
 
 class SquareButton(
                     override var color: BoardColor,
-                    val pos: Square,
+                    val pos: Sqr,
                     override var piece: framework.Piece)
   extends ToggleButton with PieceButton {
 

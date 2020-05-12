@@ -2,9 +2,6 @@ package framework
 
 import framework.ChessBoard.columnLetter
 
-import scala.collection.IndexedSeqLike
-import scala.collection.generic.CanBuildFrom
-import scala.collection.mutable.ArrayBuffer
 import scala.xml._
 
 /**
@@ -13,23 +10,13 @@ import scala.xml._
   * @author Felix Lehner
   * @version
   */
-final case class BoardMap(ps: Array[IndexedSeq[Piece]])
-  extends IndexedSeq[IndexedSeq[Piece]] with IndexedSeqLike[IndexedSeq[Piece], BoardMap] {
-
-  override val length = 8
-
-  override def size = 8
-
-  val pieces: Array[IndexedSeq[Piece]] = if (ps.length == 8 && ps.forall(_.length == 8)) ps else Array.fill(8)(Array.fill(8)(NoPiece))
-
-  def apply(idx: Int): IndexedSeq[Piece] = pieces(idx)
-
+final case class BoardMap(pieces: Array[Array[Piece]]) {
   /**
     * @param sqr coordinates of the wanted piece
     * @return the chess square at a specific position on the board, [[scala.None]] if the sqr does not exist
     */
   def getPiece(sqr: Sqr): Option[Piece] =
-    if (sqr.isValid) Some(apply(sqr._1 - 1)(sqr._2 - 1))
+    if (isValid(sqr)) Some(pieces(sqr._1 - 1)(sqr._2 - 1))
     else None
 
   /**
@@ -44,20 +31,37 @@ final case class BoardMap(ps: Array[IndexedSeq[Piece]])
 
   /**
     * Updates the board.
+    * Returns the unchanged BoardMap object if coordinates are invalid.
     *
     * @param square the coordinate of the square to updated
     * @param piece  the piece the square shall be updated to
-    * @return a ChessBoard with updated squares.
+    * @return a BoardMap with updated squares.
     */
   def updated(square: Sqr, piece: Piece): BoardMap = {
-    if (square.isValid) {
-      val updated = this(square._1 - 1).updated(square._2 - 1, piece)
-      this.updated(square._1 - 1, updated)
+    if (isValid(square)) {
+      val updated = pieces(square._1 - 1).updated(square._2 - 1, piece)
+      BoardMap(pieces.updated(square._1 - 1, updated))
     } else this
   }
 
   /**
-    * Empties a square.
+    * Checks if a pair of coordinates describes a valid position on this BoardMap.
+    *
+    * @param sqr the given [[framework.Sqr]]
+    * @return `true` if sqr is valid, otherwise `false`
+    */
+  def isValid(sqr: Sqr): Boolean = {
+    val outerLen = pieces.length
+
+    // needs to be lazy because pieces(0) might fail so we first need to test for outerLen > 0
+    lazy val innerLen = pieces(0).length
+
+    outerLen > 0 && innerLen > 0 &&
+      0 < sqr.column && sqr.column <= pieces.length && 0 < sqr.row && sqr.row <= pieces(0).length
+  }
+
+  /**
+    * Empties a square by placing a [[framework.NoPiece]] at this position.
     *
     * @param sqr the square to be emptied
     */
@@ -101,6 +105,9 @@ final case class BoardMap(ps: Array[IndexedSeq[Piece]])
         }</col> copy (label = col.toUpper.toString)
   }
 
+  def filter(predicate: Piece => Boolean): BoardMap =
+    BoardMap(pieces map ( _.filter(predicate) ))
+
   /**
     * Formats the board as a [[String]].
     *
@@ -109,26 +116,14 @@ final case class BoardMap(ps: Array[IndexedSeq[Piece]])
     */
   override def toString: String = {
     val separationLine: String = "  +---+---+---+---+---+---+---+---+\n"
-    val lines = for (x <- 0 to 7; c = ChessBoard.columnLetter(x + 1)) yield c + " " + apply(x)
+    val lines = for (x <- 0 to 7; c = ChessBoard.columnLetter(x + 1)) yield c + " " + pieces(x)
     lines mkString("    1   2   3   4   5   6   7   8\n" + separationLine, "\n" + separationLine, "\n" + separationLine)
   }
 }
 
 
 object BoardMap {
-  def fill(piece: Piece): BoardMap = BoardMap.fromSeq(Array.fill(8)(IndexedSeq.fill(8)(piece)))
+  def fill(piece: Piece): BoardMap = BoardMap(Array.fill(8)(Array.fill(8)(piece)))
 
-  def apply(pieces: Seq[Piece]*): BoardMap = fromSeq(pieces)
-
-  def fromSeq(buf: Seq[Seq[Piece]]): BoardMap = new BoardMap(buf.toArray.map(_.toIndexedSeq))
-
-  def newBuilder: scala.collection.mutable.Builder[Seq[Piece], BoardMap] = new ArrayBuffer mapResult fromSeq
-
-  implicit def canBuildFrom: CanBuildFrom[BoardMap, Seq[Piece], BoardMap] =
-    new CanBuildFrom[BoardMap, Seq[Piece], BoardMap] {
-
-      def apply(): scala.collection.mutable.Builder[Seq[Piece], BoardMap] = newBuilder
-
-      def apply(from: BoardMap): scala.collection.mutable.Builder[Seq[Piece], BoardMap] = newBuilder
-    }
+  def empty(): BoardMap = fill(NoPiece)
 }

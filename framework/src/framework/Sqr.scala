@@ -2,15 +2,6 @@ package framework
 
 import scala.language.implicitConversions
 
-/*
-* TODO
-*  Reduce complexity to only one class, 'Sqr' or 'Sqr'
-*  and generate interchangeability of numerical and classic
-*  coordinates by method overloading.
-*  This will make the whole code simpler and the planned
-*  changes in BoardMap easier to implement.
-*/
-
 /**
   * A coordinate of a square.
   *
@@ -43,11 +34,6 @@ case class Sqr(column: Int, row: Int) {
   def -(sq: (Int, Int)): Sqr = Sqr(column - sq._1, row - sq._2)
 
   /**
-    * All adjacent squares that are on the board.
-    */
-  def validAdjacents: IndexedSeq[Sqr] = adjacents filter (_.isValid)
-
-  /**
     * All adjacent squares.
     *
     * @see [[framework.Sqr#validAdjacents]] for
@@ -60,11 +46,6 @@ case class Sqr(column: Int, row: Int) {
   ) map (this + _)
 
   def +(sq: (Int, Int)): Sqr = Sqr(column + sq._1, row + sq._2)
-
-  /**
-    * Checks if this square is inside of a 8x8 board.
-    */
-  def isValid: Boolean = column >= 1 && column <= 8 && row >= 1 && row <= 8
 
   def toTuple: (Int, Int) = (column, row)
 

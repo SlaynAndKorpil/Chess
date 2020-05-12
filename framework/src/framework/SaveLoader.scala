@@ -60,7 +60,7 @@ object SaveLoader {
     /** Loads a board from toXml */
     def load(xml: Elem)(implicit io: ChessIO): Either[FileOperationError, ChessBoard]
 
-    def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, IndexedSeq[Piece]]
+    def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, Array[Piece]]
 
     def loadPieceFromXML(xml: NodeSeq): Either[FileOperationError, Piece]
   }
@@ -73,7 +73,7 @@ object SaveLoader {
 
     override def load(xml: Elem)(implicit io: ChessIO): Either[FileOperationError, ChessBoard] = Left(UnknownVersionError)
 
-    override def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, IndexedSeq[Piece]] = Left(ColumnLoadingError(xml.toString))
+    override def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, Array[Piece]] = Left(ColumnLoadingError(xml.toString))
 
     override def loadPieceFromXML(xml: NodeSeq): Either[FileOperationError, Piece] = Left(PieceLoadingError(xml.toString))
   }
@@ -129,16 +129,16 @@ object SaveLoader {
     }
 
     override def loadSquaresFromXML(xml: Node): Either[FileOperationError, BoardMap] = {
-      val loadedSquares: IndexedSeq[Either[FileOperationError, IndexedSeq[Piece]]] = for {
+      val loadedSquares: Array[Either[FileOperationError, Array[Piece]]] = (for {
         x <- 1 to 8
         col = columnLetter(x)
-      } yield loadColumnFromXML(xml \ col.toString.toUpperCase)
+      } yield loadColumnFromXML(xml \ col.toString.toUpperCase)).toArray
       val possibleError = loadedSquares find (_.isLeft) map (_.left)
 
       possibleError match {
         case None =>
           val res = loadedSquares map { piece => piece.right.get }
-          Right(BoardMap.fromSeq(res))
+          Right(BoardMap(res))
         case Some(error) =>
           Left(error.get)
       }
@@ -150,10 +150,10 @@ object SaveLoader {
       * @param xml data formatted as toXml
       * @return the loaded column
       */
-    override def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, IndexedSeq[Piece]] = {
+    override def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, Array[Piece]] = {
       try {
-        var pieces: IndexedSeq[Piece] = IndexedSeq.empty
-        var errors: IndexedSeq[FileOperationError] = IndexedSeq.empty
+        var pieces: Array[Piece] = Array.empty
+        var errors: Array[FileOperationError] = Array.empty
         val loadedData =
           for {
             i <- 1 to 8
@@ -247,15 +247,15 @@ object SaveLoader {
     }
 
     override def loadSquaresFromXML(xml: Node): Either[FileOperationError, BoardMap] = {
-      val loadedSquares: IndexedSeq[Either[FileOperationError, IndexedSeq[Piece]]] = for {
+      val loadedSquares: Array[Either[FileOperationError, Array[Piece]]] = (for {
         x <- 1 to 8
         col = columnLetter(x)
-      } yield loadColumnFromXML(xml \ col.toString.toUpperCase)
+      } yield loadColumnFromXML(xml \ col.toString.toUpperCase)).toArray
       val possibleError = loadedSquares find (_.isLeft) map (_.left)
       possibleError match {
         case None =>
           val res = loadedSquares.map { _.right.get }
-          Right(BoardMap.fromSeq(res))
+          Right(BoardMap(res))
         case Some(error) =>
           Left(error.get)
       }
@@ -267,7 +267,7 @@ object SaveLoader {
       * @param xml data formatted as toXml
       * @return the loaded column
       */
-    override def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, IndexedSeq[Piece]] = {
+    override def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, Array[Piece]] = {
       try {
         var pieces: Array[Piece] = Array.empty
         var errors: Array[FileOperationError] = Array.empty
@@ -366,7 +366,7 @@ object SaveLoader {
             if (moveHistory.isEmpty) Positions.empty
             else {
               val boards: IndexedSeq[BoardMap] = moveHistory.tail.foldRight(Array(startPos.right.get.squares)) {
-                (move, positions) => getNextPositionAfterMove(BoardMap.fromSeq(positions.head), move) +: positions
+                (move, positions) => getNextPositionAfterMove(positions.head, move) +: positions
               }
               Positions(boards map Position)
             }
@@ -402,15 +402,15 @@ object SaveLoader {
     }
 
     override def loadSquaresFromXML(xml: Node): Either[FileOperationError, BoardMap] = {
-      val loadedSquares: IndexedSeq[Either[FileOperationError, IndexedSeq[Piece]]] = for {
+      val loadedSquares: Array[Either[FileOperationError, Array[Piece]]] = (for {
         x <- 1 to 8
         col = columnLetter(x)
-      } yield loadColumnFromXML(xml \ col.toString.toUpperCase)
+      } yield loadColumnFromXML(xml \ col.toString.toUpperCase)).toArray
       val possibleError = loadedSquares find (_.isLeft) map (_.left)
       possibleError match {
         case None =>
           val res = loadedSquares.map { _.right.get }
-          Right(BoardMap.fromSeq(res))
+          Right(BoardMap(res))
         case Some(error) =>
           Left(error.get)
       }
@@ -422,7 +422,7 @@ object SaveLoader {
       * @param xml data formatted as toXml
       * @return the loaded column
       */
-    override def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, IndexedSeq[Piece]] = {
+    override def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, Array[Piece]] = {
       try {
         var pieces: Array[Piece] = Array.empty
         var errors: Array[FileOperationError] = Array.empty

@@ -1,13 +1,12 @@
 package framework
 
-import framework.BoardStatus.GameStatus.{GameStatus, PromoReq, StandardReq}
-import framework.pathfinding.WaypointResult
-import framework.Input._
 import framework.BoardStatus.GameResult._
-import framework.BoardStatus.GameStatus._
-import framework.BoardStatus.ResultReason.WinResultReason._
+import framework.BoardStatus.GameStatus.{GameStatus, PromoReq, StandardReq, _}
 import framework.BoardStatus.ResultReason.DrawResultReason._
+import framework.BoardStatus.ResultReason.WinResultReason._
 import framework.IOEvents._
+import framework.Input._
+import framework.pathfinding.WaypointResult
 
 import scala.language.postfixOps
 import scala.xml._
@@ -137,8 +136,7 @@ case class ChessBoard(
   /**
     * Filters for all pieces that match a predicate.
     */
-  def filterPieces(func: Piece => Boolean): BoardMap =
-    squares map { tup => tup.filter(func) }
+  def filterPieces(func: Piece => Boolean): BoardMap = squares.filter(func)
 
   /**
     * Generates a new [[framework.ChessBoard ChessBoard]] which shares all attributes with this one
@@ -216,7 +214,7 @@ case class ChessBoard(
     * @param to   the end-coordinates
     * @return the updated board
     */
-  def move(from: Sqr, to: Sqr): Option[Output] = if (from.isValid && to.isValid) {
+  def move(from: Sqr, to: Sqr): Option[Output] = if (squares.isValid(from) && squares.isValid(to)) {
     val movingPiece = apply(from)
     val endPiece = apply(to)
     val startColor = movingPiece.color
@@ -511,7 +509,7 @@ case class ChessBoard(
         }
         !capturing && !moving && !enPassant
       case King(color, _) =>
-        val adjacents = square.adjacents.filter(_.isValid)
+        val adjacents = square.adjacents.filter(squares.isValid)
         !adjacents.exists(sq => !isAttacked(sq, color, withKing = true) && apply(sq).color != color)
       case other if other.isInstanceOf[AnyPiece] =>
         val offsets = other match {
@@ -674,7 +672,7 @@ case class ChessBoard(
   @scala.annotation.tailrec
   final def nextPiece(start: Sqr, increment: Sqr): Piece = {
     val incremented = start + increment
-    if (incremented.isValid) apply(incremented) match {
+    if (squares.isValid(incremented)) apply(incremented) match {
       case NoPiece => nextPiece(incremented, increment)
       case piece => piece
     }
@@ -774,7 +772,7 @@ case class ChessBoard(
       alliedPieces exists (sp => !isPinnedPiece(sp._1) && isLegalMove(sp._1, sqr, sp._2, endPiece))
     }
 
-    def adjacents = kingSq.validAdjacents
+    def adjacents = kingSq.adjacents.filter(squares.isValid)
 
     def kingCanMove = adjacents exists (a => {
       val adjacentPiece = apply(a)
@@ -830,7 +828,7 @@ object ChessBoard {
   def fill(piece: Piece)(implicit io: ChessIO): ChessBoard =
     this(BoardMap.fill(piece), Nil, Positions.empty, White, StandardReq)
 
-  val classicalPosition: BoardMap = BoardMap(
+  val classicalPosition: BoardMap = BoardMap(Array(
     Array(Rook(White), Knight(White), Bishop(White), Queen(White), King(White), Bishop(White), Knight(White), Rook(White)),
     Array.fill(8)(Pawn(White)),
     Array.fill(8)(NoPiece),
@@ -840,7 +838,7 @@ object ChessBoard {
     Array.fill(8)(NoPiece),
     Array.fill(8)(NoPiece),
     Array.fill(8)(Pawn(Black)),
-    Array(Rook(Black), Knight(Black), Bishop(Black), Queen(Black), King(Black), Bishop(Black), Knight(Black), Rook(Black)))
+    Array(Rook(Black), Knight(Black), Bishop(Black), Queen(Black), King(Black), Bishop(Black), Knight(Black), Rook(Black))))
 
   /**
     * Defines the classical chess standard board
