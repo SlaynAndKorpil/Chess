@@ -91,7 +91,7 @@ case class Position(pos: BoardMap) extends AnyVal {
         col <- 1 to 8
         column = ChessBoard.columnLetter(col)
         row <- 1 to 8
-        square = Square(column, row)
+        square = Sqr(column, row)
         otherPiece = other.pos(square)
         piece = this.pos(square)
       } yield {

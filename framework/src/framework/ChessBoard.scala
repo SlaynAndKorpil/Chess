@@ -1,13 +1,12 @@
 package framework
 
-import framework.BoardStatus.GameStatus.{GameStatus, PromoReq, StandardReq}
-import framework.pathfinding.WaypointResult
-import framework.Input._
 import framework.BoardStatus.GameResult._
-import framework.BoardStatus.GameStatus._
-import framework.BoardStatus.ResultReason.WinResultReason._
+import framework.BoardStatus.GameStatus.{GameStatus, PromoReq, StandardReq, _}
 import framework.BoardStatus.ResultReason.DrawResultReason._
+import framework.BoardStatus.ResultReason.WinResultReason._
 import framework.IOEvents._
+import framework.Input._
+import framework.pathfinding.WaypointResult
 
 import scala.language.postfixOps
 import scala.xml._
@@ -34,16 +33,16 @@ case class ChessBoard(
   import ChessBoard._
 
   /** All pieces (excluding [[framework.NoPiece NoPiece]]s) and their position */
-  lazy val allPieces: Array[(Square, AnyPiece)] = {
+  lazy val allPieces: Array[(Sqr, AnyPiece)] = {
     val allSquares = for {
       x <- 1 to 8
       col = columnLetter(x)
       row <- 1 to 8
-      square = Square(col, row)
+      square = Sqr(col, row)
       piece: Piece = apply(square)
       if piece.nonEmpty
     } yield (square, piece)
-    allSquares.toArray.asInstanceOf[Array[(Square, AnyPiece)]]
+    allSquares.toArray.asInstanceOf[Array[(Sqr, AnyPiece)]]
   }
 
   /**
@@ -54,14 +53,6 @@ case class ChessBoard(
 
   /** The move counter */
   val turnCounter: Int = history.length / 2
-
-  /**
-    * @param column the one-letter identifier of a column of squares on the board
-    * @return a column of the board, [[scala.None]] if no column with this identifier exists
-    */
-  def getColumn(column: Char): Option[Column] =
-    if (isValidColumn(column)) Some(squares(column))
-    else None
 
   /**
     * Handles different input types depending on the [[framework.ChessBoard#gameStatus gameStatus]].
@@ -115,12 +106,12 @@ case class ChessBoard(
   /**
     * Applies a function to all pieces and returns the results.
     */
-  def mapPiece[T](func: (Square, AnyPiece) => T): IndexedSeq[T] =
+  def mapPiece[T](func: (Sqr, AnyPiece) => T): IndexedSeq[T] =
     for {
       col <- 1 to 8
       column = columnLetter(col)
       row <- 1 to 8
-      square = Square(column, row)
+      square = Sqr(column, row)
       piece = apply(square)
       if piece.nonEmpty
     } yield func(square, piece.asInstanceOf[AnyPiece])
@@ -133,21 +124,19 @@ case class ChessBoard(
     * @return the piece at some specified position
     */
   @inline
-  def apply(sqr: Square): Piece = getPiece(sqr) getOrElse NoPiece
+  def apply(sqr: Sqr): Piece = getPiece(sqr) getOrElse NoPiece
 
   /**
     * @param sqr coordinates of the wanted piece
     * @return the chess square at a specific position on the board, [[scala.None]] if the sqr does not exist
     */
   @inline
-  def getPiece(sqr: Square): Option[Piece] = squares.getPiece(sqr)
+  def getPiece(sqr: Sqr): Option[Piece] = squares.getPiece(sqr)
 
   /**
     * Filters for all pieces that match a predicate.
-    *
     */
-  def filterPieces(func: Piece => Boolean): Map[Char, Column] =
-    squares map { tup => tup._1 -> tup._2.filter(func) }
+  def filterPieces(func: Piece => Boolean): BoardMap = squares.filter(func)
 
   /**
     * Generates a new [[framework.ChessBoard ChessBoard]] which shares all attributes with this one
@@ -207,7 +196,7 @@ case class ChessBoard(
     *
     * @param sqr the square to be emptied
     */
-  def emptySquare(sqr: Square): ChessBoard = clone(squares = squares.emptySquare(sqr))
+  def emptySquare(sqr: Sqr): ChessBoard = clone(squares = squares.emptySquare(sqr))
 
   /**
     * Moves a piece after testing for validity of the move which depends on the following aspects:
@@ -225,7 +214,7 @@ case class ChessBoard(
     * @param to   the end-coordinates
     * @return the updated board
     */
-  def move(from: Square, to: Square): Option[Output] = if (from.isValid && to.isValid) {
+  def move(from: Sqr, to: Sqr): Option[Output] = if (squares.isValid(from) && squares.isValid(to)) {
     val movingPiece = apply(from)
     val endPiece = apply(to)
     val startColor = movingPiece.color
@@ -283,7 +272,7 @@ case class ChessBoard(
     * @tparam T some return type
     * @return either the result of `func` or `onFailure`
     */
-  def doOnCheck[T](func: Square => T, onFailure: T, color: AnyColor = turn): IndexedSeq[T] = {
+  def doOnCheck[T](func: Sqr => T, onFailure: T, color: AnyColor = turn): IndexedSeq[T] = {
     val sqrs = checkedSquares()
     if (sqrs nonEmpty) sqrs map func
     else IndexedSeq(onFailure)
@@ -295,11 +284,11 @@ case class ChessBoard(
     * @param color kings of this color are tested
     * @return a list of all positions with checked kings
     */
-  def checkedSquares(color: AnyColor = turn): IndexedSeq[Square] = {
+  def checkedSquares(color: AnyColor = turn): IndexedSeq[Sqr] = {
     for {
       c <- 1 to 8
       row <- 1 to 8
-      sqr = Square(columnLetter(c), row)
+      sqr = Sqr(columnLetter(c), row)
       piece = apply(sqr)
       if piece === King(color) && isAttacked(sqr, withKing = true)
     } yield sqr
@@ -315,9 +304,9 @@ case class ChessBoard(
     * @param endPiece   the captured piece or [[framework.NoPiece NoPiece]] for an empty square
     * @return `true` if the move is legal, otherwise `false`
     */
-  def isLegalMove(start: Square, end: Square, startPiece: Piece, endPiece: Piece): Boolean = {
-    val startCIndex = start.colIndx
-    val endCIndex = end.colIndx
+  def isLegalMove(start: Sqr, end: Sqr, startPiece: Piece, endPiece: Piece): Boolean = {
+    val startCIndex = start.column
+    val endCIndex = end.column
     val columnDif = endCIndex - startCIndex
     val lineDif = end._2 - start._2
 
@@ -332,7 +321,7 @@ case class ChessBoard(
             val sPos = history.head.startPos
             val ePos = history.head.endPos
             piece === Pawn(color.opposite) &&
-              sPos == Square(end.column, ClassicalValues.pawnStartLine(color.opposite)) &&
+              sPos == Sqr(end.column, ClassicalValues.pawnStartLine(color.opposite)) &&
               ePos == sPos + (0, -2 * direction) &&
               lineDif == direction &&
               (columnDif == 1 || columnDif == -1) &&
@@ -351,14 +340,11 @@ case class ChessBoard(
           //castle
         (!startPiece.moved && (end.column == 'c' || end.column == 'g') && {
             val rookCol = if (end.column == 'c') 'a' else 'h'
-            val rook = apply(Square(rookCol, ClassicalValues.piecesStartLine(color)))
-            val squaresToTest: List[NumericSquare] =
-              AbstractSqrCoordinate.sqr2indxSqr(Square(if (startCIndex < endCIndex) 'g' else 'c', start.row)) to start
+            val rook = apply(Sqr(rookCol, ClassicalValues.piecesStartLine(color)))
+            val squaresToTest: List[Sqr] =
+              Sqr(if (startCIndex < endCIndex) 'g' else 'c', start.row) to start
 
-            def isSqrAttacked(sqr: AbstractSqrCoordinate[_]): Boolean = sqr match {
-              case square: Square => isAttacked(square, turn, withKing = true)
-              case square: NumericSquare => isAttacked(square, turn, withKing = true)
-            }
+            def isSqrAttacked(sqr: Sqr): Boolean = isAttacked(sqr, turn, withKing = true)
 
             rook == Rook(color, false) && squaresToTest.forall(sqr => !isSqrAttacked(sqr)) && isEmptyOrthogonal(start, end)
           })
@@ -373,7 +359,7 @@ case class ChessBoard(
     * @see [[framework.ChessBoard#isAttacked isAttacked]]
     * @return `true` if the square is attacked, otherwise `false`
     */
-  def isAttacked(sqr: Square, withKing: Boolean): Boolean = {
+  def isAttacked(sqr: Sqr, withKing: Boolean): Boolean = {
     val attackedCol = apply(sqr).color
     attackedCol match {
       case col: AnyColor => isAttacked(sqr, col, withKing)
@@ -388,7 +374,7 @@ case class ChessBoard(
     * @param attacked the 'defending' color
     * @return `true` if the square is attacked, otherwise `false`
     */
-  def isAttacked(sqr: Square, attacked: AnyColor, withKing: Boolean): Boolean =
+  def isAttacked(sqr: Sqr, attacked: AnyColor, withKing: Boolean): Boolean =
     attackingPieces(sqr, attacked, withKing) > 0
 
   /**
@@ -399,18 +385,18 @@ case class ChessBoard(
     * @param withKing whether the king should be counted as possible attacker
     * @return `true` if the square is attacked, otherwise `false`
     */
-  def attackingPieces(sqr: Square, attacked: AnyColor, withKing: Boolean = true): Int = {
+  def attackingPieces(sqr: Sqr, attacked: AnyColor, withKing: Boolean = true): Int = {
     implicit class Intersectable[P <: Piece](val content: Array[P]) {
       def ^[OtherP <: Piece](other: Array[OtherP]): Int = (for (i <- content; j <- other) yield if (j === i) 1 else 0) sum
     }
 
     val opponent = attacked.opposite
-    val colI = sqr.colIndx
+    val colI = sqr.column
     val row = sqr.row
 
-    def partNxtPiece(inc: (Int, Int)): Piece = nextPiece(NumericSquare(colI, sqr.row), NumericSquare(inc))
+    def partNxtPiece(inc: (Int, Int)): Piece = nextPiece(sqr, Sqr(inc))
 
-    def partApply(inc: (Int, Int)) = apply(NumericSquare(colI, row) + inc)
+    def partApply(inc: (Int, Int)) = apply(sqr + inc)
 
     val attackedByKnight: Int =
       Array(partApply(1, 2), partApply(2, 1), partApply(2, -1), partApply(1, -2), partApply(-1, 2),
@@ -432,7 +418,7 @@ case class ChessBoard(
     val attackedByPawn: Int = {
       val dir = ClassicalValues.pawnDir(attacked)
 
-      def pieceAtOffset(colD: Int, rowD: Int): Piece = apply(NumericSquare(colI, row) + (colD, rowD))
+      def pieceAtOffset(colD: Int, rowD: Int): Piece = apply(sqr + (colD, rowD))
 
       val arr = Array(pieceAtOffset(1, dir), pieceAtOffset(-1, dir))
 
@@ -442,7 +428,7 @@ case class ChessBoard(
     attackedByKnight + attackedByKing + attackedDiagonally + attackedOrthogonally + attackedByPawn
   }
 
-  def attackingSquares(sqr: Square, attacked: AnyColor, withKing: Boolean = true): Array[(Square, AnyPiece)] = {
+  def attackingSquares(sqr: Sqr, attacked: AnyColor, withKing: Boolean = true): Array[(Sqr, AnyPiece)] = {
     val opponent = attacked.opposite
     allPieces
       .filter(_._2.color == opponent) // filter all pieces of the correct color
@@ -454,7 +440,7 @@ case class ChessBoard(
     * Tests if there is a piece on a specific square that is pinned (it blocks an attack against the king)
     * and thereby cannot be moved.
     */
-  def isPinnedPiece(square: Square): Boolean = getPiece(square) match {
+  def isPinnedPiece(square: Sqr): Boolean = getPiece(square) match {
     case Some(piece) =>
       piece match {
         case NoPiece => false
@@ -462,7 +448,7 @@ case class ChessBoard(
         case anyPiece: AnyPiece =>
           val kings = allPieces filter (_._2 === King(anyPiece.color))
           kings exists { king =>
-            val negVec = NumericSquare((square.colIndx - king._1.colIndx).signum, (square.row - king._1.row).signum)
+            val negVec = Sqr((square.column - king._1.column).signum, (square.row - king._1.row).signum)
 
             val possiblePinner = nextPiece(square, negVec)
 
@@ -491,14 +477,14 @@ case class ChessBoard(
     movesSinceLastCapture / 2 > 50 && movesSinceLastPawnMove / 2 > 50
 
   /**
-    * Tests if a certain [[framework.Square]] is blocked,
+    * Tests if a certain [[framework.Sqr]] is blocked,
     * i.e. the piece on the square cannot move.
     * When the square is empty, `false` is returned.
     */
-  def isBlockedSquare(square: Square): Boolean = {
+  def isBlockedSquare(square: Sqr): Boolean = {
     val piece = apply(square)
 
-    def atOffset(off: (Int, Int)): Square = square + off
+    def atOffset(off: (Int, Int)): Sqr = square + off
 
     def offsetPiece(off: (Int, Int)) = getPiece(atOffset(off))
 
@@ -523,7 +509,7 @@ case class ChessBoard(
         }
         !capturing && !moving && !enPassant
       case King(color, _) =>
-        val adjacents = square.adjacents.filter(_.isValid)
+        val adjacents = square.adjacents.filter(squares.isValid)
         !adjacents.exists(sq => !isAttacked(sq, color, withKing = true) && apply(sq).color != color)
       case other if other.isInstanceOf[AnyPiece] =>
         val offsets = other match {
@@ -573,9 +559,9 @@ case class ChessBoard(
         .forall(isBlockedSquare)
 
     def kingsBlocked = {
-      val kings: Array[(Square, AnyPiece)] = allPieces filter (_._2.isInstanceOf[King]) reverse
+      val kings: Array[(Sqr, AnyPiece)] = allPieces filter (_._2.isInstanceOf[King]) reverse
 
-      def kingIsBlocked(kingOnSq: (Square, AnyPiece)): Boolean = {
+      def kingIsBlocked(kingOnSq: (Sqr, AnyPiece)): Boolean = {
         import framework.pathfinding.KingMovementPathfinder
         import framework.pathfinding.WaypointResult._
 
@@ -585,7 +571,7 @@ case class ChessBoard(
         val kingColor = king.color
 
         val pathfinder = new KingMovementPathfinder {
-          override def decision(pos: Square): WaypointResult.Value = getPiece(pos) match {
+          override def decision(pos: Sqr): WaypointResult.Value = getPiece(pos) match {
             case Some(piece) if !isAttacked(pos, kingColor, withKing = false) && kingColor != piece.color =>
               piece.color match {
                 case color: AnyColor if color == kingColor.opposite => Positive
@@ -644,7 +630,7 @@ case class ChessBoard(
     val piecesOfColor = // pieces of specified color without kings
       allPieces
         .map { tup => /*replace square with square color*/
-          (if (tup._1.colIndx % 2 == tup._1.row % 2) Black else White, tup._2) }
+          (if (tup._1.column % 2 == tup._1.row % 2) Black else White, tup._2) }
         .filter(_._2.color == color)
         .filterNot(_._2 === King(color))
 
@@ -684,9 +670,9 @@ case class ChessBoard(
     * @return the first piece on a line
     */
   @scala.annotation.tailrec
-  final def nextPiece(start: NumericSquare, increment: NumericSquare): Piece = {
+  final def nextPiece(start: Sqr, increment: Sqr): Piece = {
     val incremented = start + increment
-    if (incremented.isValid) apply(incremented) match {
+    if (squares.isValid(incremented)) apply(incremented) match {
       case NoPiece => nextPiece(incremented, increment)
       case piece => piece
     }
@@ -698,7 +684,7 @@ case class ChessBoard(
     *
     * @see [[framework.ChessBoard#isEmptyDiagonal isEmptyDiagonal]]
     */
-  def isEmptyOrthogonal(from: Square, to: Square): Boolean = {
+  def isEmptyOrthogonal(from: Sqr, to: Sqr): Boolean = {
     val orthogonal = from._1 == to._1 || from._2 == to._2
     orthogonal && isEmptyConnection(from, to)
   }
@@ -709,9 +695,9 @@ case class ChessBoard(
     *
     * @see [[framework.ChessBoard#isEmptyOrthogonal isEmptyOrthogonal]]
     */
-  def isEmptyDiagonal(from: Square, to: Square): Boolean = {
-    val startColIndex = from.colIndx
-    val endColIndex = to.colIndx
+  def isEmptyDiagonal(from: Sqr, to: Sqr): Boolean = {
+    val startColIndex = from.column
+    val endColIndex = to.column
     val diagonal = startColIndex - endColIndex == from._2 - to._2 || startColIndex - to._2 == endColIndex - from._2
     diagonal && isEmptyConnection(from, to)
   }
@@ -723,7 +709,7 @@ case class ChessBoard(
     * @param piece  the piece the square shall be updated to
     * @return a ChessBoard with updated squares.
     */
-  def updated(square: Square, piece: Piece): ChessBoard =
+  def updated(square: Sqr, piece: Piece): ChessBoard =
     clone(squares = squares.updated(square, piece))
 
   /**
@@ -738,7 +724,7 @@ case class ChessBoard(
     * @param endColor   color of the piece on the end square
     * @return the board after the move
     */
-  private def doMove(from: Square, to: Square, piece: Piece, startColor: Color, endColor: Color): ChessBoard = {
+  private def doMove(from: Sqr, to: Sqr, piece: Piece, startColor: Color, endColor: Color): ChessBoard = {
     val updatedStatus: GameStatus = piece match {
       case Pawn(color, _) if to.row == ClassicalValues.piecesStartLine(color.opposite) =>
         PromoReq(to)
@@ -773,7 +759,7 @@ case class ChessBoard(
     else index + 1
   }
 
-  private def kingIsMate(testedKing: (Square, AnyPiece)): Boolean = {
+  private def kingIsMate(testedKing: (Sqr, AnyPiece)): Boolean = {
     lazy val kingColor = turn
     val kingSq = testedKing._1
     lazy val alliedPieces = allPieces.filter(piece => {
@@ -781,12 +767,12 @@ case class ChessBoard(
     })
 
     //tests if any piece can move to a specific position (-> block or capture)
-    def piecesCanMoveTo(sqr: Square): Boolean = {
+    def piecesCanMoveTo(sqr: Sqr): Boolean = {
       val endPiece = apply(sqr)
       alliedPieces exists (sp => !isPinnedPiece(sp._1) && isLegalMove(sp._1, sqr, sp._2, endPiece))
     }
 
-    def adjacents = kingSq.validAdjacents
+    def adjacents = kingSq.adjacents.filter(squares.isValid)
 
     def kingCanMove = adjacents exists (a => {
       val adjacentPiece = apply(a)
@@ -809,10 +795,10 @@ case class ChessBoard(
   }
 
   @scala.annotation.tailrec
-  private def isEmptyConnection(from: Square, to: Square): Boolean = {
-    val startColIndex = from.colIndx
-    val endColIndex = to.colIndx
-    val incremented: Square = NumericSquare((endColIndex - startColIndex).signum, (to._2 - from._2).signum) + from
+  private def isEmptyConnection(from: Sqr, to: Sqr): Boolean = {
+    val startColIndex = from.column
+    val endColIndex = to.column
+    val incremented: Sqr = Sqr((endColIndex - startColIndex).signum, (to._2 - from._2).signum) + from
     if (incremented == to) true
     else if (apply(incremented).isEmpty) isEmptyConnection(incremented, to)
     else false
@@ -840,57 +826,17 @@ object ChessBoard {
     * @return a fully filled [[framework.ChessBoard ChessBoard]]
     */
   def fill(piece: Piece)(implicit io: ChessIO): ChessBoard =
-    this(Array.fill(8)(Column(piece)), Nil, Positions.empty, White).get
+    this(BoardMap.fill(piece), Nil, Positions.empty, White, StandardReq)
 
-  val classicalPosition: BoardMap = BoardMap(
-    'a' -> new Column(Map(
-      1 -> Rook(White),
-      2 -> Pawn(White),
-      7 -> Pawn(Black),
-      8 -> Rook(Black)
-    )),
-    'b' -> new Column(Map(
-      1 -> Knight(White),
-      2 -> Pawn(White),
-      7 -> Pawn(Black),
-      8 -> Knight(Black)
-    )),
-    'c' -> new Column(Map(
-      1 -> Bishop(White),
-      2 -> Pawn(White),
-      7 -> Pawn(Black),
-      8 -> Bishop(Black)
-    )),
-    'd' -> new Column(Map(
-      1 -> Queen(White),
-      2 -> Pawn(White),
-      7 -> Pawn(Black),
-      8 -> Queen(Black)
-    )),
-    'e' -> new Column(Map(
-      1 -> King(White),
-      2 -> Pawn(White),
-      7 -> Pawn(Black),
-      8 -> King(Black)
-    )),
-    'f' -> new Column(Map(
-      1 -> Bishop(White),
-      2 -> Pawn(White),
-      7 -> Pawn(Black),
-      8 -> Bishop(Black)
-    )),
-    'g' -> new Column(Map(
-      1 -> Knight(White),
-      2 -> Pawn(White),
-      7 -> Pawn(Black),
-      8 -> Knight(Black)
-    )),
-    'h' -> new Column(Map(
-      1 -> Rook(White),
-      2 -> Pawn(White),
-      7 -> Pawn(Black),
-      8 -> Rook(Black)
-    )))
+  val classicalPosition: BoardMap = BoardMap(Array(
+    Array(Rook(White), Knight(White), Bishop(White), Queen(White), King(White), Bishop(White), Knight(White), Rook(White)),
+    Array.fill(8)(Pawn(White)),
+    Array.fill(8)(NoPiece),
+    Array.fill(8)(NoPiece),
+    Array.fill(8)(NoPiece),
+    Array.fill(8)(NoPiece),
+    Array.fill(8)(Pawn(Black)),
+    Array(Rook(Black), Knight(Black), Bishop(Black), Queen(Black), King(Black), Bishop(Black), Knight(Black), Rook(Black))))
 
   /**
     * Defines the classical chess standard board
@@ -899,25 +845,6 @@ object ChessBoard {
     */
   def classicalBoard(implicit io: ChessIO): ChessBoard =
     ChessBoard(classicalPosition, Nil, Positions.empty, White, StandardReq)(io, ClassicPosition)
-
-  /**
-    * Generator for chessboards.
-    */
-  def apply(columns: Array[Column], history: List[MoveData], positions: Positions, turn: AnyColor)
-           (implicit io: ChessIO): Option[ChessBoard] =
-    if (columns.length >= 8) {
-      val board = BoardMap(
-        'a' -> columns(0),
-        'b' -> columns(1),
-        'c' -> columns(2),
-        'd' -> columns(3),
-        'e' -> columns(4),
-        'f' -> columns(5),
-        'g' -> columns(6),
-        'h' -> columns(7)
-      )
-      Some(new ChessBoard(board, history, positions, turn, StandardReq)(io, ArbitraryPosition(board)))
-    } else None
 
   /**
     * Saves a [[framework.ChessBoard]] to a file using the xml format.
@@ -962,12 +889,6 @@ object ChessBoard {
       case _: Throwable =>
         Left(FileOperationError.FileNotFoundError(path))
     }
-
-  /**
-    * Saves a board as XML
-    */
-  def saveSquares(squares: Map[Char, Column]): NodeSeq =
-    for (x <- 1 to 8; col = columnLetter(x)) yield <col>{squares(col).saveData}</col> copy (label = col.toUpper toString)
 
   /**
     * Converts a column index to it's corresponding character.
@@ -1031,9 +952,9 @@ object ChessBoard {
     def pawnDir(color: AnyColor): Int =
       if (color == White) 1 else -1
 
-    /** @return the [[framework.Square]] where the king of this color is placed. */
-    def kingStartSquare(color: AnyColor): Square =
-      Square('e', piecesStartLine(color))
+    /** @return the [[framework.Sqr]] where the king of this color is placed. */
+    def kingStartSquare(color: AnyColor): Sqr =
+      Sqr('e', piecesStartLine(color))
   }
 
 }

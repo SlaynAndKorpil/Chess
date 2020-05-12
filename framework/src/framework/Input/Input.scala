@@ -1,6 +1,6 @@
 package framework.Input
 
-import framework.{AnyColor, AnyPiece, Square}
+import framework.{AnyColor, AnyPiece, Sqr}
 
 /**
   * Inputs for [[framework.ChessBoard#receive framework.ChessBoard]] or [[framework.ChessIO#receiveInput framework.ChessIO]]
@@ -11,7 +11,7 @@ import framework.{AnyColor, AnyPiece, Square}
 sealed abstract class Input[InputType](val value: InputType)
 
 /** A move action. */
-final case class MoveParams(from: Square, to: Square) extends Input(from -> to)
+final case class MoveParams(from: Sqr, to: Sqr) extends Input(from -> to)
 
 /** A promotion to a piece type. */
 final case class Promotion(piece: (AnyColor, Boolean) => AnyPiece) extends Input(piece)

@@ -4,6 +4,7 @@ import FileOperationError._
 import BoardStatus.GameStatus._
 import ChessBoard.columnLetter
 
+import scala.language.postfixOps
 import scala.xml._
 
 /**
@@ -54,12 +55,12 @@ object SaveLoader {
     (xml \ nodeName).text.filter(c => c != ' ' && c != '\n')
 
   trait Loader {
-    def loadSquaresFromXML(xml: Node): Either[FileOperationError, Map[Char, Column]]
+    def loadSquaresFromXML(xml: Node): Either[FileOperationError, BoardMap]
 
     /** Loads a board from toXml */
     def load(xml: Elem)(implicit io: ChessIO): Either[FileOperationError, ChessBoard]
 
-    def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, Column]
+    def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, Array[Piece]]
 
     def loadPieceFromXML(xml: NodeSeq): Either[FileOperationError, Piece]
   }
@@ -68,11 +69,11 @@ object SaveLoader {
     * Chosen when no other loader is defined for a specific version
     */
   object NoLoaderDefined extends Loader {
-    override def loadSquaresFromXML(xml: Node): Either[FileOperationError, Map[Char, Column]] = Left(BoardLoadingError(xml.toString))
+    override def loadSquaresFromXML(xml: Node): Either[FileOperationError, BoardMap] = Left(BoardLoadingError(xml.toString))
 
     override def load(xml: Elem)(implicit io: ChessIO): Either[FileOperationError, ChessBoard] = Left(UnknownVersionError)
 
-    override def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, Column] = Left(ColumnLoadingError(xml.toString))
+    override def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, Array[Piece]] = Left(ColumnLoadingError(xml.toString))
 
     override def loadPieceFromXML(xml: NodeSeq): Either[FileOperationError, Piece] = Left(PieceLoadingError(xml.toString))
   }
@@ -86,15 +87,14 @@ object SaveLoader {
         case col: AnyColor =>
           val squares = loadSquaresFromXML(boardData.head)
 
-          val history =
+          val history: Either[HistoryLoadingError, List[MoveData]] =
             try Right(
-              moves map (move =>
-                MoveData(
-                  Square(extractWithFilter(move, "start").head, extractWithFilter(move, "start").last.asDigit),
+              (moves map {move => MoveData(
+                  Sqr(extractWithFilter(move, "start").head, extractWithFilter(move, "start").last.asDigit),
                   Piece(extractWithFilter(move, "movedPiece").head, Color(extractWithFilter(move, "movedPiece").last), moved = true),
-                  Square(extractWithFilter(move, "end").head, extractWithFilter(move, "end").last.asDigit),
+                  Sqr(extractWithFilter(move, "end").head, extractWithFilter(move, "end").last.asDigit),
                   extractWithFilter(move, "capture").toBoolean
-                )) toList
+                )}).toList
             )
             catch {
               case _: Throwable => Left(HistoryLoadingError(moves.toString))
@@ -129,16 +129,15 @@ object SaveLoader {
     }
 
     override def loadSquaresFromXML(xml: Node): Either[FileOperationError, BoardMap] = {
-      val loadedSquares: IndexedSeq[(Char, Either[FileOperationError, Column])] = for {
+      val loadedSquares: Array[Either[FileOperationError, Array[Piece]]] = (for {
         x <- 1 to 8
         col = columnLetter(x)
-      } yield col -> loadColumnFromXML(xml \ col.toString.toUpperCase)
-      val possibleError = loadedSquares find (_._2.isLeft) map (_._2.left)
+      } yield loadColumnFromXML(xml \ col.toString.toUpperCase)).toArray
+      val possibleError = loadedSquares find (_.isLeft) map (_.left)
+
       possibleError match {
         case None =>
-          val res = loadedSquares.map { tup =>
-            (tup._1, tup._2.right.get)
-          }
+          val res = loadedSquares map { piece => piece.right.get }
           Right(BoardMap(res))
         case Some(error) =>
           Left(error.get)
@@ -146,12 +145,12 @@ object SaveLoader {
     }
 
     /**
-      * Loads a [[framework.Column]] from toXml data.
+      * Loads a column from toXml data.
       *
       * @param xml data formatted as toXml
       * @return the loaded column
       */
-    override def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, Column] = {
+    override def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, Array[Piece]] = {
       try {
         var pieces: Array[Piece] = Array.empty
         var errors: Array[FileOperationError] = Array.empty
@@ -167,7 +166,7 @@ object SaveLoader {
           case Left(error) =>
             errors :+= error
         }
-        if (pieces.length >= 8) Right(new Column(pieces))
+        if (pieces.length >= 8) Right(pieces)
         else Left(errors.head)
       }
       catch {
@@ -202,9 +201,9 @@ object SaveLoader {
                 val end = move \@ "end"
                 val captured = move \@ "capture"
                 MoveData(
-                  Square(start.head, start.last.asDigit),
+                  Sqr(start.head, start.last.asDigit),
                   Piece(movedPiece.head, Color(movedPiece.last), moved = true),
-                  Square(end.head, end.last.asDigit),
+                  Sqr(end.head, end.last.asDigit),
                   captured.toBoolean
                 )
               }) toList
@@ -248,16 +247,14 @@ object SaveLoader {
     }
 
     override def loadSquaresFromXML(xml: Node): Either[FileOperationError, BoardMap] = {
-      val loadedSquares: IndexedSeq[(Char, Either[FileOperationError, Column])] = for {
+      val loadedSquares: Array[Either[FileOperationError, Array[Piece]]] = (for {
         x <- 1 to 8
         col = columnLetter(x)
-      } yield col -> loadColumnFromXML(xml \ col.toString.toUpperCase)
-      val possibleError = loadedSquares find (_._2.isLeft) map (_._2.left)
+      } yield loadColumnFromXML(xml \ col.toString.toUpperCase)).toArray
+      val possibleError = loadedSquares find (_.isLeft) map (_.left)
       possibleError match {
         case None =>
-          val res = loadedSquares.map { tup =>
-            (tup._1, tup._2.right.get)
-          }
+          val res = loadedSquares.map { _.right.get }
           Right(BoardMap(res))
         case Some(error) =>
           Left(error.get)
@@ -265,12 +262,12 @@ object SaveLoader {
     }
 
     /**
-      * Loads a [[framework.Column]] from toXml data.
+      * Loads a column from toXml data.
       *
       * @param xml data formatted as toXml
       * @return the loaded column
       */
-    override def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, Column] = {
+    override def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, Array[Piece]] = {
       try {
         var pieces: Array[Piece] = Array.empty
         var errors: Array[FileOperationError] = Array.empty
@@ -286,7 +283,7 @@ object SaveLoader {
           case Left(error) =>
             errors :+= error
         }
-        if (pieces.length >= 8) Right(new Column(pieces))
+        if (pieces.length >= 8) Right(pieces)
         else Left(errors.head)
       }
       catch {
@@ -336,16 +333,16 @@ object SaveLoader {
                 if (move.attributes.exists(_.key == "promoPiece")) {
                   val promoPieceId = (move \@ "promoPiece").head
                   PromotionMove(
-                    Square(start.head, start.last.asDigit),
+                    Sqr(start.head, start.last.asDigit),
                     Piece(pieceId, color, moved = true),
-                    Square(end.head, end.last.asDigit),
+                    Sqr(end.head, end.last.asDigit),
                     captured.toBoolean,
                     Piece(promoPieceId, color, moved = false))
                 }
                 else MoveData(
-                  Square(start.head, start.last.asDigit),
+                  Sqr(start.head, start.last.asDigit),
                   Piece(pieceId, color, moved = true),
-                  Square(end.head, end.last.asDigit),
+                  Sqr(end.head, end.last.asDigit),
                   captured.toBoolean)
               }) toList
             )
@@ -369,7 +366,7 @@ object SaveLoader {
             if (moveHistory.isEmpty) Positions.empty
             else {
               val boards: IndexedSeq[BoardMap] = moveHistory.tail.foldRight(Array(startPos.right.get.squares)) {
-                (move, positions) => getNextPositionAfterMove(BoardMap(positions.head), move) +: positions
+                (move, positions) => getNextPositionAfterMove(positions.head, move) +: positions
               }
               Positions(boards map Position)
             }
@@ -405,16 +402,14 @@ object SaveLoader {
     }
 
     override def loadSquaresFromXML(xml: Node): Either[FileOperationError, BoardMap] = {
-      val loadedSquares: IndexedSeq[(Char, Either[FileOperationError, Column])] = for {
+      val loadedSquares: Array[Either[FileOperationError, Array[Piece]]] = (for {
         x <- 1 to 8
         col = columnLetter(x)
-      } yield col -> loadColumnFromXML(xml \ col.toString.toUpperCase)
-      val possibleError = loadedSquares find (_._2.isLeft) map (_._2.left)
+      } yield loadColumnFromXML(xml \ col.toString.toUpperCase)).toArray
+      val possibleError = loadedSquares find (_.isLeft) map (_.left)
       possibleError match {
         case None =>
-          val res = loadedSquares.map { tup =>
-            (tup._1, tup._2.right.get)
-          }
+          val res = loadedSquares.map { _.right.get }
           Right(BoardMap(res))
         case Some(error) =>
           Left(error.get)
@@ -422,12 +417,12 @@ object SaveLoader {
     }
 
     /**
-      * Loads a [[framework.Column]] from toXml data.
+      * Loads a column from toXml data.
       *
       * @param xml data formatted as toXml
       * @return the loaded column
       */
-    override def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, Column] = {
+    override def loadColumnFromXML(xml: NodeSeq): Either[FileOperationError, Array[Piece]] = {
       try {
         var pieces: Array[Piece] = Array.empty
         var errors: Array[FileOperationError] = Array.empty
@@ -443,7 +438,7 @@ object SaveLoader {
           case Left(error) =>
             errors :+= error
         }
-        if (pieces.length >= 8) Right(new Column(pieces))
+        if (pieces.length >= 8) Right(pieces)
         else Left(errors.head)
       }
       catch {

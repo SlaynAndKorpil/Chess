@@ -3,7 +3,7 @@ package graphics
 import framework.BoardStatus.GameResult._
 import framework.BoardStatus.ResultReason.DrawResultReason.InsufficientMaterial
 import framework.IOEvents._
-import framework.{ChessBoard, ChessIO, Square, AnyColor}
+import framework.{ChessBoard, ChessIO, Sqr, AnyColor}
 import framework.FileOperationError._
 import framework.Input._
 
@@ -29,23 +29,23 @@ class Board(val window: CWindow) extends GridPanel(0, 9) with BoardEventHandler 
         else if (j == 0) new CTextField(row.toString)
         else {
           val color: BoardColor = if (i % 2 == j % 2) Brown.White else Brown.Black
-          val pos = Square(col, row)
+          val pos = Sqr(col, row)
           new SquareButton(color, pos, chessBoard(pos))
         }
     }
     contents foreach (comp => listenTo(comp))
   }
 
-  def unselect(square: Square): Unit =
+  def unselect(square: Sqr): Unit =
     getSquareOnCoordinate(square) match {
       case Some(s) => s.unselect()
       case _ =>
     }
 
-  private def getSquareOnCoordinate(square: Square): Option[SquareButton] =
-    if (square.isValid) {
+  private def getSquareOnCoordinate(square: Sqr): Option[SquareButton] =
+    if (board.squares.isValid(square)) {
       val row = 9 - square.row
-      val col = square.colIndx + 1
+      val col = square.column + 1
       val indx = col + 9 * row - 10
       contents(indx) match {
         case s: SquareButton => Some(s)
@@ -105,7 +105,7 @@ class Board(val window: CWindow) extends GridPanel(0, 9) with BoardEventHandler 
       displayCheck(pos)
   }
 
-  def displayCheck(on: Square): Unit =
+  def displayCheck(on: Sqr): Unit =
     getSquareOnCoordinate(on) match {
       case Some(square) =>
         square.checked = true

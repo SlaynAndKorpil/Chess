@@ -1,7 +1,7 @@
 package graphics
 
 import framework.Input.{MoveParams, Promotion}
-import framework.{AnyColor, AnyPiece, Square}
+import framework.{AnyColor, AnyPiece, Sqr}
 
 /**
   * [Description]
@@ -12,7 +12,7 @@ import framework.{AnyColor, AnyPiece, Square}
 trait BoardEventHandler {
   self: Board =>
 
-  private var selectedSquare: Square = _
+  private var selectedSquare: Sqr = _
 
   reactions += {
     case SquarePressed(square) =>
@@ -41,7 +41,7 @@ trait BoardEventHandler {
 
   def saveBoard(file: String): Unit = framework.ChessBoard.save(board, file)
 
-  private def move(from: Square, to: Square): Unit =
+  private def move(from: Sqr, to: Sqr): Unit =
     receiveInput(MoveParams(from, to))
 
   private def promote(piece: (AnyColor, Boolean) => AnyPiece): Unit =

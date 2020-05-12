@@ -29,5 +29,5 @@ object ClassicPosition extends StartPosition {
   * @param squares the pieces
   */
 case class ArbitraryPosition(squares: BoardMap) extends StartPosition {
-  def xml: NodeSeq = ChessBoard.saveSquares(squares)
+  def xml: NodeSeq = squares.toXml
 }
