@@ -1,6 +1,6 @@
 package framework
 
-import framework.ChessBoard.columnLetter
+import framework.ChessBoard.{columnLetter, columnIndex}
 
 import scala.xml._
 
@@ -89,10 +89,16 @@ final case class BoardMap(pieces: Array[Array[Piece]]) {
     piece match {
       case Pawn(_, _) if apply(to).isEmpty && from.column != to.column =>
         result = result.emptySquare(Sqr(to.column, from.row))
-      case King(color, moved) if !moved && (to.column == 'c' || to.column == 'g') =>
+      case King(color, moved)
+        if !moved && (to.column == columnIndex('c') || to.column == columnIndex('g')) =>
+
         val row = ChessBoard.ClassicalValues.piecesStartLine(color)
-        val col = if (to.column == 'c') 'd' else 'f'
-        val emptyCol = if (to.column == 'c') 'a' else 'h'
+        val col =
+          if (to.column == columnIndex('c')) columnIndex('d')
+          else columnIndex('f')
+        val emptyCol =
+          if (to.column == columnIndex('c')) columnIndex('a')
+          else columnIndex('h')
         result = result.updated(Sqr(col, row), Rook(color)).emptySquare(Sqr(emptyCol, row))
       case _ =>
     }
