@@ -4,6 +4,9 @@ import scala.language.implicitConversions
 
 /**
   * A coordinate of a square.
+  * `column` and `row` are 1-based so they better represent actual chess notation.
+  * When accessing the arrays in [[framework.BoardMap]] they get converted into
+  * actual indices. (see `BoardMap.getPiece`)
   *
   * @version alpha 0.1
   * @author Felix Lehner
@@ -35,6 +38,7 @@ case class Sqr(column: Int, row: Int) {
 
   /**
     * All adjacent squares.
+    * Use `BoardMap.isValid` to filter for valid adjacent squares on a specific board.
     *
     * @see [[framework.Sqr#validAdjacents]] for
     *      adjacent squares that are on the board.

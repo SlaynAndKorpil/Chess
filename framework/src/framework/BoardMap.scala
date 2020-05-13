@@ -6,12 +6,18 @@ import scala.xml._
 
 /**
   * A chess board. Stores pieces in a 2 dimensional system (columns and rows).
+  * Does not assume that the 2 dimensional array that holds the [[framework.Piece Pieces]] has a length of 8x8
+  * so you could build bigger or smaller boards. See `isValid` to check whether a certain [[framework.Sqr]] describes
+  * a valid square on a specific board.
   *
+  * @constructor the outer array are the lines and the inner array contains the pieces
   * @author Felix Lehner
   * @version
   */
 final case class BoardMap(pieces: Array[Array[Piece]]) {
   /**
+    * Turns the coordinates of a [[framework.Sqr]] into actual indices to get the corresponding [[framework.Piece]].
+    *
     * @param sqr coordinates of the wanted piece
     * @return the chess square at a specific position on the board, [[scala.None]] if the sqr does not exist
     */
