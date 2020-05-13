@@ -12,12 +12,19 @@ import scala.language.postfixOps
 import scala.xml._
 
 /**
+  * Describes a chess game (I know it is called ChessBoard and
+  * not ChessGame but would you please just shut the fuck up
+  * and leave me alone? EVER HEARD OF CREATIVE FREEDOM?!?!) by
+  * combining relevant information about the state of the game
+  * with methods to manipulate those and a [[framework.ChessIO]]
+  * used as a channel for input to and output from the game.
+  *
   * Defines a classical 1 vs 1 chess board
   * and defines an access via the `receive` method.
   * Use the companion object to initialize.
   *
-  * @constructor The implicit `io` param is used as an interface
-  *              by/to this obj.
+  * @constructor Should be self-descriptive so if you do not get it
+  *              it is your fault.
   * @version alpha 0.3
   * @author Felix Lehner
   */
@@ -27,8 +34,7 @@ case class ChessBoard(
                        positions: Positions,
                        turn: AnyColor,
                        gameStatus: GameStatus
-                     )(implicit val io: ChessIO, val startPos: StartPosition = ArbitraryPosition(squares))
-  extends BoardMeta {
+                     )(implicit val io: ChessIO, val startPos: StartPosition = ArbitraryPosition(squares)) {
 
   import ChessBoard._
 
@@ -259,6 +265,76 @@ case class ChessBoard(
       Output(resBoard, events) asSome
     } else None
   } else None
+
+  /**
+    * Takes the last move back.
+    * If any of the players was checked, also a [[framework.IOEvents.ShowCheck ShowCheck]] event is triggered.
+    */
+  private[framework] def takeback: Option[Output] =
+    if (positions.length >= 1) {
+      val resBoard = clone(
+        squares = positions.head.pos,
+        positions = positions --,
+        history = history.tail,
+        gameStatus = StandardReq,
+        turn = turn.opposite)
+      val takebackCheckEvents = resBoard.doOnCheck(pos => ShowCheck(pos), NoEvent)
+      Output(
+        resBoard,
+        Array(RemoveTakeback) ++ takebackCheckEvents
+      ) asSome
+    }
+    else None
+
+  /**
+    * Resigns the game, i.e. grants the win to the opposite color.
+    */
+  private[framework] def resign: Ended =
+    Ended(Win(turn.opposite)(Resignation))
+
+  /**
+    * Promotes a pawn to a given piece.
+    *
+    * @param piece the piece's apply method
+    * @return an updated [[framework.ChessBoard ChessBoard]] of [[scala.None]] when the piece type is incorrect
+    */
+  private[framework] def promote(piece: (AnyColor, Boolean) => AnyPiece): Option[Output] = {
+    val promoColor = turn.opposite
+    val promoPiece = piece match {
+      case Queen =>
+        Queen(promoColor)
+      case Bishop =>
+        Bishop(promoColor)
+      case Knight =>
+        Knight(promoColor)
+      case Rook =>
+        Rook(promoColor)
+      case _ => NoPiece
+    }
+
+    if (promoPiece != NoPiece) {
+      gameStatus match {
+        case PromoReq(sqr: Sqr) =>
+          val updatedHistory =
+            PromotionMove(history.head.startPos, history.head.piece, sqr, history.head.captured, promoPiece) :: this.history.tail
+          val result = updated(sqr, promoPiece).clone(gameStatus = StandardReq, history = updatedHistory)
+          val promoCheckEvents: IndexedSeq[IOEvent] =
+            result.doOnCheck[Array[IOEvent]](pos => Array(ShowCheck(pos)), Array()).flatten
+
+          // checkmate
+          if (promoCheckEvents.nonEmpty && result.isMate) {
+            val status = Ended(turn match {
+              case White => WhiteWins by Mate
+              case Black => BlackWins by Mate
+            })
+
+            Output(result.clone(gameStatus = status), Array(RemovePromotion, ShowEnded(status.result))) asSome
+          } else Output(result, RemovePromotion +: promoCheckEvents) asSome
+        case _ => None
+      }
+    }
+    else None
+  }
 
   /** Tests if a player is currently checked. */
   def isCheck(color: AnyColor = turn): Boolean = checkedSquares(color) nonEmpty
