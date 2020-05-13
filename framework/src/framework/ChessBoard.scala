@@ -335,14 +335,14 @@ case class ChessBoard(
         isEmptyOrthogonal(start, end)
       case Queen(_, _) =>
         isEmptyOrthogonal(start, end) || isEmptyDiagonal(start, end)
-      case King(color, _) =>
+      case King(color, moved) =>
         (columnDif <= 1 && columnDif >= -1 && lineDif <= 1 && lineDif >= -1) ||
           //castle
-        (!startPiece.moved && (end.column == 'c' || end.column == 'g') && {
-            val rookCol = if (end.column == 'c') 'a' else 'h'
+        (!moved && (end.column == columnIndex('c') || end.column == columnIndex('g')) && {
+            val rookCol = if (end.column == columnIndex('c')) columnIndex('a') else columnIndex('h')
             val rook = apply(Sqr(rookCol, ClassicalValues.piecesStartLine(color)))
             val squaresToTest: List[Sqr] =
-              Sqr(if (startCIndex < endCIndex) 'g' else 'c', start.row) to start
+              Sqr(if (startCIndex < endCIndex) columnIndex('g') else columnIndex('c'), start.row) to start
 
             def isSqrAttacked(sqr: Sqr): Boolean = isAttacked(sqr, turn, withKing = true)
 
