@@ -23,11 +23,13 @@ It currently features:
 ## [GUI Application](https://github.com/SlaynAndKorpil/Chess/tree/master/graphics)
 When you start the .jar the game will open.
 Right now there are neither animations nor sounds because I normally turn these off in chess apps. I might add these in on demand.
+&nbsp;
+
+**Example**
 
 ## [CLI Application](https://github.com/SlaynAndKorpil/Chess/tree/master/console)
 Use 'console' argument to start in console mode:
 > java -jar Chess.jar console
-
 &nbsp;
 
 **Example**
