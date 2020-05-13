@@ -28,7 +28,7 @@ Right now there are neither animations nor sounds because I normally turn these 
 
 **Example**
 
-![example](https://github.com/SlaynAndKorpil/Chess/tree/master/example.gif)
+![example](https://github.com/SlaynAndKorpil/Chess/blob/master/example.gif)
 ## [CLI Application](https://github.com/SlaynAndKorpil/Chess/tree/master/console)
 Use 'console' argument to start in console mode:
 > java -jar Chess.jar console
