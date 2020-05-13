@@ -16,7 +16,7 @@ import scala.xml._
   * not ChessGame but would you please just shut the fuck up
   * and leave me alone? EVER HEARD OF CREATIVE FREEDOM?!?!) by
   * combining relevant information about the state of the game
-  * with methods to manipulate those and a [[framework.ChessIO]]
+  * with logic to manipulate those and a [[framework.ChessIO]]
   * used as a channel for input to and output from the game.
   *
   * Defines a classical 1 vs 1 chess board
@@ -38,7 +38,7 @@ case class ChessBoard(
 
   import ChessBoard._
 
-  /** All pieces (excluding [[framework.NoPiece NoPiece]]s) and their position */
+  /** All pieces (excluding [[framework.NoPiece NoPieces]]) and their position */
   lazy val allPieces: Array[(Sqr, AnyPiece)] = {
     val allSquares = for {
       x <- 1 to 8
@@ -467,8 +467,6 @@ case class ChessBoard(
     }
 
     val opponent = attacked.opposite
-    val colI = sqr.column
-    val row = sqr.row
 
     def partNxtPiece(inc: (Int, Int)): Piece = nextPiece(sqr, Sqr(inc))
 
