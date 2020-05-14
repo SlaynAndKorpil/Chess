@@ -240,7 +240,7 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
         s"${names.head}     $params\n" +
           "--------------------------------------------\n" +
           s"$help\n" +
-          s"Aliases: ${names mkString "|"}"
+          s"Aliases: ${names.tail.mkString(" | ")}"
       }
     }
 
