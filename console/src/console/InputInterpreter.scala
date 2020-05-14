@@ -162,7 +162,6 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
         "Ask your opponent for allowance to take the last move back. Answers can either be y(es) or n(o)."
       override val description: String = "Take the last move back."
       override val names: Array[String] = Array("takeback", "t")
-      override val paramInfo: String = noParams
 
       override def apply(params: String): Question = {
         receiveInput(TakebackProposal)
@@ -175,7 +174,6 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
         "Asks for a draw. When the same position was reached three times or the fifty moves rule applies, a draw by repetition is caused automatically."
       override val description: String = "Propose a draw."
       override val names: Array[String] = Array("draw")
-      override val paramInfo: String = noParams
 
       override def apply(params: String): Question = {
         receiveInput(DrawOffer)
@@ -187,7 +185,6 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
       override val help: String = "The currently active color resigns the game."
       override val description: String = "Resign the game."
       override val names: Array[String] = Array("resign")
-      override val paramInfo: String = noParams
 
       override def apply(params: String): Message = {
         receiveInput(Resign)
@@ -199,7 +196,6 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
       override val help: String = "Restart the game from the beginning."
       override val description: String = "Restart the game."
       override val names: Array[String] = Array("restart")
-      override val paramInfo: String = noParams
 
       override def apply(params: String): CommandResult = {
         chessBoard = ChessBoard.classicalBoard
@@ -237,10 +233,10 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
           if (command.paramInfo == noParams) "NO PARAMETERS"
           else command.paramInfo
         val help = command.help
-        s"${names.head}     $params\n" +
+        s"${name}     $params\n" +
           "--------------------------------------------\n" +
           s"$help\n" +
-          s"Aliases: ${names.tail.mkString(" | ")}"
+          s"Aliases: ${aliases.mkString(" | ")}"
       }
     }
 
@@ -248,7 +244,6 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
       override val help: String = "End your life."
       override val description: String = "Stop this BS."
       override val names: Array[String] = Array("exit", "halt", "stop", "die", "end", "shutdown", "quit", "kill")
-      override val paramInfo: String = noParams
 
       override def apply(params: String): Quit = Quit("CYA...")
     }
@@ -330,4 +325,9 @@ object InputInterpreter {
     * this shows that the command does not take any parameters.
     */
   val noParams = ""
+
+  /**
+    * Used as name when no name is given for a command
+    */
+  val noName = "[[missing command name]]"
 }
