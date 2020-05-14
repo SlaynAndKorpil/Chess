@@ -13,12 +13,13 @@ When using scala, you can interact with it through [framework.ChessIO](https://g
 https://github.com/SlaynAndKorpil/Chess/blob/master/framework/src/framework/javaInterfacing/JChessIO.java) for use with Java.
 The main game logic is located in [framework.ChessBoard](https://github.com/SlaynAndKorpil/Chess/blob/master/framework/src/framework/ChessBoard.scala).
 It currently features:
-   0. Recognition and execution of correct moves
-   0. Promotions
-   0. Any types of draws (insufficient material, stalemate, ...) and mates
-   0. Saving and loading your games
-   0. Currently no AI opponent but I might be adding Stockfish or Lila when I feel like it
-   0. A full java interface
+
+ 0. Recognition and execution of correct moves
+ 0. Promotions
+ 0. Any types of draws (insufficient material, stalemate, ...) and mates
+ 0. Saving and loading your games
+ 0. Currently no AI opponent but I might be adding Stockfish or Lila when I feel like it
+ 0. A full java interface
 
 ## [GUI Application](https://github.com/SlaynAndKorpil/Chess/tree/master/graphics)
 When you start the .jar the game will open.
