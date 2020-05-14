@@ -40,10 +40,10 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
   private var reject: Input[_] = _
 
   /**
-    * Runs an interpretation of the console and plays the interpreted moves on the [[InputInterpreter#board board]].
+    * Runs an interpretation of the console and plays the interpreted moves on the [[console.InputInterpreter#board board]].
     */
   def run(): Unit = {
-    print("Welcome to my gorgeous CLI chess game! Type 'help' and then press ENTER to get a list of available commands.\n\n")
+    print("Welcome to my gorgeous CLI chess game! Type \"help\" and then press 'ENTER' to get a list of available commands.\n\n")
     println(board)
     gameLoop()
 
@@ -106,7 +106,7 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
     if (input.isEmpty) NoMessage
     else if (existsCommand(commandName)) {
       val command = allCommandBindings(commandName)
-      command(words.filterNot(_.isEmpty).tail.mkString(" "))
+      command(words.filter(_.nonEmpty).tail.mkString(" "))
     }
     else if (isMoveCommand(input)) parseMove(input)
     else Message(commandErrorMessage)
@@ -142,7 +142,7 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
       override val names: Array[String] = Array("load")
       override val paramInfo: String = "<file path>"
 
-      override def apply(params: String): Message = load(params) match {
+      override def apply(params: String): Message = load(params.filter(_ != '"')) match {
         case Some(error) => Message("ERROR: " + error.description)
         case None => Message("Successfully loaded!")
       }
@@ -155,7 +155,7 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
       override val names: Array[String] = Array("save", "s", "write", "w")
       override val paramInfo: String = "<file path>"
 
-      override def apply(params: String): Message = save(params) match {
+      override def apply(params: String): Message = save(params.filter(_ != '"')) match {
         case Some(error) => Message("ERROR: " + error.description)
         case None => Message("Successfully saved!")
       }
