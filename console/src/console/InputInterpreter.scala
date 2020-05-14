@@ -43,6 +43,7 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
     * Runs an interpretation of the console and plays the interpreted moves on the [[InputInterpreter#board board]].
     */
   def run(): Unit = {
+    print("Welcome to my gorgeous CLI chess game! Type 'help' and then press ENTER to get a list of available commands.\n\n")
     println(board)
     gameLoop()
 
