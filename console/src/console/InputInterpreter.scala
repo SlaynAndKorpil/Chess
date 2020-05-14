@@ -43,7 +43,7 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
     * Runs an interpretation of the console and plays the interpreted moves on the [[InputInterpreter#board board]].
     */
   def run(): Unit = {
-    println(board)
+    print(s"$board\n> ")
     gameLoop()
 
     @scala.annotation.tailrec
@@ -78,6 +78,8 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
               println(message)
               return
           }
+
+          print("> ")
       }
 
       gameLoop()
