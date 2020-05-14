@@ -18,10 +18,19 @@ import scala.language.postfixOps
   * @author Felix Lehner
   * @version alpha 0.3
   */
-class InputInterpreter extends ChessIO with CommandRegistrator {
+class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistrator {
   import InputInterpreter._
 
-  var board: ChessBoard = ChessBoard.classicalBoard
+  var board: ChessBoard =
+    if (loadGameFrom.isEmpty) ChessBoard.classicalBoard
+    else {
+      ChessBoard.load(loadGameFrom) match {
+        case Left(error) =>
+          Error write error.description
+          ChessBoard.classicalBoard
+        case Right(board) => board
+      }
+    }
 
   // registers all commands
   Commands.register()

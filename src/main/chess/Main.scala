@@ -11,7 +11,8 @@ package main.chess
   */
 object Main extends App {
   println("version 0.3")
-  //  new test.test.TestImpl();
-  if (args contains "console") console.Run.main(Array())
-  else graphics.Run.main(Array())
+
+  if (args contains "console") console.Main.main(args
+      .filter(arg => arg.toLowerCase != "console" && arg.toLowerCase != "cli"))
+  else graphics.Main.main(args)
 }
