@@ -228,15 +228,17 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
       }
 
       def specificHelp(command: ConsoleCommand): String = {
-        val names = command.names map (_.toUpperCase)
+        val commandName = command.name.toUpperCase
+        val commandAliases = command.aliases map (_.toUpperCase) mkString " | "
         val params =
           if (command.paramInfo == noParams) "NO PARAMETERS"
           else command.paramInfo
         val help = command.help
-        s"${name}     $params\n" +
+
+        s"$commandName     $params\n" +
           "--------------------------------------------\n" +
           s"$help\n" +
-          s"Aliases: ${aliases.mkString(" | ")}"
+          s"Aliases: $commandAliases"
       }
     }
 

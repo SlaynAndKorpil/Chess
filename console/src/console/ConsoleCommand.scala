@@ -44,7 +44,8 @@ trait ConsoleCommand extends (String => CommandResult) {
     * The name of the command as given in `names`
     * or [[console.InputInterpreter#noName noName]] when no name is given.
     */
-  val name: String =
+  // needs to be lazy as it otherwise throws a NullPointerException
+  lazy val name: String =
     names.headOption match {
       case Some(s) => s
       case None => InputInterpreter.noName
@@ -54,7 +55,8 @@ trait ConsoleCommand extends (String => CommandResult) {
     * The aliases for name.
     * An empty [[scala.Array]] when the `names` array only contains the name.
     */
-  val aliases: Array[String] =
+  // needs to be lazy as it otherwise throws a NullPointerException
+  lazy val aliases: Array[String] =
     if (names.length > 1) names.tail
     else Array()
 }
