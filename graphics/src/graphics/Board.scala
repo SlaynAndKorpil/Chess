@@ -11,12 +11,21 @@ import BoardColors._
 
 import scala.swing._
 
-class Board(val window: CWindow) extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
+class Board(val window: CWindow, loadGameFrom: String) extends GridPanel(0, 9) with BoardEventHandler with ChessIO {
   //TODO maybe use a real popup for this?
   val promoMenu = new PromotionChooser(400, 100)
   listenTo(promoMenu)
 
-  override protected var board: ChessBoard = ChessBoard.classicalBoard
+  override protected var board: ChessBoard =
+    if (loadGameFrom.isEmpty) ChessBoard.classicalBoard
+    else {
+      ChessBoard.load(loadGameFrom) match {
+        case Left(error) =>
+          Error write error.description
+          ChessBoard.classicalBoard
+        case Right(board) => board
+      }
+    }
 
   setup()
 
