@@ -43,11 +43,16 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
     * Runs an interpretation of the console and plays the interpreted moves on the [[InputInterpreter#board board]].
     */
   def run(): Unit = {
-    print(s"$board\n> ")
+    println(board)
     gameLoop()
 
     @scala.annotation.tailrec
     def gameLoop(): Unit = {
+      chessBoard.gameStatus match {
+        case DrawAcceptanceReq | TakebackAcceptanceReq | PromoReq(_) =>
+        case _ => print("> ")
+      }
+
       val input = scala.io.StdIn.readLine
 
       chessBoard.gameStatus match {
@@ -55,7 +60,7 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
           input.toLowerCase match {
             case "y" | "yes" | "yep" => receiveInput(approval)
             case "n" | "no" | "nope" => receiveInput(reject)
-            case _ => print("This is not an answer to a yes/no question. Please type either \"y\" or \"n\".")
+            case _ => print("This is not an answer to a yes/no question. Please type either \"y\" or \"n\": ")
           }
         case PromoReq(_) =>
           input.toLowerCase match {
@@ -63,7 +68,7 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
             case "r" => receiveInput(Promotion(Rook))
             case "k" => receiveInput(Promotion(Knight))
             case "b" => receiveInput(Promotion(Bishop))
-            case _ => print("This is not a valid piece identifier. Please type on of the following: Q R K B")
+            case _ => print("This is not a valid piece identifier. Please type on of the following: Q R K B: ")
           }
         case _ =>
           parseInput(input) match {
@@ -78,8 +83,6 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
               println(message)
               return
           }
-
-          print("> ")
       }
 
       gameLoop()
