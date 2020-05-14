@@ -25,7 +25,7 @@ trait ConsoleCommand extends (String => CommandResult) {
   /**
     * This gives information about the expected parameters that can be used to generate more detailed help texts.
     */
-  val paramInfo: String
+  val paramInfo: String = InputInterpreter.noParams
 
   /**
     * Tests if this command has a certain name.
@@ -39,4 +39,24 @@ trait ConsoleCommand extends (String => CommandResult) {
     * This applies the command to a [[String]] containing parameters.
     */
   override def apply(params: String): CommandResult
+
+  /**
+    * The name of the command as given in `names`
+    * or [[console.InputInterpreter#noName noName]] when no name is given.
+    */
+  // needs to be lazy as it otherwise throws a NullPointerException
+  lazy val name: String =
+    names.headOption match {
+      case Some(s) => s
+      case None => InputInterpreter.noName
+    }
+
+  /**
+    * The aliases for name.
+    * An empty [[scala.Array]] when the `names` array only contains the name.
+    */
+  // needs to be lazy as it otherwise throws a NullPointerException
+  lazy val aliases: Array[String] =
+    if (names.length > 1) names.tail
+    else Array()
 }

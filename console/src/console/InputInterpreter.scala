@@ -40,14 +40,20 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
   private var reject: Input[_] = _
 
   /**
-    * Runs an interpretation of the console and plays the interpreted moves on the [[InputInterpreter#board board]].
+    * Runs an interpretation of the console and plays the interpreted moves on the [[console.InputInterpreter#board board]].
     */
   def run(): Unit = {
-    print(s"$board\n> ")
+    print("Welcome to my gorgeous CLI chess game! Type \"help\" and then press 'ENTER' to get a list of available commands.\n\n")
+    println(board)
     gameLoop()
 
     @scala.annotation.tailrec
     def gameLoop(): Unit = {
+      chessBoard.gameStatus match {
+        case DrawAcceptanceReq | TakebackAcceptanceReq | PromoReq(_) =>
+        case _ => print("> ")
+      }
+
       val input = scala.io.StdIn.readLine
 
       chessBoard.gameStatus match {
@@ -55,7 +61,7 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
           input.toLowerCase match {
             case "y" | "yes" | "yep" => receiveInput(approval)
             case "n" | "no" | "nope" => receiveInput(reject)
-            case _ => print("This is not an answer to a yes/no question. Please type either \"y\" or \"n\".")
+            case _ => print("This is not an answer to a yes/no question. Please type either \"y\" or \"n\": ")
           }
         case PromoReq(_) =>
           input.toLowerCase match {
@@ -63,7 +69,7 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
             case "r" => receiveInput(Promotion(Rook))
             case "k" => receiveInput(Promotion(Knight))
             case "b" => receiveInput(Promotion(Bishop))
-            case _ => print("This is not a valid piece identifier. Please type on of the following: Q R K B")
+            case _ => print("This is not a valid piece identifier. Please type on of the following: Q R K B: ")
           }
         case _ =>
           parseInput(input) match {
@@ -78,8 +84,6 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
               println(message)
               return
           }
-
-          print("> ")
       }
 
       gameLoop()
@@ -102,7 +106,7 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
     if (input.isEmpty) NoMessage
     else if (existsCommand(commandName)) {
       val command = allCommandBindings(commandName)
-      command(words.filterNot(_.isEmpty).tail.mkString(" "))
+      command(words.filter(_.nonEmpty).tail.mkString(" "))
     }
     else if (isMoveCommand(input)) parseMove(input)
     else Message(commandErrorMessage)
@@ -138,7 +142,7 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
       override val names: Array[String] = Array("load")
       override val paramInfo: String = "<file path>"
 
-      override def apply(params: String): Message = load(params) match {
+      override def apply(params: String): Message = load(params.filter(_ != '"')) match {
         case Some(error) => Message("ERROR: " + error.description)
         case None => Message("Successfully loaded!")
       }
@@ -151,7 +155,7 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
       override val names: Array[String] = Array("save", "s", "write", "w")
       override val paramInfo: String = "<file path>"
 
-      override def apply(params: String): Message = save(params) match {
+      override def apply(params: String): Message = save(params.filter(_ != '"')) match {
         case Some(error) => Message("ERROR: " + error.description)
         case None => Message("Successfully saved!")
       }
@@ -162,7 +166,6 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
         "Ask your opponent for allowance to take the last move back. Answers can either be y(es) or n(o)."
       override val description: String = "Take the last move back."
       override val names: Array[String] = Array("takeback", "t")
-      override val paramInfo: String = noParams
 
       override def apply(params: String): Question = {
         receiveInput(TakebackProposal)
@@ -175,7 +178,6 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
         "Asks for a draw. When the same position was reached three times or the fifty moves rule applies, a draw by repetition is caused automatically."
       override val description: String = "Propose a draw."
       override val names: Array[String] = Array("draw")
-      override val paramInfo: String = noParams
 
       override def apply(params: String): Question = {
         receiveInput(DrawOffer)
@@ -187,7 +189,6 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
       override val help: String = "The currently active color resigns the game."
       override val description: String = "Resign the game."
       override val names: Array[String] = Array("resign")
-      override val paramInfo: String = noParams
 
       override def apply(params: String): Message = {
         receiveInput(Resign)
@@ -199,7 +200,6 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
       override val help: String = "Restart the game from the beginning."
       override val description: String = "Restart the game."
       override val names: Array[String] = Array("restart")
-      override val paramInfo: String = noParams
 
       override def apply(params: String): CommandResult = {
         chessBoard = ChessBoard.classicalBoard
@@ -232,15 +232,17 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
       }
 
       def specificHelp(command: ConsoleCommand): String = {
-        val names = command.names map (_.toUpperCase)
+        val commandName = command.name.toUpperCase
+        val commandAliases = command.aliases map (_.toUpperCase) mkString " | "
         val params =
           if (command.paramInfo == noParams) "NO PARAMETERS"
           else command.paramInfo
         val help = command.help
-        s"${names.head}     $params\n" +
+
+        s"$commandName     $params\n" +
           "--------------------------------------------\n" +
           s"$help\n" +
-          s"Aliases: ${names mkString "|"}"
+          s"Aliases: $commandAliases"
       }
     }
 
@@ -248,7 +250,6 @@ class InputInterpreter(loadGameFrom: String) extends ChessIO with CommandRegistr
       override val help: String = "End your life."
       override val description: String = "Stop this BS."
       override val names: Array[String] = Array("exit", "halt", "stop", "die", "end", "shutdown", "quit", "kill")
-      override val paramInfo: String = noParams
 
       override def apply(params: String): Quit = Quit("CYA...")
     }
@@ -330,4 +331,9 @@ object InputInterpreter {
     * this shows that the command does not take any parameters.
     */
   val noParams = ""
+
+  /**
+    * Used as name when no name is given for a command
+    */
+  val noName = "[[missing command name]]"
 }
