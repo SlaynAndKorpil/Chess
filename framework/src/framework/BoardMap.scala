@@ -10,7 +10,7 @@ import scala.xml._
   * so you could build bigger or smaller boards. See `isValid` to check whether a certain [[framework.Sqr]] describes
   * a valid square on a specific board.
   *
-  * @constructor the outer array are the lines and the inner array contains the pieces
+  * @constructor the outer array contains the lines and the inner arrays hold the pieces
   * @author Felix Lehner
   * @version
   */
