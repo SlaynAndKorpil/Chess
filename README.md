@@ -1,4 +1,6 @@
 # Chess
+![Scala CI](https://github.com/SlaynAndKorpil/Chess/workflows/Scala%20CI/badge.svg)
+
 This project is mostly for experimental and testing purpose as it is my first project on github.
 Don't take it too seriously. (Though it works pretty well, and I appreciate any support)
 
@@ -22,7 +24,8 @@ It currently features:
  0. A full java interface
 
 ## [GUI Application](https://github.com/SlaynAndKorpil/Chess/tree/master/graphics)
-When you start the .jar the game will open.
+When you start the .jar the game will open. Use a path to a saved game as parameter to open that game.
+
 Right now there are neither animations nor sounds because I normally turn these off in chess apps. I might add these in on demand.
 
 &nbsp;
@@ -33,6 +36,9 @@ Right now there are neither animations nor sounds because I normally turn these 
 ## [CLI Application](https://github.com/SlaynAndKorpil/Chess/tree/master/console)
 Use 'console' argument to start in console mode:
 > java -jar Chess.jar console
+
+Use a path to a saved game as additional parameter to open that game.
+> java -jar Chess.jar console saves/mySavedGame.save
 
 &nbsp;
 
