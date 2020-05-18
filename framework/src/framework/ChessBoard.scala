@@ -624,6 +624,19 @@ case class ChessBoard(
   /**
     * Tests for blockage by testing if every piece is blocked
     * and the kings are unable to reach any opponent piece.
+		*
+		* If this does not work it's probably... surely caused 
+		* by the abomination I've created in [[framework.pathfinding]].
+	  * It actually works in most cases. If you get a false negative
+		* result you just can agree on a draw. In the case of a false
+		* positive just comment all this crap out, return false and
+		* recompile.
+		*
+		* @see [[framework.pathfinding.KingMovementPathfinder]] if
+		*			you actually want to take a look at this mesmerizing
+		*			piece of shit that should have been aborted the very
+		*			moment I thought of doing it this way. Also you can
+		*			find there a more detailed description of the situation.
     */
   def isBlocked: Boolean = {
     def piecesBlocked =
